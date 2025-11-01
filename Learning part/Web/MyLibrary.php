@@ -1,9 +1,9 @@
 <?php
-function NavigationBarE($DedicatedPage)
+function NavigationBarE()
 {
     global $t;
 ?>
- <nav class="navbar">
+    <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">MyBrand</div>
             <ul class="nav-links">
@@ -13,7 +13,11 @@ function NavigationBarE($DedicatedPage)
                 <li><a href="#Contact">Contact</a></li>
             </ul>
         </div>
+
     </nav>
+    <div class="login_container_indexPage">
+        <h2><a href="sign_in_up.php">login</a></h2>
+    </div>
 <?php
-    }
-            ?>
+}
+?>

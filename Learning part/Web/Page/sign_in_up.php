@@ -19,24 +19,10 @@ include_once("../MyLibrary.php");
     <?php
     NavigationBarE();
     ?>
-
-    <section id="Home">
-        <!-- <button id="increamentBtn">Counter+</button>
-        <h2 id="result">10</h2>
- -->
-        <h1>Home_page</h1>
-
-    </section>
-    <section id="Service">
-        <h1>Service page</h1>
-    </section>
-    <section id="About">
-        <h1>About page</h1>
-    </section>
-    <section id="Contact">
-        <h1>Contact page</h1>
-    </section>
-
+    <div class="signInOut_form_container">
+        <div class="left_side_container"></div>
+        <div class="right_side_container"></div>
+    </div>
 </body>
 
 </html>
