@@ -1,6 +1,5 @@
 $(document).ready(function documentIsReady() {
   // we can start writing here
-  start();
 
   $(window).on("scroll", function () {
     clearTimeout(timer);
@@ -10,20 +9,13 @@ $(document).ready(function documentIsReady() {
   });
 
   PageScrollDetector();
+
+  $("#goToLogin").on("click", function () {
+    window.location.href = "./sign_in_up.php";
+  });
 });
 
-function start() {
-  $("#increamentBtn").click(incrementBtnF);
-}
-
 let timer;
-
-function incrementBtnF() {
-  let currentValue = $("#result").html();
-  currentValue++;
-
-  $("#result").html(currentValue);
-}
 
 function PageScrollDetector() {
   const scrollPosition = $(this).scrollTop();
@@ -36,10 +28,12 @@ function PageScrollDetector() {
       scrollPosition >= sectionTop - sectionHeight / 3 &&
       scrollPosition < sectionTop + sectionHeight - sectionHeight / 3
     ) {
-      // Example: add a class or trigger animation
-      $(this).addClass("active");
+      console.log("In section: " + sectionId);
+      if (sectionId) {
+        $('nav a[href="#' + sectionId + '"]').addClass("active");
+      }
     } else {
-      $(this).removeClass("active");
+      $('nav a[href="#' + sectionId + '"]').removeClass("active");
     }
   });
 }
