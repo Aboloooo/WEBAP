@@ -21,7 +21,7 @@ include_once("../MyLibrary.php");
     ?>
     <div class="signInOut_form_container1">
         <div class="signInOut_form_container2">
-            <div class="left_side_container"></div>
+            <!-- <div class="left_side_container"></div> -->
             <div class="right_side_container">
                 <form method="post">
                     <h2>Sign up</h2>
@@ -30,6 +30,15 @@ include_once("../MyLibrary.php");
 
                     <label for="">Password</label>
                     <input type="password" placeholder="...">
+
+                    <div class="signUpOptions">
+                        <span><a href="#">create new</a></span>
+                        <span><a href="#">forget password</a></span>
+                    </div>
+
+                    <button>submit</button>
+
+                    <div class="seperator"></div>
                 </form>
             </div>
         </div>
