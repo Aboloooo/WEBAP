@@ -13,6 +13,9 @@ $(document).ready(function documentIsReady() {
   $("#goToLogin").on("click", function () {
     window.location.href = "./sign_in_up.php";
   });
+
+  /* sign in up overlayout trigger */
+  $(".layoutTrigger").click(overlayoutTrigger);
 });
 
 let timer;
@@ -36,4 +39,14 @@ function PageScrollDetector() {
       $('nav a[href="#' + sectionId + '"]').removeClass("active");
     }
   });
+}
+
+/* sign in up overlayout trigger */
+function overlayoutTrigger() {
+  let currentPosition = parseInt($(".overlayout").css("left"));
+  if (currentPosition == 0) {
+    $(".overlayout").animate({ left: "+=450px" }, 500);
+  } else {
+    $(".overlayout").animate({ left: "0px" }, 500);
+  }
 }

@@ -1,29 +1,86 @@
+:root {
+  /* Primary Colors */
+  --primary-color: #0077cc;
+  --primary-dark: #3741b0;
+  --primary-light: #5563de;
+  --primary-hover: #3d4bc6;
+  --primary-gradient: linear-gradient(135deg, #5563de, #3741b0);
+
+  /* Neutral Colors */
+  --text-dark: #222;
+  --text-medium: #333;
+  --text-light: #444;
+  --text-white: #fff;
+  --text-muted: #eee;
+
+  /* Background Colors */
+  --bg-white: #fff;
+  --bg-light: #e5e8ff;
+  --bg-overlay: rgba(255, 255, 255, 0.1);
+  --bg-gradient: linear-gradient(135deg, #5563de, #3741b0);
+
+  /* Border & Divider Colors */
+  --border-light: #e0e0e0;
+  --border-medium: #ccc;
+  --border-white: #fff;
+  --divider-color: #eee;
+
+  /* State Colors */
+  --hover-color: #0077cc;
+  --focus-glow: rgba(85, 99, 222, 0.15);
+  --focus-glow-white: rgba(255, 255, 255, 0.25);
+
+  /* Shadow Colors */
+  --shadow-light: rgba(0, 0, 0, 0.15);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --shadow-heavy: rgba(0, 0, 0, 0.25);
+
+  /* Link Colors */
+  --link-color: #5563de;
+  --link-hover: #2c3add;
+  --link-light: #dce2ff;
+
+  /* Layout Spacing */
+  --nav-height: 80px;
+  --container-max-width: 1200px;
+  --border-radius: 16px;
+  --border-radius-small: 6px;
+}
+
+/* === Base Styles === */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 80px; /* adjust based on your nav height */
+  scroll-padding-top: var(--nav-height);
 }
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   line-height: 1.6;
-  color: #222;
-  background-color: #fff;
+  color: var(--text-dark);
+  background-color: var(--bg-white);
+  min-height: 100vh;
 }
 
 /* === Navigation Bar Styles === */
 .navbar {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  background-color: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
   position: sticky;
   top: 0;
   width: 100%;
   z-index: 1000;
+  backdrop-filter: blur(10px);
 }
 
 .nav-container {
-  max-width: 1200px;
+  max-width: var(--container-max-width);
   margin: 0 auto;
   padding: 0.75rem 1.5rem;
   display: flex;
@@ -35,11 +92,12 @@ body {
 .nav-logo {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #222;
+  color: var(--text-dark);
   letter-spacing: 0.5px;
+  text-decoration: none;
 }
 
-/* Links */
+/* Navigation Links */
 .nav-links {
   list-style: none;
   display: flex;
@@ -50,16 +108,38 @@ body {
 
 .nav-links a {
   text-decoration: none;
-  color: #333;
+  color: var(--text-medium);
   font-weight: 500;
-  transition: color 0.3s, border-bottom 0.3s;
+  transition: all 0.3s ease;
   padding-bottom: 0.25rem;
   border-bottom: 2px solid transparent;
+  position: relative;
 }
 
 .nav-links a:hover {
-  color: #0077cc;
-  border-bottom: 2px solid #0077cc;
+  color: var(--hover-color);
+  border-bottom-color: var(--hover-color);
+}
+
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--hover-color);
+  transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+/* Active Navigation State */
+.nav-links a.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
 }
 
 /* === Login Styles in index page === */
@@ -75,53 +155,70 @@ body {
   justify-content: center;
   align-items: center;
 }
+
 .login_container_indexPage div {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 0.5rem;
 }
+
 .login_container_indexPage img {
   width: 45px;
   height: 45px;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
 }
 
+.login_container_indexPage img:hover {
+  transform: scale(1.05);
+}
+
+/* === Main Content Styles === */
 h1 {
   display: flex;
   justify-content: center;
   align-items: center;
+  text-align: center;
+  margin: 2rem 0;
+  color: var(--text-dark);
 }
 
 section {
-  background-color: #0077cc;
+  background: var(--primary-gradient);
   width: 80%;
   height: 90vh;
   margin-left: auto;
   margin-right: auto;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 15px var(--shadow-light);
 }
 
-nav .active {
-  color: #0077cc;
-  border-bottom: 2px solid #0077cc;
-}
-
-/* === sign_in_out page Styles === */
-/* === Outer Container === */
+/* === Sign In/Out Form Container Styles === */
 .main_container {
   width: 100%;
-  height: 80vh;
+  min-height: 80vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .signInOut_form_container1 {
+  position: relative;
   margin: auto;
   width: 100%;
   max-width: 900px;
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background-color: var(--bg-white);
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 25px var(--shadow-light);
   overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.signInOut_form_container1:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px var(--shadow-heavy);
 }
 
 /* === Inner Container (Split Layout) === */
@@ -130,86 +227,113 @@ nav .active {
   flex-wrap: wrap;
   width: 100%;
   min-height: 550px;
+  position: relative;
+  z-index: 1;
 }
 
 /* === Left Side: Create User Form Area === */
 .left_side_container {
   flex: 1;
-  background: linear-gradient(135deg, #5563de, #3741b0);
-  color: #fff;
+  background: var(--primary-gradient);
+  color: var(--text-white);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.left_side_container::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  animation: float 6s ease-in-out infinite;
 }
 
 /* --- Create User Form --- */
 .create_user_form {
   width: 100%;
   max-width: 350px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-overlay);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px var(--shadow-light);
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  z-index: 2;
 }
 
 .create_user_form h2 {
   text-align: center;
-  color: #fff;
+  color: var(--text-white);
   margin-bottom: 1rem;
   font-weight: 600;
+  font-size: 1.5rem;
 }
 
 .create_user_form label {
-  color: #eee;
+  color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
+  margin-bottom: 0.25rem;
 }
 
 .create_user_form input,
 .create_user_form select {
   padding: 0.75rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-small);
   font-size: 0.95rem;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-medium);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .create_user_form input:focus,
 .create_user_form select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 3px var(--focus-glow-white);
   transform: translateY(-1px);
+  border-color: var(--text-white);
 }
 
 /* Submit Button (Left Side) */
 .create_user_form button {
   padding: 0.9rem;
   border: none;
-  border-radius: 6px;
-  background-color: #fff;
-  color: #3741b0;
+  border-radius: var(--border-radius-small);
+  background-color: var(--bg-white);
+  color: var(--primary-dark);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
 }
 
 .create_user_form button:hover {
-  background-color: #e5e8ff;
+  background-color: var(--bg-light);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
-/* === Right Side: Sign-Up Form Area === */
+/* === Right Side: Sign-In Form Area === */
 .right_side_container {
   flex: 1;
-  background-color: #fff;
+  background-color: var(--bg-white);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -226,64 +350,75 @@ nav .active {
 
 .right_side_container h2 {
   text-align: center;
-  color: #333;
+  color: var(--text-medium);
   font-weight: 600;
   margin-bottom: 1rem;
+  font-size: 1.5rem;
 }
 
 /* --- Input Fields --- */
 .right_side_container label {
-  color: #444;
+  color: var(--text-light);
   font-size: 0.9rem;
   font-weight: 500;
+  margin-bottom: 0.25rem;
 }
 
 .right_side_container input {
   padding: 0.75rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--border-radius-small);
   font-size: 1rem;
   transition: all 0.3s ease;
+  background-color: var(--bg-white);
 }
 
 .right_side_container input:focus {
-  border-color: #5563de;
+  border-color: var(--primary-light);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(85, 99, 222, 0.15);
+  box-shadow: 0 0 0 3px var(--focus-glow);
+  transform: translateY(-1px);
 }
 
 /* --- Sign Up Options --- */
 .signUpOptions {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.85rem;
+  margin: 0.5rem 0;
 }
 
 .signUpOptions a {
-  color: #5563de;
+  color: var(--link-color);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .signUpOptions a:hover {
-  color: #2c3add;
+  color: var(--link-hover);
+  text-decoration: underline;
 }
 
 /* --- Submit Button (Right Side) --- */
 .right_side_container button {
   padding: 0.9rem;
   border: none;
-  border-radius: 6px;
-  background-color: #5563de;
-  color: white;
+  border-radius: var(--border-radius-small);
+  background-color: var(--primary-light);
+  color: var(--text-white);
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
 }
 
 .right_side_container button:hover {
-  background-color: #3d4bc6;
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 /* === Already Have an Account Section === */
@@ -291,25 +426,125 @@ nav .active {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.9rem;
-  color: #eee;
+  color: var(--text-muted);
 }
 
 .account_link a {
-  color: #fff;
+  color: var(--text-white);
   font-weight: 600;
   margin-left: 0.3rem;
-  text-decoration: underline;
+  text-decoration: none;
   transition: color 0.3s ease;
+  border-bottom: 1px solid transparent;
 }
 
 .account_link a:hover {
-  color: #dce2ff;
+  color: var(--link-light);
+  border-bottom-color: var(--link-light);
 }
 
 /* --- Separator Line --- */
 .seperator {
   margin-top: 1.5rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--divider-color);
+  position: relative;
+}
+
+.seperator::before {
+  content: "or";
+  position: absolute;
+  top: -0.7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-white);
+  padding: 0 1rem;
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+
+/* === Overlay Styles === */
+.overlayout {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--bg-white);
+  display: flex; /* Hidden by default - change to flex to show */
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  border-radius: var(--border-radius);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.overlay_content img {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 1.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1rem;
+}
+.overlay_content {
+  background-color: var(--bg-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-heavy);
+}
+
+.form-message {
+  padding: 0.5rem;
+  border-radius: var(--border-radius-small);
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.form-message.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.form-message.success {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* === Loading States === */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* === Mobile Responsive === */
@@ -317,6 +552,7 @@ nav .active {
   .nav-container {
     flex-direction: column;
     align-items: flex-start;
+    padding: 1rem;
   }
 
   .nav-links {
@@ -324,13 +560,20 @@ nav .active {
     gap: 1rem;
     width: 100%;
     margin-top: 0.5rem;
+    display: none;
+  }
+
+  .nav-links.active {
+    display: flex;
   }
 
   .nav-links a {
     display: block;
     width: 100%;
+    padding: 0.5rem 0;
   }
-  /* sign in form */
+
+  /* Form Container Responsive */
   .signInOut_form_container2 {
     flex-direction: column;
   }
@@ -341,6 +584,69 @@ nav .active {
 
   .right_side_container {
     width: 100%;
-    padding: 2rem;
+    padding: 2rem 1.5rem;
+  }
+
+  .main_container {
+    padding: 1rem 0.5rem;
+  }
+
+  .signInOut_form_container1 {
+    margin: 1rem;
+  }
+
+  .overlay_content {
+    padding: 2rem 1.5rem;
+  }
+
+  .overlay_content h3 {
+    font-size: 1.5rem;
+  }
+
+  .login_container_indexPage {
+    position: static;
+    width: 100%;
+    float: none;
+    margin: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .signInOut_form_container1 {
+    margin: 0.5rem;
+    border-radius: 12px;
+  }
+
+  .right_side_container {
+    padding: 1.5rem 1rem;
+  }
+
+  .create_user_form,
+  .right_side_container form {
+    padding: 1.5rem;
+  }
+
+  .signUpOptions {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .nav-container {
+    padding: 0.75rem;
+  }
+}
+
+/* === Print Styles === */
+@media print {
+  .navbar,
+  .login_container_indexPage,
+  .overlayout {
+    display: none !important;
+  }
+
+  .signInOut_form_container1 {
+    box-shadow: none !important;
+    border: 1px solid var(--border-medium);
   }
 }

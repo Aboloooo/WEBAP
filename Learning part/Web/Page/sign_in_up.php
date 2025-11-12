@@ -11,7 +11,7 @@ include_once("../MyLibrary.php");
     <script src="../MyScript.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>index</title>
+    <title>Sign In/Up Form</title>
     <link rel="stylesheet" href="../MyStyle.css">
 </head>
 
@@ -21,9 +21,17 @@ include_once("../MyLibrary.php");
     ?>
     <div class="main_container">
         <div class="signInOut_form_container1">
+
+            <!-- Overlay should be outside the form container2 -->
+            <div class="overlayout" id="formOverlay">
+                <div class="overlay_content">
+                    <img src="../img/login_img2.avif" class="myImg" alt="Overlay Image">
+                </div>
+            </div>
+
             <div class="signInOut_form_container2">
                 <div class="left_side_container">
-                    <form class="create_user_form" method="post">
+                    <form class="create_user_form" method="post" action="#">
                         <h2>Create New User</h2>
 
                         <label for="fullname">Full Name</label>
@@ -50,34 +58,35 @@ include_once("../MyLibrary.php");
 
                         <div class="account_link">
                             <span>Already have an account?</span>
-                            <a href="#">Sign in</a>
+                            <a href="#" class="layoutTrigger">Sign in</a>
                         </div>
                     </form>
                 </div>
 
                 <div class="right_side_container">
-                    <form method="post">
-                        <h2>Sign up</h2>
-                        <label for="">Username</label>
-                        <input type="text" placeholder="Username">
+                    <form method="post" action="#">
+                        <h2>Sign In</h2>
+                        <label for="signin_username">Username</label>
+                        <input type="text" id="signin_username" name="signin_username" placeholder="Username" required>
 
-                        <label for="">Password</label>
-                        <input type="password" placeholder="...">
+                        <label for="signin_password">Password</label>
+                        <input type="password" id="signin_password" name="signin_password" placeholder="Enter your password" required>
 
                         <div class="signUpOptions">
-                            <span><a href="#">Create New Account</a></span>
-                            <span><a href="#">Forget Password</a></span>
+                            <span><a href="#" class="layoutTrigger">Create New Account</a></span>
+                            <span><a href="#">Forgot Password?</a></span>
                         </div>
 
-                        <button>submit</button>
+                        <button type="submit">Sign In</button>
 
                         <div class="seperator"></div>
                     </form>
                 </div>
-
             </div>
         </div>
     </div>
+
+
 </body>
 
 </html>
