@@ -24,6 +24,12 @@ include_once("../MyLibrary.php");
 
     <section id="Home">
         <h1>Home_page</h1>
+        <div class="rotator">
+            <img src="" alt="">
+            <img src="" alt="">
+            <img src="" alt="">
+            <img src="" alt="">
+        </div>
     </section>
     <section id="Service">
         <h1>Service page</h1>
