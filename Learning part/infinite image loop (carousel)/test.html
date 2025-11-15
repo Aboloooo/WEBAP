@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      /* style.css */
+      .rotator {
+        width: 400px; /* adjust size */
+        height: 250px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .rotator img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* keeps aspect ratio */
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      .rotator img.active {
+        opacity: 1;
+        background-color: aqua;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="rotator">
+      <img src="img1.jpg" class="active" alt="img1" />
+      <img src="img2.jpg" alt="img2" />
+      <img src="img3.jpg" alt="img3" />
+      <img src="img4.jpg" alt="img4" />
+    </div>
+
+    <script>
+      // script.js
+      const images = document.querySelectorAll(".rotator img");
+      let index = 0;
+
+      setInterval(() => {
+        // remove 'active' from current
+        images[index].classList.remove("active");
+
+        // move to next image (loop around)
+        index = (index + 1) % images.length;
+
+        // add 'active' to new image
+        images[index].classList.add("active");
+      }, 2000); // 2000 ms = 2 seconds
+    </script>
+  </body>
+</html>
