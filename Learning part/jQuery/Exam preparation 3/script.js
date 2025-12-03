@@ -5,21 +5,27 @@ function start() {
 }
 
 let list = [];
-
+/* 
+var matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+];
+console.log(matrix[0][1]); // 2
+console.log(matrix[2][0]); // 7
+*/
+let orderRow;
 function addBtn() {
+  orderRow = 0;
   let selectedItemValue = $("#selectL").val();
   let selectedItemTxt = $("#selectL option:selected").text();
   let quantity = $("#quantity").val();
-  alert(quantity + " - " + selectedItemTxt);
-  list.push({ selectedItemTxt: quantity });
+  let order = selectedItemTxt + "-" + quantity;
+  list.push(order);
+  alert("Item added to your list");
   /*   $("#finalSubBtn").on("click", () => showRecipt(selectedItemValue, selectedItemTxt));
    */
 }
-
-function showRecipt() {
-    
-}
-
 
 function creator() {
   let recipeNameInput = $("<input>")
@@ -65,6 +71,17 @@ function creator() {
       .attr("id", "finalSubBtn")
       .text("create recipt");
     $("body").append(finalSubmitBtn);
-    $("#finalSubBtn").on("click", showRecipt);
+    $("#finalSubBtn").on("click", function () {
+      let header = $("<h1>");
+      header.html(recipeNameV);
+      let listDiv = $("<div>");
+      listDiv.append(header);
+      list.forEach((element) => {
+        let ul = $("<ul>");
+        ul.append(element);
+        listDiv.append(ul);
+      });
+      $("body").append(listDiv);
+    });
   });
 }
