@@ -1,19 +1,18 @@
-DROP DATABASE IF EXISTS PIF2025_2026;
-CREATE DATABASE PIF2025_2026;
-USE PIF2025_2026;
-/* adding forign key and some table left */
+DROP DATABASE IF EXISTS PIF_2026;
+CREATE DATABASE PIF_2026;
+USE PIF_2026;
 
 CREATE TABLE User(
     Username VARCHAR(255) PRIMARY KEY,
     First_name CHAR(50) NOT NULL,
     Last_name CHAR(50) NOT NULL,
-    Role VARCHAR(50) NOT NULL,
+    Role VARCHAR(50) NOT NULL
 );
 CREATE TABLE Station(
     Station_id int PRIMARY KEY AUTO_INCREMENT,
     Serial_number VARCHAR(255) NOT NULL,
     Name VARCHAR(50),
-    Description CHAR,
+    Description CHAR(255),
     Owner VARCHAR(255),
     FOREIGN KEY (Owner) REFERENCES User(Username) 
 );
@@ -24,21 +23,43 @@ CREATE TABLE Measurement(
     Air_pressure VARCHAR(255),
     Light_intensity VARCHAR(255),
     Air_quality VARCHAR(255),
-    Station_id VARCHAR(255),
+    Station_id int,
     FOREIGN KEY (Station_id) REFERENCES Station(Station_id) 
 );
 CREATE TABLE Collection(
     Collection_id int PRIMARY KEY AUTO_INCREMENT,
     Name VARCHAR(50) NOT NULL,
-    Description CHAR,
-    Measurement_id VARCHAR(255),
-    FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id) 
+    Description CHAR(255),
+    Creator VARCHAR(255),
+    FOREIGN KEY (Creator) REFERENCES User(Username) 
 );
 CREATE TABLE CollectionMeasurement(
-    Username VARCHAR(255),
+    Measurement_id int,
     Collection_id int,
-    FOREIGN KEY (Username) REFERENCES User(Username),
+    FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id),
     FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id) 
 );
-CREATE TABLE Friendship();
-CREATE TABLE CollectionShare();
+CREATE TABLE FriendList(
+/* Users freindship can be saved pair by pair */
+/* 
+    (UserA,UserB)
+    (UserA,UserC)
+    (UserC,UserA)
+we can see each user is friend with who in the example above
+ */
+    UserA VARCHAR(255) NOT NULL,
+    UserB VARCHAR(255) NOT NULL,
+    PRIMARY KEY (UserA, UserB),
+    FOREIGN KEY (UserA) REFERENCES User(Username),
+    FOREIGN KEY (UserB) REFERENCES User(Username)
+);
+CREATE TABLE CollectionShare(
+    Share_id       INT PRIMARY KEY,
+    Collection_id  INT NOT NULL,
+    Shared_by      VARCHAR(100) NOT NULL,
+    Shared_with    VARCHAR(100) NOT NULL,
+    FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
+    FOREIGN KEY (Shared_by) REFERENCES User(Username),
+    FOREIGN KEY (Shared_with) REFERENCES User(Username)
+
+);
