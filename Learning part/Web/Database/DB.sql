@@ -24,7 +24,9 @@ CREATE TABLE Measurement(
     Light_intensity VARCHAR(255),
     Air_quality VARCHAR(255),
     Station_id int,
-    FOREIGN KEY (Station_id) REFERENCES Station(Station_id) 
+    CollectionMeasurement_id int,
+    FOREIGN KEY (Station_id) REFERENCES Station(Station_id),
+    FOREIGN KEY (CollectionMeasurement_id) REFERENCES Measurement(CollectionMeasurement_id)
 );
 CREATE TABLE Collection(
     Collection_id int PRIMARY KEY AUTO_INCREMENT,
@@ -34,9 +36,9 @@ CREATE TABLE Collection(
     FOREIGN KEY (Creator) REFERENCES User(Username) 
 );
 CREATE TABLE CollectionMeasurement(
-    Measurement_id int,
+    CollectionMeasurement_id int PRIMARY KEY,
     Collection_id int,
-    FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id),
+
     FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id) 
 );
 CREATE TABLE FriendList(
@@ -54,12 +56,11 @@ we can see each user is friend with who in the example above
     FOREIGN KEY (UserB) REFERENCES User(Username)
 );
 CREATE TABLE CollectionShare(
-    Share_id       INT PRIMARY KEY,
-    Collection_id  INT NOT NULL,
-    Shared_by      VARCHAR(100) NOT NULL,
-    Shared_with    VARCHAR(100) NOT NULL,
+    Collection_id INT NOT NULL,
+    Shared_by VARCHAR(255) NOT NULL,
+    Shared_with VARCHAR(255) NOT NULL,
+    PRIMARY KEY (Collection_id, Shared_by, Shared_with),
     FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
     FOREIGN KEY (Shared_by) REFERENCES User(Username),
     FOREIGN KEY (Shared_with) REFERENCES User(Username)
-
 );
