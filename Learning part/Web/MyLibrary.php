@@ -1,4 +1,30 @@
 <?php
+session_start();
+/* connection to database */
+$host = 'localhost';
+$username = 'root';
+$password = '';
+$port = '3306';
+$certificate_file_path = '';
+$database = 'PIF_2026';
+$connection = mysqli_connect($host, $username, $password, $database);
+
+if (!isset($_SESSION["userLogin"])) {
+    $_SESSION["userLogin"] = false;
+}
+if (!isset($_SESSION["username"])) {
+    $_SESSION["username"] = "Username";
+}
+if (!isset($_SESSION["level"])) {
+    $_SESSION["level"] = 3;
+}
+if (!isset($_SESSION["Admin"])) {
+    $_SESSION["Admin"] = false;
+}
+if (!isset($_SESSION["SecurityAccess"])) {
+    $_SESSION["SecurityAccess"] = false;
+}
+
 function NavigationBarE()
 {
     global $t;

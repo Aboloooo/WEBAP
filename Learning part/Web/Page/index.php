@@ -25,6 +25,9 @@ include_once("../MyLibrary.php");
     <section id="Home">
         <h1>Home_page</h1>
     </section>
+    <section id="About">
+        <h1>About_page</h1>
+    </section>
     <section id="Service">
         <h1 class="section-title">Our Services</h1>
 

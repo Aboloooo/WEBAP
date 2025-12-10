@@ -28,7 +28,26 @@ include_once("../MyLibrary.php");
                     <img src="../img/login_img2.avif" class="myImg" alt="Overlay Image">
                 </div>
             </div>
-
+            <?php
+            if (isset($_POST['submit'])) {
+                $FullName = $_POST['fullname'];
+                $EmailAddress = $_POST['email'];
+                $Username = $_POST['username'];
+                $Password = $_POST['password'];
+                $DefaultAccessLevel = 3;
+                $confirmPassword = $_POST['confirmPassword'];
+                /* password doesnt match possible error */
+                if ($password == $confirmPassword) {
+                    $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
+                    $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $Password, $DefaultAccessLevel);
+                    if ($insertValues->execute()) {
+                        echo "<script>alert('Form submitted successfully');</script>";
+                    };
+                } else {
+                    echo "<script>alert('Passwords do not match');</script>";
+                }
+            }
+            ?>
             <div class="signInOut_form_container2">
                 <div class="left_side_container">
                     <form class="create_user_form" method="post" action="#">
@@ -46,15 +65,18 @@ include_once("../MyLibrary.php");
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" placeholder="********" required>
 
-                        <label for="role">User Role</label>
+                        <label for="password">Confirm your Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="********" required>
+
+                        <!--   <label for="role">User Role</label>
                         <select id="role" name="role" required>
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
                             <option value="editor">Editor</option>
                             <option value="user">User</option>
-                        </select>
+                        </select> -->
 
-                        <button type="submit">Create User</button>
+                        <button type="submit" name="submit">Create User</button>
 
                         <div class="account_link">
                             <span>Already have an account?</span>
@@ -63,6 +85,24 @@ include_once("../MyLibrary.php");
                     </form>
                 </div>
 
+                <?php
+                if (isset($_POST['signin_username']) && isset($_POST['signin_password'])) {
+                    $loginCheck = $connection->prepare('select * from Users where Username =?');
+                    $loginCheck->bind_param('s', $_POST["signin_username"]);
+                    $loginCheck->execute();
+                    $result = $loginCheck->get_result();
+                    if ($row = $result->fetch_assoc()) {
+                        if (password_verify($_POST['password'], $password)) {
+                            $_SESSION["username"] = $username;
+                            $_SESSION["userLogin"] = true;
+                        } else {
+                            echo "<script>alert('incorrect password')</script>";
+                        }
+                    } else {
+                        echo "<script>alert('Username not found')</script>";
+                    }
+                }
+                ?>
                 <div class="right_side_container">
                     <form method="post" action="#">
                         <h2>Sign In</h2>
