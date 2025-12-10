@@ -4,9 +4,12 @@ USE PIF_2026;
 
 -- Role table
 CREATE TABLE Role(
-    AccessLevelID int PRIMARY KEY,
-    Name VARCHAR(50) NOT NULL
+    AccessLevelID int PRIMARY KEY AUTO_INCREMENT,
+    level VARCHAR(50) NOT NULL
 );
+insert into Role(level) values("Admin");
+insert into Role(level) values("Dev");
+insert into Role(level) values("User");
 
 -- Users table (renamed from User)
 CREATE TABLE Users(

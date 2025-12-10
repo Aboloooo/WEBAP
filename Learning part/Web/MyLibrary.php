@@ -36,6 +36,7 @@ function NavigationBarE()
                 <li><a href="index.php#Home">Home</a></li>
                 <li><a href="index.php#About">About</a></li>
                 <li><a href="index.php#Service">Service</a></li>
+                <li><a href="index.php#dashboard">Dashboard</a></li>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
         </div>
@@ -44,7 +45,11 @@ function NavigationBarE()
     <div class="login_container_indexPage">
         <div id="goToLogin">
             <img src="../img/User.png" alt="not found">
-            <span>username</span>
+            <span><?php if ($_SESSION["userLogin"]) {
+                        print($_SESSION["username"]);
+                    } else {
+                        print("username");
+                    } ?></span>
         </div>
     </div>
 <?php

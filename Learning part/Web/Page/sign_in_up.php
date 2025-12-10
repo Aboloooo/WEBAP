@@ -34,12 +34,13 @@ include_once("../MyLibrary.php");
                 $EmailAddress = $_POST['email'];
                 $Username = $_POST['username'];
                 $Password = $_POST['password'];
+                $hashedPass = password_hash($Password, PASSWORD_DEFAULT);
                 $DefaultAccessLevel = 3;
                 $confirmPassword = $_POST['confirmPassword'];
                 /* password doesnt match possible error */
-                if ($password == $confirmPassword) {
+                if ($Password == $confirmPassword) {
                     $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
-                    $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $Password, $DefaultAccessLevel);
+                    $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $hashedPass, $DefaultAccessLevel);
                     if ($insertValues->execute()) {
                         echo "<script>alert('Form submitted successfully');</script>";
                     };
@@ -92,9 +93,15 @@ include_once("../MyLibrary.php");
                     $loginCheck->execute();
                     $result = $loginCheck->get_result();
                     if ($row = $result->fetch_assoc()) {
-                        if (password_verify($_POST['password'], $password)) {
+                        $username = $row['Username'];
+                        $password = $row['Password'];
+                        echo "<script>alert('$password')</script>";
+
+                        $level = $row['AccessLevelID'];
+                        if (password_verify($_POST['signin_password'], $password)) {
                             $_SESSION["username"] = $username;
                             $_SESSION["userLogin"] = true;
+                            header("location: index.php");
                         } else {
                             echo "<script>alert('incorrect password')</script>";
                         }
