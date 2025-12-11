@@ -149,7 +149,7 @@ include_once("../MyLibrary.php");
         ?>
             <div class="main_container">
                 <div class="user_card">
-                    <h2>👤 User Information</h2>
+                    <h2>User Information</h2>
 
                     <div class="info_grid" id="userInfoGrid">
                         <!-- Full Name -->
@@ -224,15 +224,16 @@ include_once("../MyLibrary.php");
 
                     <!-- Action Buttons -->
                     <div class="card-actions" id="actionButtons">
-                        <button class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display: flex;">
-                            ❌ Cancel
-                        </button>
-                        <button class="btn btn-save" id="saveBtn" onclick="saveChanges()" style="display: flex;">
-                            💾 Save Changes
-                        </button>
                         <button class="btn btn-edit" id="editBtn" onclick="enableEditing()" style="display: flex;">
                             ✏️ Edit Information
                         </button>
+                        <button class="btn btn-save" id="saveBtn" onclick="saveChanges()" style="display: none;">
+                            💾 Save Changes
+                        </button>
+                        <button class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display: none;">
+                            ❌ Cancel
+                        </button>
+
                     </div>
                 </div>
             </div>

@@ -51,11 +51,23 @@ function overlayoutTrigger() {
   }
 }
 
+// state managment
+/* everytime we want to edit the initial data, we simply change the
+value of the field and call function initializeOriginalData() */
+let orginalData = {};
+function initializeOriginalData() {}
+
 function enableEditing() {
   // Enter edit mode for all fields
-  $(".info_row").forEach((row) => {
-    if (!row.classList.contains("editing")) {
-      row.classList.add("editing");
+  $("#cancelBtn").css("display", "flex");
+  $("#saveBtn").css("display", "flex");
+  $(".info_row").each(function () {
+    if (!$(this).hasClass("editing")) {
+      $(this).addClass("editing");
     }
   });
 }
+
+function saveChanges() {}
+
+function cancelEdit() {}

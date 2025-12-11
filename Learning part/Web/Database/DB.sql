@@ -11,6 +11,15 @@ insert into Role(level) values("Admin");
 insert into Role(level) values("Dev");
 insert into Role(level) values("User");
 
+-- Station table
+CREATE TABLE Station(
+    Station_id INT PRIMARY KEY AUTO_INCREMENT,
+    Serial_number VARCHAR(255) NOT NULL,
+    Name VARCHAR(50),
+    Description VARCHAR(255),
+    Owner_ID int
+);
+
 -- Users table (renamed from User)
 CREATE TABLE Users(
     UserID int PRIMARY KEY AUTO_INCREMENT,
@@ -19,26 +28,30 @@ CREATE TABLE Users(
     Username VARCHAR(255),
     Password VARCHAR(255),
     AccessLevelID int NOT NULL,
+    owner_of_station int,
     FOREIGN KEY (AccessLevelID) REFERENCES Role(AccessLevelID)
 );
 
--- Station table
-CREATE TABLE Station(
-    Station_id INT PRIMARY KEY AUTO_INCREMENT,
-    Serial_number VARCHAR(255) NOT NULL,
-    Name VARCHAR(50),
-    Description VARCHAR(255),
-    Owner VARCHAR(255),
-    FOREIGN KEY (Owner) REFERENCES Users(Username)
-);
+-- I want Users to reference Station (e.g., Users.Station_id), AND Station to reference Users(circular foreign-key dependency that SQL doesnt support)
+ALTER TABLE Users
+ADD CONSTRAINT fk_user_station
+    FOREIGN KEY (owner_of_station) REFERENCES Station(Station_id)
+    ON DELETE SET NULL;
+
+ALTER TABLE Station
+ADD CONSTRAINT fk_station_owner
+    FOREIGN KEY (Owner_ID) REFERENCES Users(UserID)
+    ON DELETE SET NULL;
+
+
 
 -- Collection table
 CREATE TABLE Collection(
     Collection_id INT PRIMARY KEY AUTO_INCREMENT,
     Name VARCHAR(50) NOT NULL,
     Description VARCHAR(255),
-    Creator VARCHAR(255),
-    FOREIGN KEY (Creator) REFERENCES Users(Username)
+    Creator_ID int,
+    FOREIGN KEY (Creator_ID) REFERENCES Users(UserID)
 );
 
 -- CollectionMeasurement table
@@ -64,20 +77,20 @@ CREATE TABLE Measurement(
 
 -- FriendList table
 CREATE TABLE FriendList(
-    UserA VARCHAR(255) NOT NULL,
-    UserB VARCHAR(255) NOT NULL,
+    UserA int NOT NULL,
+    UserB int NOT NULL,
     PRIMARY KEY (UserA, UserB),
-    FOREIGN KEY (UserA) REFERENCES Users(Username),
-    FOREIGN KEY (UserB) REFERENCES Users(Username)
+    FOREIGN KEY (UserA_ID) REFERENCES Users(UserID),
+    FOREIGN KEY (UserB_ID) REFERENCES Users(UserID)
 );
 
 -- CollectionShare table
 CREATE TABLE CollectionShare(
     Collection_id INT NOT NULL,
-    Shared_by VARCHAR(255) NOT NULL,
-    Shared_with VARCHAR(255) NOT NULL,
+    Shared_by int NOT NULL,
+    Shared_with int NOT NULL,
     PRIMARY KEY (Collection_id, Shared_by, Shared_with),
     FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
-    FOREIGN KEY (Shared_by) REFERENCES Users(Username),
-    FOREIGN KEY (Shared_with) REFERENCES Users(Username)
+    FOREIGN KEY (Shared_by) REFERENCES Users(UserID),
+    FOREIGN KEY (Shared_with) REFERENCES Users(UserID)
 );
