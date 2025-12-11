@@ -231,6 +231,11 @@ section {
   transform: translateY(-5px);
   box-shadow: 0 12px 35px var(--shadow-heavy);
 }
+/* sing out btn */
+
+#signoutBtn {
+  background-color: var(--temp-danger);
+}
 
 /* === Inner Container (Split Layout) === */
 .signInOut_form_container2 {
@@ -521,6 +526,341 @@ section {
   background-color: #e8f5e8;
   color: #2e7d32;
   border: 1px solid #c8e6c9;
+}
+
+/* user information */
+/* === User Information Card === */
+/* === Enhanced User Information Card === */
+.user_card {
+  width: 440px;
+  background: linear-gradient(145deg, var(--bg-white) 0%, #f8fafc 100%);
+  padding: 2.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 32px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  color: var(--text-dark);
+  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+/* Subtle background pattern */
+.user_card {
+  width: 480px;
+  background: linear-gradient(145deg, var(--bg-white) 0%, #f8fafc 100%);
+  padding: 2.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 32px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  color: var(--text-dark);
+  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.user_card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.user_card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 40px var(--shadow-medium), 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.user_card h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--primary-dark);
+  font-size: 1.75rem;
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.user_card h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), transparent);
+  border-radius: 2px;
+}
+
+.info_grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.info_row {
+  background: var(--bg-light);
+  padding: 1rem 1.25rem;
+  border-radius: var(--border-radius-small);
+  font-size: 1rem;
+  color: var(--text-medium);
+  border: 1px solid transparent;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.info_row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary-color);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.info_row:hover {
+  border-color: var(--border-light);
+  background: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.info_row.editing {
+  background: #f0f9ff;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.info_row.editing::before {
+  opacity: 1;
+}
+
+.info_row strong {
+  color: var(--primary-dark);
+  font-weight: 600;
+  min-width: 160px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info_row strong::before {
+  content: "•";
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.info_row .value {
+  flex: 1;
+  word-break: break-word;
+  padding: 0.25rem 0;
+}
+
+.info_row .editable-field {
+  flex: 1;
+  display: none;
+}
+
+.info_row.editing .value {
+  display: none;
+}
+
+.info_row.editing .editable-field {
+  display: block;
+}
+
+/* Form Elements */
+.editable-field input,
+.editable-field select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: white;
+  color: var(--text-dark);
+}
+
+.editable-field input:focus,
+.editable-field select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Password field */
+.info_row[data-field="password"] {
+  background: linear-gradient(90deg, #fff5f5, var(--bg-light));
+}
+
+.info_row[data-field="password"]::after {
+  content: "🔒";
+  position: absolute;
+  right: 1rem;
+  opacity: 0.6;
+  font-size: 0.9rem;
+  z-index: 1;
+}
+
+/* Access Level badge */
+.info_row[data-field="access-level"] .value {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Stations list styling */
+.info_row[data-field="stations"] .value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.station_badge {
+  background: var(--bg-light);
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+/* Multi-select for stations */
+.multi-select {
+  width: 100%;
+  max-height: 120px;
+  overflow-y: auto;
+  background: white;
+  border: 2px solid var(--border-light);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.multi-select label {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.multi-select label:hover {
+  background: var(--bg-light);
+}
+
+.multi-select input {
+  margin-right: 0.5rem;
+  width: auto;
+}
+
+/* Action Buttons */
+.card-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.btn-approve:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-approve:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: var(--bg-light);
+  color: var(--text-medium);
+  border: 1px solid var(--border-light);
+}
+
+.btn-cancel:hover {
+  background: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.btn-edit:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+}
+
+/* Edit icons */
+.edit-icon {
+  opacity: 0;
+  margin-left: 0.5rem;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.info_row:hover .edit-icon {
+  opacity: 0.5;
+}
+
+.info_row:hover .edit-icon:hover {
+  opacity: 1;
+  color: var(--primary-color);
 }
 
 /* === Loading States === */

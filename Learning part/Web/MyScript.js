@@ -50,3 +50,12 @@ function overlayoutTrigger() {
     $(".overlayout").animate({ left: "0px" }, 500);
   }
 }
+
+function enableEditing() {
+  // Enter edit mode for all fields
+  $(".info_row").forEach((row) => {
+    if (!row.classList.contains("editing")) {
+      row.classList.add("editing");
+    }
+  });
+}

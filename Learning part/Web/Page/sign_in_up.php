@@ -20,56 +20,59 @@ include_once("../MyLibrary.php");
     NavigationBarE();
     ?>
     <div class="main_container">
-        <div class="signInOut_form_container1">
+        <?php
+        if (!$_SESSION["userLogin"]) {
+        ?>
+            <div class="signInOut_form_container1">
 
-            <!-- Overlay should be outside the form container2 -->
-            <div class="overlayout" id="formOverlay">
-                <div class="overlay_content">
-                    <img src="../img/login_img2.avif" class="myImg" alt="Overlay Image">
+                <!-- Overlay should be outside the form container2 -->
+                <div class="overlayout" id="formOverlay">
+                    <div class="overlay_content">
+                        <img src="../img/login_img2.avif" class="myImg" alt="Overlay Image">
+                    </div>
                 </div>
-            </div>
-            <?php
-            if (isset($_POST['submit'])) {
-                $FullName = $_POST['fullname'];
-                $EmailAddress = $_POST['email'];
-                $Username = $_POST['username'];
-                $Password = $_POST['password'];
-                $hashedPass = password_hash($Password, PASSWORD_DEFAULT);
-                $DefaultAccessLevel = 3;
-                $confirmPassword = $_POST['confirmPassword'];
-                /* password doesnt match possible error */
-                if ($Password == $confirmPassword) {
-                    $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
-                    $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $hashedPass, $DefaultAccessLevel);
-                    if ($insertValues->execute()) {
-                        echo "<script>alert('Form submitted successfully');</script>";
-                    };
-                } else {
-                    echo "<script>alert('Passwords do not match');</script>";
+                <?php
+                if (isset($_POST['submit'])) {
+                    $FullName = $_POST['fullname'];
+                    $EmailAddress = $_POST['email'];
+                    $Username = $_POST['username'];
+                    $Password = $_POST['password'];
+                    $hashedPass = password_hash($Password, PASSWORD_DEFAULT);
+                    $DefaultAccessLevel = 3;
+                    $confirmPassword = $_POST['confirmPassword'];
+                    /* password doesnt match possible error */
+                    if ($Password == $confirmPassword) {
+                        $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
+                        $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $hashedPass, $DefaultAccessLevel);
+                        if ($insertValues->execute()) {
+                            echo "<script>alert('Form submitted successfully');</script>";
+                        };
+                    } else {
+                        echo "<script>alert('Passwords do not match');</script>";
+                    }
                 }
-            }
-            ?>
-            <div class="signInOut_form_container2">
-                <div class="left_side_container">
-                    <form class="create_user_form" method="post" action="#">
-                        <h2>Create New User</h2>
+                ?>
+                <div class="signInOut_form_container2">
+                    <div class="left_side_container">
+                        <form class="create_user_form" method="post" action="#">
+                            <h2>Create New User</h2>
 
-                        <label for="fullname">Full Name</label>
-                        <input type="text" id="fullname" name="fullname" placeholder="John Doe" required>
+                            <label for="fullname">Full Name</label>
+                            <input type="text" id="fullname" name="fullname" placeholder="John Doe" required>
 
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="example@email.com" required>
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="example@email.com" required>
 
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" placeholder="johndoe123" required>
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" placeholder="johndoe123" required>
 
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="********" required>
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="********" required>
 
-                        <label for="password">Confirm your Password</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="********" required>
+                            <label for="password">Confirm your Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="********" required>
 
-                        <!--   <label for="role">User Role</label>
+                            <!--   <label for="role">User Role</label>
                         <select id="role" name="role" required>
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
@@ -77,60 +80,165 @@ include_once("../MyLibrary.php");
                             <option value="user">User</option>
                         </select> -->
 
-                        <button type="submit" name="submit">Create User</button>
+                            <button type="submit" name="submit">Create User</button>
 
-                        <div class="account_link">
-                            <span>Already have an account?</span>
-                            <a href="#" class="layoutTrigger">Sign in</a>
-                        </div>
-                    </form>
-                </div>
+                            <div class="account_link">
+                                <span>Already have an account?</span>
+                                <a href="#" class="layoutTrigger">Sign in</a>
+                            </div>
+                        </form>
+                    </div>
 
-                <?php
-                if (isset($_POST['signin_username']) && isset($_POST['signin_password'])) {
-                    $loginCheck = $connection->prepare('select * from Users where Username =?');
-                    $loginCheck->bind_param('s', $_POST["signin_username"]);
-                    $loginCheck->execute();
-                    $result = $loginCheck->get_result();
-                    if ($row = $result->fetch_assoc()) {
-                        $username = $row['Username'];
-                        $password = $row['Password'];
-                        echo "<script>alert('$password')</script>";
+                    <?php
+                    if (isset($_POST['signin_username']) && isset($_POST['signin_password'])) {
+                        $loginCheck = $connection->prepare('select * from Users where Username =?');
+                        $loginCheck->bind_param('s', $_POST["signin_username"]);
+                        $loginCheck->execute();
+                        $result = $loginCheck->get_result();
+                        if ($row = $result->fetch_assoc()) {
+                            $username = $row['Username'];
+                            $password = $row['Password'];
+                            echo "<script>alert('$password')</script>";
 
-                        $level = $row['AccessLevelID'];
-                        if (password_verify($_POST['signin_password'], $password)) {
-                            $_SESSION["username"] = $username;
-                            $_SESSION["userLogin"] = true;
-                            header("location: index.php");
+                            $level = $row['AccessLevelID'];
+                            if (password_verify($_POST['signin_password'], $password)) {
+                                $_SESSION["username"] = $username;
+                                $_SESSION["userLogin"] = true;
+                                header("location: index.php");
+                            } else {
+                                echo "<script>alert('incorrect password')</script>";
+                            }
                         } else {
-                            echo "<script>alert('incorrect password')</script>";
+                            echo "<script>alert('Username not found')</script>";
                         }
-                    } else {
-                        echo "<script>alert('Username not found')</script>";
                     }
-                }
-                ?>
-                <div class="right_side_container">
-                    <form method="post" action="#">
-                        <h2>Sign In</h2>
-                        <label for="signin_username">Username</label>
-                        <input type="text" id="signin_username" name="signin_username" placeholder="Username" required>
+                    ?>
+                    <div class="right_side_container">
+                        <form method="post" action="#">
+                            <h2>Sign In</h2>
+                            <label for="signin_username">Username</label>
+                            <input type="text" id="signin_username" name="signin_username" placeholder="Username" required>
 
-                        <label for="signin_password">Password</label>
-                        <input type="password" id="signin_password" name="signin_password" placeholder="Enter your password" required>
+                            <label for="signin_password">Password</label>
+                            <input type="password" id="signin_password" name="signin_password" placeholder="Enter your password" required>
 
-                        <div class="signUpOptions">
-                            <span><a href="#" class="layoutTrigger">Create New Account</a></span>
-                            <span><a href="#">Forgot Password?</a></span>
-                        </div>
-
-                        <button type="submit">Sign In</button>
-
-                        <div class="seperator"></div>
-                    </form>
+                            <div class="signUpOptions">
+                                <span><a href="#" class="layoutTrigger">Create New Account</a></span>
+                                <span><a href="#">Forgot Password?</a></span>
+                            </div>
+                            <button type="submit">Sign In</button>
+                            <div class="seperator"></div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        <?php
+        } else {
+            $loginCheck = $connection->prepare('select * from Users where Username =?');
+            $loginCheck->bind_param('s', $_SESSION["username"]);
+            $loginCheck->execute();
+            $result = $loginCheck->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $fullName = $row['Fullname'];
+                $username = $row['Username'];
+                $email = $row['Email'];
+                $password = $row['Password'];
+                $level = $row['AccessLevelID'];
+            }
+
+        ?>
+            <div class="main_container">
+                <div class="user_card">
+                    <h2>👤 User Information</h2>
+
+                    <div class="info_grid" id="userInfoGrid">
+                        <!-- Full Name -->
+                        <div class="info_row" data-field="full-name">
+                            <strong>Full Name</strong>
+                            <span class="value" id="fullNameValue"><?= $fullName ?></span>
+                            <div class="editable-field">
+                                <input type="text" id="fullNameInput" value="Johnathan Michael Doe">
+                            </div>
+                            <span class="edit-icon" onclick="editField('full-name')">✏️</span>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="info_row" data-field="username">
+                            <strong>Username</strong>
+                            <span class="value" id="usernameValue"><?= $username ?></span>
+                            <div class="editable-field">
+                                <input type="text" id="usernameInput" value="johnd">
+                            </div>
+                            <span class="edit-icon" onclick="editField('username')">✏️</span>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="info_row" data-field="email">
+                            <strong>Email Address</strong>
+                            <span class="value" id="emailValue"><?= $email ?></span>
+                            <div class="editable-field">
+                                <input type="email" id="emailInput" value="john.doe@example.com">
+                            </div>
+                            <span class="edit-icon" onclick="editField('email')">✏️</span>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="info_row" data-field="password">
+                            <strong>Password</strong>
+                            <span class="value" id="passwordValue">••••••••••</span>
+                            <div class="editable-field">
+                                <input type="password" id="passwordInput" placeholder="Enter new password">
+                            </div>
+                            <span class="edit-icon" onclick="editField('password')">✏️</span>
+                        </div>
+
+                        <!-- Assigned Stations -->
+                        <div class="info_row" data-field="stations">
+                            <strong>Assigned Stations</strong>
+                            <span class="value" id="stationsValue">
+                                <span class="station_badge">Station A</span>
+                                <span class="station_badge">Station B</span>
+                            </span>
+                            <div class="editable-field">
+                                <div class="multi-select" id="stationsSelect">
+                                    <label>
+                                        <input type="checkbox" value="Station A" checked> Station A
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" value="Station B" checked> Station B
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" value="Station C"> Station C
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" value="Station D"> Station D
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" value="Station E"> Station E
+                                    </label>
+                                </div>
+                            </div>
+                            <span class="edit-icon" onclick="editField('stations')">✏️</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="card-actions" id="actionButtons">
+                        <button class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display: flex;">
+                            ❌ Cancel
+                        </button>
+                        <button class="btn btn-save" id="saveBtn" onclick="saveChanges()" style="display: flex;">
+                            💾 Save Changes
+                        </button>
+                        <button class="btn btn-edit" id="editBtn" onclick="enableEditing()" style="display: flex;">
+                            ✏️ Edit Information
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <?php
+        }
+        ?>
     </div>
 
 
