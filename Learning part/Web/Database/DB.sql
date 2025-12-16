@@ -77,9 +77,9 @@ CREATE TABLE Measurement(
 
 -- FriendList table
 CREATE TABLE FriendList(
-    UserA int NOT NULL,
-    UserB int NOT NULL,
-    PRIMARY KEY (UserA, UserB),
+    UserA_ID int NOT NULL,
+    UserB_ID int NOT NULL,
+    PRIMARY KEY (UserA_ID, UserB_ID),
     FOREIGN KEY (UserA_ID) REFERENCES Users(UserID),
     FOREIGN KEY (UserB_ID) REFERENCES Users(UserID)
 );

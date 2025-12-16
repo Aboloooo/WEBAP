@@ -36,7 +36,7 @@ function NavigationBarE()
                 <li><a href="index.php#Home">Home</a></li>
                 <li><a href="index.php#About">About</a></li>
                 <li><a href="index.php#Service">Service</a></li>
-                <li><a href="index.php#dashboard">Dashboard</a></li>
+                <li><a href="index.php#Dashboard">Dashboard</a></li>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
         </div>

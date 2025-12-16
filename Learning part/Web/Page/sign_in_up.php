@@ -149,92 +149,96 @@ include_once("../MyLibrary.php");
         ?>
             <div class="main_container">
                 <div class="user_card">
-                    <h2>User Information</h2>
-
-                    <div class="info_grid" id="userInfoGrid">
-                        <!-- Full Name -->
-                        <div class="info_row" data-field="full-name">
-                            <strong>Full Name</strong>
-                            <span class="value" id="fullNameValue"><?= $fullName ?></span>
-                            <div class="editable-field">
-                                <input type="text" id="fullNameInput" value="Johnathan Michael Doe">
-                            </div>
-                            <span class="edit-icon" onclick="editField('full-name')">✏️</span>
-                        </div>
-
-                        <!-- Username -->
-                        <div class="info_row" data-field="username">
-                            <strong>Username</strong>
-                            <span class="value" id="usernameValue"><?= $username ?></span>
-                            <div class="editable-field">
-                                <input type="text" id="usernameInput" value="johnd">
-                            </div>
-                            <span class="edit-icon" onclick="editField('username')">✏️</span>
-                        </div>
-
-                        <!-- Email -->
-                        <div class="info_row" data-field="email">
-                            <strong>Email Address</strong>
-                            <span class="value" id="emailValue"><?= $email ?></span>
-                            <div class="editable-field">
-                                <input type="email" id="emailInput" value="john.doe@example.com">
-                            </div>
-                            <span class="edit-icon" onclick="editField('email')">✏️</span>
-                        </div>
-
-                        <!-- Password -->
-                        <div class="info_row" data-field="password">
-                            <strong>Password</strong>
-                            <span class="value" id="passwordValue">••••••••••</span>
-                            <div class="editable-field">
-                                <input type="password" id="passwordInput" placeholder="Enter new password">
-                            </div>
-                            <span class="edit-icon" onclick="editField('password')">✏️</span>
-                        </div>
-
-                        <!-- Assigned Stations -->
-                        <div class="info_row" data-field="stations">
-                            <strong>Assigned Stations</strong>
-                            <span class="value" id="stationsValue">
-                                <span class="station_badge">Station A</span>
-                                <span class="station_badge">Station B</span>
-                            </span>
-                            <div class="editable-field">
-                                <div class="multi-select" id="stationsSelect">
-                                    <label>
-                                        <input type="checkbox" value="Station A" checked> Station A
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" value="Station B" checked> Station B
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" value="Station C"> Station C
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" value="Station D"> Station D
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" value="Station E"> Station E
-                                    </label>
+                    <div id="firstSide">
+                        <h2>User Information</h2>
+                        <div class="info_grid" id="userInfoGrid">
+                            <!-- Full Name -->
+                            <div class="info_row" data-field="full-name">
+                                <strong>Full Name</strong>
+                                <span class="value" id="fullNameValue"><?= $fullName ?></span>
+                                <div class="editable-field">
+                                    <input type="text" id="fullNameInput" value="<?= $fullName ?>">
                                 </div>
+                                <span class="edit-icon" onclick="editField('full-name')">✏️</span>
                             </div>
-                            <span class="edit-icon" onclick="editField('stations')">✏️</span>
+
+                            <!-- Username -->
+                            <div class="info_row" data-field="username">
+                                <strong>Username</strong>
+                                <span class="value" id="usernameValue"><?= $username ?></span>
+                                <div class="editable-field">
+                                    <input type="text" id="usernameInput" value="<?= $username ?>">
+                                </div>
+                                <span class="edit-icon" onclick="editField('username')">✏️</span>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="info_row" data-field="email">
+                                <strong>Email Address</strong>
+                                <span class="value" id="emailValue"><?= $email ?></span>
+                                <div class="editable-field">
+                                    <input type="email" id="emailInput" value="<?= $email ?>">
+                                </div>
+                                <span class="edit-icon" onclick="editField('email')">✏️</span>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="info_row" data-field="password">
+                                <strong>Password</strong>
+                                <span class="value" id="passwordValue">••••••••••</span>
+                                <div class="editable-field">
+                                    <input type="password" id="passwordInput" placeholder="Enter new password">
+                                </div>
+                                <span class="edit-icon" onclick="editField('password')">✏️</span>
+                            </div>
+
+                            <!-- Assigned Stations -->
+                            <div class="info_row" data-field="stations">
+                                <strong>Assigned Stations</strong>
+                                <span class="value" id="stationsValue">
+                                    <span class="station_badge">Station A</span>
+                                    <span class="station_badge">Station B</span>
+                                </span>
+                                <div class="editable-field">
+                                    <div class="multi-select" id="stationsSelect">
+                                        <label>
+                                            <input type="checkbox" value="Station A" checked> Station A
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" value="Station B" checked> Station B
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" value="Station C"> Station C
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" value="Station D"> Station D
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" value="Station E"> Station E
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="edit-icon" onclick="editField('stations')">✏️</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="card-actions" id="actionButtons">
+                            <button class="btn btn-edit" id="editBtn" onclick="enableEditing()" style="display: flex;">
+                                ✏️ Edit Information
+                            </button>
+                            <button class="btn btn-save" id="saveBtn" onclick="saveChanges()" style="display: none;">
+                                💾 Save Changes
+                            </button>
+                            <button class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display: none;">
+                                ❌ Cancel
+                            </button>
+
                         </div>
                     </div>
-
-                    <!-- Action Buttons -->
-                    <div class="card-actions" id="actionButtons">
-                        <button class="btn btn-edit" id="editBtn" onclick="enableEditing()" style="display: flex;">
-                            ✏️ Edit Information
-                        </button>
-                        <button class="btn btn-save" id="saveBtn" onclick="saveChanges()" style="display: none;">
-                            💾 Save Changes
-                        </button>
-                        <button class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display: none;">
-                            ❌ Cancel
-                        </button>
-
+                    <div id="secondSide">
                     </div>
+
                 </div>
             </div>
         <?php

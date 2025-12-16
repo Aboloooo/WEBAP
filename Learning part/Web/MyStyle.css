@@ -532,7 +532,9 @@ section {
 /* === User Information Card === */
 /* === Enhanced User Information Card === */
 .user_card {
-  width: 440px;
+  display: flex;
+  flex-direction: row;
+  width: 70%;
   background: linear-gradient(145deg, var(--bg-white) 0%, #f8fafc 100%);
   padding: 2.5rem;
   border-radius: var(--border-radius);
@@ -545,10 +547,16 @@ section {
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
+#firstSide,
+#secondSide {
+  width: 50%;
+}
 
 /* Subtle background pattern */
-.user_card {
-  width: 480px;
+c {
+  display: flex;
+  flex-direction: row;
+  width: 70%;
   background: linear-gradient(145deg, var(--bg-white) 0%, #f8fafc 100%);
   padding: 2.5rem;
   border-radius: var(--border-radius);

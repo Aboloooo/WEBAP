@@ -1,4 +1,5 @@
-$(document).ready(function documentIsReady() {
+$(start);
+function start() {
   // we can start writing here
 
   $(window).on("scroll", function () {
@@ -16,7 +17,7 @@ $(document).ready(function documentIsReady() {
 
   /* sign in up overlayout trigger */
   $(".layoutTrigger").click(overlayoutTrigger);
-});
+}
 
 let timer;
 
@@ -26,17 +27,16 @@ function PageScrollDetector() {
     let sectionId = $(this).attr("id");
     const sectionTop = $(this).offset().top;
     const sectionHeight = $(this).outerHeight();
-
     if (
       scrollPosition >= sectionTop - sectionHeight / 3 &&
       scrollPosition < sectionTop + sectionHeight - sectionHeight / 3
     ) {
-      console.log("In section: " + sectionId);
+      /* console.log("In section: " + sectionId); */
       if (sectionId) {
-        $('nav a[href="#' + sectionId + '"]').addClass("active");
+        $('nav a[href="index.php#' + sectionId + '"]').addClass("active");
       }
     } else {
-      $('nav a[href="#' + sectionId + '"]').removeClass("active");
+      $('nav a[href="index.php#' + sectionId + '"]').removeClass("active");
     }
   });
 }

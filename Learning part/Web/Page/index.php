@@ -59,7 +59,7 @@ include_once("../MyLibrary.php");
         </div>
     </section>
 
-    <section id="dashboard" class="section dashboard">
+    <section id="Dashboard" class="section dashboard">
         <h1 class="section-title">Live Dashboard</h1>
         <p class="section-text">
             View real-time readings directly from the database. Analyze trends, compare sensors, and check
