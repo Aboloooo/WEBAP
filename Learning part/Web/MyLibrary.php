@@ -25,11 +25,11 @@ if (!isset($_SESSION["SecurityAccess"])) {
     $_SESSION["SecurityAccess"] = false;
 }
 
-if (isset($_GET["saveButtonClicked"], $_GET["fullName"], $_GET["userName"])) {
+if (isset($_GET["saveButtonClicked"], $_GET["fullName"], $_GET["userName"], $_GET["email"])) {
 
     // we need to save
-    $sqlUpdate = $connection->prepare("UPDATE Users set Fullname = ? where Username = ?");
-    $sqlUpdate->bind_param("ss", $_GET["fullName"], $_GET["userName"]);
+    $sqlUpdate = $connection->prepare("UPDATE Users set Fullname = ?, Email = ? where Username = ?");
+    $sqlUpdate->bind_param("sss", $_GET["fullName"], $_GET["email"], $_GET["userName"]);
     $sqlUpdate->execute();
     print("Update successfull");
 }

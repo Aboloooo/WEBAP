@@ -162,7 +162,7 @@ include_once("../MyLibrary.php");
                                     <div class="editable-field">
                                         <input type="text" id="fullNameInput" value="<?= $fullName ?>">
                                     </div>
-                                    <span class="edit-icon" onclick="editField('full-name')">✏️</span>
+                                    <!-- <span class="edit-icon" onclick="editField('full-name')">✏️</span> -->
                                 </div>
 
                                 <!-- Username -->
@@ -170,9 +170,9 @@ include_once("../MyLibrary.php");
                                     <strong>Username</strong>
                                     <span class="value" id="usernameValue"><?= $username ?></span>
                                     <div class="editable-field">
-                                        <input type="text" id="usernameInput" value="<?= $username ?>">
+                                        <input type="text" id="usernameInput" disabled value="<?= $username ?>">
                                     </div>
-                                    <span class="edit-icon" onclick="editField('username')">✏️</span>
+                                    <!--  <span class="edit-icon" onclick="editField('username')">✏️</span> -->
                                 </div>
 
                                 <!-- Email -->
@@ -182,7 +182,7 @@ include_once("../MyLibrary.php");
                                     <div class="editable-field">
                                         <input type="email" id="emailInput" value="<?= $email ?>">
                                     </div>
-                                    <span class="edit-icon" onclick="editField('email')">✏️</span>
+                                    <!-- <span class="edit-icon" onclick="editField('email')">✏️</span> -->
                                 </div>
 
                                 <!-- Password -->
@@ -192,8 +192,17 @@ include_once("../MyLibrary.php");
                                     <div class="editable-field">
                                         <input type="password" id="passwordInput" placeholder="Enter new password">
                                     </div>
-                                    <span class="edit-icon" onclick="editField('password')">✏️</span>
+                                    <!-- <span class="edit-icon" onclick="editField('password')">✏️</span> -->
                                 </div>
+                                <div class="info_row" style="display: none;" id="passConfir" data-field="passwordConfirmation">
+                                    <strong>Re-type Password</strong>
+                                    <span class="value" id="passConfirValue">••••••••••</span>
+                                    <div class="editable-field">
+                                        <input type="password" id="passwordConfirmationInput" placeholder="Confirm your new password">
+                                    </div>
+                                    <!-- <span class="edit-icon" onclick="editField('password')">✏️</span> -->
+                                </div>
+
 
                                 <!-- Assigned Stations -->
                                 <div class="info_row" data-field="stations">
@@ -221,7 +230,7 @@ include_once("../MyLibrary.php");
                                             </label>
                                         </div>
                                     </div>
-                                    <span class="edit-icon" onclick="editField('stations')">✏️</span>
+                                    <!-- <span class="edit-icon" onclick="editField('stations')">✏️</span> -->
                                 </div>
                             </div>
                         </div>

@@ -853,20 +853,6 @@ c {
   box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
 }
 
-/* Edit icons */
-.edit-icon {
-  opacity: 0;
-  margin-left: 0.5rem;
-  color: var(--text-light);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.info_row:hover .edit-icon {
-  opacity: 0.5;
-}
-
 .info_row:hover .edit-icon:hover {
   opacity: 1;
   color: var(--primary-color);

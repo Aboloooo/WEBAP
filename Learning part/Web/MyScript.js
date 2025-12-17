@@ -18,22 +18,54 @@ function start() {
   /* sign in up overlayout trigger */
   $(".layoutTrigger").click(overlayoutTrigger);
 
-  $("#saveBtn").on("click", callPhp);
+  $("#saveBtn").on("click", saveChanges);
+}
+/* class toggle function */
+function toggleMyClass(classTarget, className) {
+  $("." + classTarget).each(function () {
+    $(this).toggleClass(className);
+  });
 }
 
-function callPhp() {
+function saveChanges() {
+  /* only in case two passwords are match we can pass them */
+  let matchPass =
+    $("#passwordInput").val() == $("#passwordConfirmationInput").val()
+      ? true
+      : false;
   $.get(
     "../MyLibrary.php",
     {
       saveButtonClicked: true,
       fullName: $("#fullNameInput").val(),
       userName: $("#usernameInput").val(),
+      email: $("#emailInput").val(),
+      /*       if(matchPass),
+       */
     },
     function (htmlReply) {
       // we get called here when the request was finished
       alert(htmlReply);
+      toggleMyClass("info_row", "editing");
+      $("#saveBtn").css("display", "none");
+      $("#cancelBtn").css("display", "none");
+      location.reload();
     }
   );
+}
+
+function enableEditing() {
+  // Enter edit mode for all fields
+  $("#cancelBtn").css("display", "flex");
+  $("#saveBtn").css("display", "flex");
+  toggleMyClass("info_row", "editing");
+  $("#passConfir").toggle();
+}
+
+function cancelEdit() {
+  toggleMyClass("info_row", "editing");
+  $("#saveBtn").css("display", "none");
+  $("#cancelBtn").css("display", "none");
 }
 
 let timer;
@@ -48,7 +80,6 @@ function PageScrollDetector() {
       scrollPosition >= sectionTop - sectionHeight / 3 &&
       scrollPosition < sectionTop + sectionHeight - sectionHeight / 3
     ) {
-      /* console.log("In section: " + sectionId); */
       if (sectionId) {
         $('nav a[href="index.php#' + sectionId + '"]').addClass("active");
       }
@@ -73,18 +104,3 @@ function overlayoutTrigger() {
 value of the field and call function initializeOriginalData() */
 let orginalData = {};
 function initializeOriginalData() {}
-
-function enableEditing() {
-  // Enter edit mode for all fields
-  $("#cancelBtn").css("display", "flex");
-  $("#saveBtn").css("display", "flex");
-  $(".info_row").each(function () {
-    if (!$(this).hasClass("editing")) {
-      $(this).addClass("editing");
-    }
-  });
-}
-
-function saveChanges() {}
-
-function cancelEdit() {}
