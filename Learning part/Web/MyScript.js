@@ -17,6 +17,23 @@ function start() {
 
   /* sign in up overlayout trigger */
   $(".layoutTrigger").click(overlayoutTrigger);
+
+  $("#saveBtn").on("click", callPhp);
+}
+
+function callPhp() {
+  $.get(
+    "../MyLibrary.php",
+    {
+      saveButtonClicked: true,
+      fullName: $("#fullNameInput").val(),
+      userName: $("#usernameInput").val(),
+    },
+    function (htmlReply) {
+      // we get called here when the request was finished
+      alert(htmlReply);
+    }
+  );
 }
 
 let timer;

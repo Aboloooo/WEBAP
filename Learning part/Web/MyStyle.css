@@ -533,8 +533,8 @@ section {
 /* === Enhanced User Information Card === */
 .user_card {
   display: flex;
-  flex-direction: row;
-  width: 70%;
+  flex-direction: column;
+  width: 60%;
   background: linear-gradient(145deg, var(--bg-white) 0%, #f8fafc 100%);
   padding: 2.5rem;
   border-radius: var(--border-radius);
@@ -547,8 +547,21 @@ section {
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
+.slidesContainer {
+  display: flex;
+  flex-direction: row;
+}
 #firstSide,
 #secondSide {
+  width: 50%;
+}
+#secondSide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+#secondSide img {
   width: 50%;
 }
 
@@ -586,26 +599,14 @@ c {
   box-shadow: 0 15px 40px var(--shadow-medium), 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
-.user_card h2 {
+#UserInfoH2 {
   text-align: center;
   margin-bottom: 2rem;
   color: var(--primary-dark);
   font-size: 1.75rem;
   font-weight: 700;
-  position: relative;
   padding-bottom: 1rem;
-}
-
-.user_card h2::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), transparent);
-  border-radius: 2px;
+  position: relative;
 }
 
 .info_grid {

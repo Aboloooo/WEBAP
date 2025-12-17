@@ -54,13 +54,6 @@ CREATE TABLE Collection(
     FOREIGN KEY (Creator_ID) REFERENCES Users(UserID)
 );
 
--- CollectionMeasurement table
-CREATE TABLE CollectionMeasurement(
-    CollectionMeasurement_id INT PRIMARY KEY AUTO_INCREMENT,
-    Collection_id INT,
-    FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id)
-);
-
 -- Measurement table
 CREATE TABLE Measurement(
     Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -73,6 +66,15 @@ CREATE TABLE Measurement(
     CollectionMeasurement_id INT,
     FOREIGN KEY (Station_id) REFERENCES Station(Station_id),
     FOREIGN KEY (CollectionMeasurement_id) REFERENCES CollectionMeasurement(CollectionMeasurement_id)
+);
+
+-- CollectionMeasurement table
+CREATE TABLE CollectionContains (
+    Collection_id INT NOT NULL,
+    Measurement_id INT NOT NULL,
+    PRIMARY KEY (Collection_id, Measurement_id),
+    FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
+    FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id)
 );
 
 -- FriendList table
