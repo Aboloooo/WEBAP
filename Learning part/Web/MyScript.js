@@ -26,32 +26,42 @@ function toggleMyClass(classTarget, className) {
     $(this).toggleClass(className);
   });
 }
+function Logout() {
+  let data = {
+    logoutBtn: true,
+  };
+  $.post("../MyLibrary.php", data, function () {
+    alert("bye");
+  });
+}
 
 function saveChanges() {
   /* only in case two passwords are match we can pass them */
-  let matchPass =
-    $("#passwordInput").val() == $("#passwordConfirmationInput").val()
-      ? true
-      : false;
-  $.get(
-    "../MyLibrary.php",
-    {
-      saveButtonClicked: true,
-      fullName: $("#fullNameInput").val(),
-      userName: $("#usernameInput").val(),
-      email: $("#emailInput").val(),
-      /*       if(matchPass),
-       */
-    },
-    function (htmlReply) {
-      // we get called here when the request was finished
-      alert(htmlReply);
-      toggleMyClass("info_row", "editing");
-      $("#saveBtn").css("display", "none");
-      $("#cancelBtn").css("display", "none");
-      location.reload();
+  let pass = $("#passwordInput").val();
+  let confirPass = $("#passwordConfirmationInput").val();
+  if (pass !== "") {
+    if (pass !== confirPass) {
+      alert("Passwords do not match");
+      return;
     }
-  );
+  }
+  let data = {
+    saveButtonClicked: true,
+    fullName: $("#fullNameInput").val(),
+    userName: $("#usernameInput").val(),
+    email: $("#emailInput").val(),
+  };
+  if (pass !== "") {
+    data.pass = pass;
+  }
+  $.post("../MyLibrary.php", data, function (htmlReply) {
+    // we get called here when the request was finished
+    alert(htmlReply);
+    toggleMyClass("info_row", "editing");
+    $("#saveBtn").css("display", "none");
+    $("#cancelBtn").css("display", "none");
+    location.reload();
+  });
 }
 
 function enableEditing() {

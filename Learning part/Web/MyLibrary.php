@@ -24,16 +24,29 @@ if (!isset($_SESSION["Admin"])) {
 if (!isset($_SESSION["SecurityAccess"])) {
     $_SESSION["SecurityAccess"] = false;
 }
-
-if (isset($_GET["saveButtonClicked"], $_GET["fullName"], $_GET["userName"], $_GET["email"])) {
-
-    // we need to save
-    $sqlUpdate = $connection->prepare("UPDATE Users set Fullname = ?, Email = ? where Username = ?");
-    $sqlUpdate->bind_param("sss", $_GET["fullName"], $_GET["email"], $_GET["userName"]);
-    $sqlUpdate->execute();
-    print("Update successfull");
+/* logout */
+if (isset($_POST["logoutBtn"])) {
+    session_unset();
+    session_destroy();
+    header("Refresh:0");
 }
 
+if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $_POST["email"])) {
+    // we need to save
+    $sqlUpdate = $connection->prepare("UPDATE Users set Fullname = ?, Email = ? where Username = ?");
+    $sqlUpdate->bind_param("sss", $_POST["fullName"], $_POST["email"], $_POST["userName"]);
+    $sqlUpdate->execute();
+
+    //we have to handel password update seperately as it is 
+    if (!empty($_POST["pass"])) {
+        $hashedPassword = password_hash($_POST["pass"], PASSWORD_DEFAULT);
+        $sqlPass = $connection->prepare("UPDATE Users SET Password = ? WHERE Username = ?");
+        $sqlPass->bind_param("ss", $hashedPassword, $_POST["userName"]);
+        $sqlPass->execute();
+    }
+
+    print("Update successful");
+}
 
 /* save changes of user credentials */
 //if (isset(""));
@@ -60,9 +73,13 @@ function NavigationBarE()
             <img src="../img/User.png" alt="not found">
             <span><?php if ($_SESSION["userLogin"]) {
                         print($_SESSION["username"]);
+                    ?>
+                    <br>
+                <?php
                     } else {
                         print("username");
                     } ?></span>
+
         </div>
     </div>
 <?php

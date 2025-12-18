@@ -98,8 +98,6 @@ include_once("../MyLibrary.php");
                         if ($row = $result->fetch_assoc()) {
                             $username = $row['Username'];
                             $password = $row['Password'];
-                            echo "<script>alert('$password')</script>";
-
                             $level = $row['AccessLevelID'];
                             if (password_verify($_POST['signin_password'], $password)) {
                                 $_SESSION["username"] = $username;
@@ -210,26 +208,9 @@ include_once("../MyLibrary.php");
                                     <span class="value" id="stationsValue">
                                         <span class="station_badge">Station A</span>
                                         <span class="station_badge">Station B</span>
+                                        <span class="station_badge">Station C</span>
                                     </span>
-                                    <div class="editable-field">
-                                        <div class="multi-select" id="stationsSelect">
-                                            <label>
-                                                <input type="checkbox" value="Station A" checked> Station A
-                                            </label>
-                                            <label>
-                                                <input type="checkbox" value="Station B" checked> Station B
-                                            </label>
-                                            <label>
-                                                <input type="checkbox" value="Station C"> Station C
-                                            </label>
-                                            <label>
-                                                <input type="checkbox" value="Station D"> Station D
-                                            </label>
-                                            <label>
-                                                <input type="checkbox" value="Station E"> Station E
-                                            </label>
-                                        </div>
-                                    </div>
+
                                     <!-- <span class="edit-icon" onclick="editField('stations')">✏️</span> -->
                                 </div>
                             </div>
