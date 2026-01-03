@@ -11,28 +11,30 @@ insert into Role(level) values("Admin");
 insert into Role(level) values("Dev");
 insert into Role(level) values("User");
 
--- Station table
-CREATE TABLE Station(
-    Station_id INT PRIMARY KEY AUTO_INCREMENT,
-    Serial_number VARCHAR(255) NOT NULL,
-    Name VARCHAR(50),
-    Description VARCHAR(255),
-    Owner_ID int
-);
-
--- Users table (renamed from User)
+-- First create Users without the circular dependency
 CREATE TABLE Users(
     UserID int PRIMARY KEY AUTO_INCREMENT,
+    Public_UserID CHAR(36) UNIQUE NOT NULL DEFAULT (UUID()),    
     Fullname VARCHAR(100) NOT NULL,
     Email VARCHAR(255) not null,
-    Username VARCHAR(255),
+    Username VARCHAR(255) UNIQUE NOT NULL,
     Password VARCHAR(255),
     AccessLevelID int NOT NULL,
     owner_of_station int,
     FOREIGN KEY (AccessLevelID) REFERENCES Role(AccessLevelID)
 );
 
--- I want Users to reference Station (e.g., Users.Station_id), AND Station to reference Users(circular foreign-key dependency that SQL doesnt support)
+-- Station table
+CREATE TABLE Station(
+    Station_id INT PRIMARY KEY AUTO_INCREMENT,
+    Serial_number VARCHAR(255) NOT NULL,
+    Name VARCHAR(50),
+    Description VARCHAR(255),
+    Status ENUM('available', 'assigned') DEFAULT 'available',
+    Owner_ID int
+);
+
+-- Now add the foreign key constraints after both tables exist
 ALTER TABLE Users
 ADD CONSTRAINT fk_user_station
     FOREIGN KEY (owner_of_station) REFERENCES Station(Station_id)
@@ -43,18 +45,24 @@ ADD CONSTRAINT fk_station_owner
     FOREIGN KEY (Owner_ID) REFERENCES Users(UserID)
     ON DELETE SET NULL;
 
-
-
 -- Collection table
 CREATE TABLE Collection(
     Collection_id INT PRIMARY KEY AUTO_INCREMENT,
     Name VARCHAR(50) NOT NULL,
     Description VARCHAR(255),
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     Creator_ID int,
     FOREIGN KEY (Creator_ID) REFERENCES Users(UserID)
 );
 
--- Measurement table
+-- CollectionContains table (renamed from what you called CollectionMeasurement)
+CREATE TABLE CollectionContains (
+    Collection_id INT NOT NULL,
+    Measurement_id INT NOT NULL,
+    PRIMARY KEY (Collection_id, Measurement_id)
+);
+
+-- Measurement table - Now this references CollectionContains indirectly through Collection_id
 CREATE TABLE Measurement(
     Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
     Timestamp DATETIME NOT NULL,
@@ -63,19 +71,15 @@ CREATE TABLE Measurement(
     Light_intensity VARCHAR(255),
     Air_quality VARCHAR(255),
     Station_id INT,
-    CollectionMeasurement_id INT,
+    Collection_id INT,
     FOREIGN KEY (Station_id) REFERENCES Station(Station_id),
-    FOREIGN KEY (CollectionMeasurement_id) REFERENCES CollectionMeasurement(CollectionMeasurement_id)
+    FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id)
 );
 
--- CollectionMeasurement table
-CREATE TABLE CollectionContains (
-    Collection_id INT NOT NULL,
-    Measurement_id INT NOT NULL,
-    PRIMARY KEY (Collection_id, Measurement_id),
-    FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
-    FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id)
-);
+-- Now update the CollectionContains foreign keys to reference the tables
+ALTER TABLE CollectionContains
+ADD FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
+ADD FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id);
 
 -- FriendList table
 CREATE TABLE FriendList(

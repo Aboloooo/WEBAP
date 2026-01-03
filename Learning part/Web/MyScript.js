@@ -31,7 +31,7 @@ function Logout() {
     logoutBtn: true,
   };
   $.post("../MyLibrary.php", data, function () {
-    alert("bye");
+    history.go(0);
   });
 }
 

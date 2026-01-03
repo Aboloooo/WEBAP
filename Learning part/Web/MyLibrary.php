@@ -24,11 +24,33 @@ if (!isset($_SESSION["Admin"])) {
 if (!isset($_SESSION["SecurityAccess"])) {
     $_SESSION["SecurityAccess"] = false;
 }
+
+/* user info from DB */
+function getUserInfo($username)
+{
+    global $connection;
+    $userInfo = $connection->prepare("SELECT * FROM Users WHERE Username =?");
+    $userInfo->bind_param('s', $username);
+    $userInfo->execute();
+    $result = $userInfo->get_result();
+    if ($row = $result->fetch_assoc()) {
+        return $row;
+    }
+    return null;
+
+    /* $user = getUserInfo('john_doe');
+    if ($user) {
+        echo "Welcome, " . $user['Fullname'];
+        echo "Your ID: " . $user['UserID'];
+        echo "Public ID: " . $user['PublicUserID'];
+    } */
+}
+
 /* logout */
 if (isset($_POST["logoutBtn"])) {
     session_unset();
     session_destroy();
-    header("Refresh:0");
+    /* header("Refresh:0"); */
 }
 
 if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $_POST["email"])) {

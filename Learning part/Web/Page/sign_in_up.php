@@ -137,6 +137,7 @@ include_once("../MyLibrary.php");
             $loginCheck->execute();
             $result = $loginCheck->get_result();
             if ($row = $result->fetch_assoc()) {
+                $Public_UserID = $row['Public_UserID'];
                 $fullName = $row['Fullname'];
                 $username = $row['Username'];
                 $email = $row['Email'];
@@ -217,8 +218,8 @@ include_once("../MyLibrary.php");
                         </div>
                         <div id="secondSide">
                             <img src="../img/User.png" alt="not found">
-                            <h3>ID: </h3>
-                            <p>Share the ID above with your friends to ...</p>
+                            <p><?= $Public_UserID ?></p>
+                            <span>Share the ID above with your friends to ...</span>
                         </div>
 
                     </div>

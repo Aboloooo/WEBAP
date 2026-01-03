@@ -25,8 +25,16 @@ include_once("../MyLibrary.php");
     <section id="Home">
         <h1>Home_page</h1>
         <h2><?= $_SESSION["userLogin"] ? "Welcome " . $_SESSION["username"] . "!" : "" ?></h2>
-        <button id="logout" onclick="Logout()">logout</button>
-
+        <?php if ($_SESSION["userLogin"]) {
+        ?>
+            <button id="logout" onclick="Logout()">logout</button>
+        <?php
+        } ?>
+        <div class="cta-banner">
+            <p><strong>Connect • Share • Collaborate</strong></p>
+            <p>Build your network and share data securely with friends.</p>
+            <a href="Friendship.php" class="link-arrow">Explore friendship features →</a>
+        </div>
     </section>
     <section id="About">
         <h1>About_page</h1>

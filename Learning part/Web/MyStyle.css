@@ -893,6 +893,20 @@ button:disabled {
   }
 }
 
+/* === Friendship page === */
+.friendFinderContainer {
+  width: auto;
+  height: auto;
+  background-color: var(--bg-white);
+  display: inline-block;
+}
+.friendFinderContainer form {
+  display: flex;
+  flex-direction: column;
+}
+.friendFinderContainer form input {
+  margin-bottom: 20px;
+}
 /* === Mobile Responsive === */
 @media (max-width: 768px) {
   .nav-container {
