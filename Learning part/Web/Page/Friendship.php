@@ -17,10 +17,11 @@ include_once("../MyLibrary.php");
     <style>
         body {
             background-image: url("../img/FriendshipImg.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
         }
     </style>
     <link rel="stylesheet" href="../MyStyle.css">
-
 </head>
 
 <body>
@@ -69,6 +70,21 @@ include_once("../MyLibrary.php");
         }
     }
     ?>
+    <div>
+        <div class="layer-content">
+            <h3>Friend Statistics</h3>
+            <div class="cards-grid">
+                <div class="card">
+                    <span>Totoal Friends:</span>
+                    <span>0</span>
+                </div>
+                <div class="card">
+                    <span>Pending Friendship request:</span>
+                    <span>0</span>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="friendFinderContainer">
         <form method="post">
             <h2>Find</h2>
@@ -76,4 +92,5 @@ include_once("../MyLibrary.php");
             <button type="submit" name="submitBtn">Add</button>
         </form>
     </div>
+
 </body>

@@ -907,6 +907,27 @@ button:disabled {
 .friendFinderContainer form input {
   margin-bottom: 20px;
 }
+.layer-content {
+  background-color: var(--bg-white);
+  padding: 20px;
+  margin-top: 40px;
+}
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.card {
+  text-align: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: ease 0.4s;
+}
+.card:hover {
+  background-color: var(--hover-color);
+}
 /* === Mobile Responsive === */
 @media (max-width: 768px) {
   .nav-container {
