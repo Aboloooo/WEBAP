@@ -75,8 +75,11 @@ include_once("../MyLibrary.php");
             <h3>Friend Statistics</h3>
             <div class="cards-grid">
                 <div class="card">
-                    <span>Totoal Friends:</span>
+                    <span>Totol Friends:</span>
                     <span>0</span>
+                </div>
+                <div class="card" onclick="MessageAll()">
+                    <span>Message all</span>
                 </div>
                 <div class="card">
                     <span>Pending Friendship request:</span>

@@ -23,6 +23,13 @@ include_once("../MyLibrary.php");
     ?>
     <?php
     if (isset($_POST['submitBtn'])) {
+        if (!$_SESSION["userLogin"]) {
+            echo "<script>
+        alert('Please login first');
+        window.location.href = 'sign_in_up.php';
+    </script>";
+            exit;
+        }
         if (isset($_POST['serialN_input']) && !empty(trim($_POST['serialN_input']))) {
             $stationFinder = $connection->prepare("SELECT * FROM Station WHERE Serial_number =?");
             $stationFinder->bind_param('s', $_POST['serialN_input']);
@@ -36,20 +43,15 @@ include_once("../MyLibrary.php");
                 $Status = $row['Status'];
                 $New_status = 'assigned';
                 $station_owner = $row['Owner_ID'];
-                /* if user is not login there must be an error */
                 $curentUser = getUserInfo($_SESSION['username']);
-                echo "<script>alert('station found');</script>";
-
                 if ($curentUser) {
                     $curentUser_ID = $curentUser['UserID'];
                     /* assign the station if station is not already assigned to someone or current user */
                     if ($Status == 'assigned' && $station_owner == $curentUser_ID) {
-                        echo "This station already assigned to you!";
-                        return;
+                        echo "<script>alert('This station already assigned to you!');</script>";
                     }
                     if ($Status == 'assigned') {
-                        echo "This station already assigned to another user!";
-                        return;
+                        echo "<script>alert('This station already assigned to another user!');</script>";
                     }
                     echo "<script>alert('current user found and two condition passed');</script>";
 

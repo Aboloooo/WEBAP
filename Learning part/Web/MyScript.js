@@ -114,3 +114,12 @@ function overlayoutTrigger() {
 value of the field and call function initializeOriginalData() */
 let orginalData = {};
 function initializeOriginalData() {}
+
+function MessageAll() {
+  /* 
+  - check if user is login 
+  - keep the blue background 
+  - replace the find form with a div container to display all messages
+  - for each new message there must be a notification in message all option 
+  */
+}
