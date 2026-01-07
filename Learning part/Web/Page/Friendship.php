@@ -83,14 +83,15 @@ include_once("../MyLibrary.php");
                     <span>0</span>
                 </div>
             </div>
+            <div class="friendFinderContainer">
+                <form method="post">
+                    <h2>Find</h2>
+                    <input type="text" name="public_id">
+                    <button type="submit" name="submitBtn">Add</button>
+                </form>
+            </div>
         </div>
     </div>
-    <div class="friendFinderContainer">
-        <form method="post">
-            <h2>Find</h2>
-            <input type="text" name="public_id">
-            <button type="submit" name="submitBtn">Add</button>
-        </form>
-    </div>
+
 
 </body>

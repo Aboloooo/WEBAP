@@ -33,6 +33,11 @@ CREATE TABLE Station(
     Status ENUM('available', 'assigned') DEFAULT 'available',
     Owner_ID int
 );
+insert into Station(Serial_number, Name, Description) values ("WST-202601-001" ,"s1 Station" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-002" ,"s2 Station" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-003" ,"s3 Station" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-004" ,"s4 Station" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-005" ,"s5 Station" ,"This station can be changed after registration");
 
 -- Now add the foreign key constraints after both tables exist
 ALTER TABLE Users
