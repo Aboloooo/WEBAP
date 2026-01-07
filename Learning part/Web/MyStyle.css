@@ -189,6 +189,29 @@ h1 {
   margin: 2rem 0;
   color: var(--text-white);
 }
+h2 {
+  text-align: center;
+  margin: 1.5rem 0 1rem;
+  color: var(--text-white);
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+h3 {
+  text-align: center;
+  margin: 1rem 0 0.5rem;
+  color: var(--text-white);
+  font-size: 1.25rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+p {
+  text-align: center;
+  margin: 1.5rem 0 1rem;
+  color: var(--text-white);
+  font-size: 1rem;
+  font-weight: 200;
+}
 
 section {
   background: var(--primary-gradient);
@@ -928,6 +951,35 @@ button:disabled {
 .card:hover {
   background-color: var(--hover-color);
 }
+
+/* station page */
+.mainStationDisplay {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 20px;
+  gap: 30px;
+}
+.mainStationDisplay .stationCard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 200px;
+  height: 250px;
+  transition: ease 0.4s;
+  border-radius: 8px;
+  background-color: #047857;
+  box-shadow: 10px 13px 10px -2px rgba(0, 0, 0, 0.39);
+  -webkit-box-shadow: 10px 13px 10px -2px rgba(0, 0, 0, 0.39);
+  -moz-box-shadow: 10px 13px 10px -2px rgba(0, 0, 0, 0.39);
+}
+.mainStationDisplay .stationCard:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
 /* === Mobile Responsive === */
 @media (max-width: 768px) {
   .nav-container {

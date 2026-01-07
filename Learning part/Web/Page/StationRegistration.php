@@ -38,6 +38,7 @@ include_once("../MyLibrary.php");
 
             if ($result->num_rows > 0) {
                 $row = $result->fetch_assoc();
+                $station_ID = $row['Station_id'];
                 $SerialNumber = $row['Serial_number'];
                 $Name = $row['Name'];
                 $Status = $row['Status'];
@@ -53,13 +54,17 @@ include_once("../MyLibrary.php");
                     if ($Status == 'assigned') {
                         echo "<script>alert('This station already assigned to another user!');</script>";
                     }
-                    echo "<script>alert('current user found and two condition passed');</script>";
+                    /* update station table (assigning owner) */
+                    $updateStationOwner = $connection->prepare("UPDATE Station SET Owner_ID = ? , Status = ? WHERE Serial_number =? AND Owner_ID IS NULL");
+                    $updateStationOwner->bind_param("iss", $curentUser_ID, $New_status, $_POST['serialN_input']);
 
-                    $addStation = $connection->prepare("UPDATE Station SET Owner_ID = ? , Status = ? WHERE Serial_number =? AND Owner_ID IS NULL");
-                    $addStation->bind_param("iss", $curentUser_ID, $New_status, $_POST['serialN_input']);
+                    /* update user table(assigning station) */
+                    $updateUserStation = $connection->prepare("UPDATE Users SET owner_of_station = ?  WHERE UserID =?");
+                    $updateUserStation->bind_param("si", $station_ID, $curentUser_ID);
+                    $updateUserStation->execute();
 
-                    if ($addStation->execute()) {
-                        echo "<script>alert('Station $Name with $SerialNumber serial number added to your list successfully!');</script>";
+                    if ($updateStationOwner->execute()) {
+                        echo "<script>alert('$Name with $SerialNumber serial number added to your list successfully!');</script>";
                     }
                 } else {
                     /* if user is not login there must be an error */
@@ -72,18 +77,47 @@ include_once("../MyLibrary.php");
         }
     }
     ?>
-    <div>
-        <div class="layer-content">
-            <h3>Register your station</h3>
-            <div class="">
-                <form method="post">
-                    <h2>Find</h2>
-                    <input type="text" name="serialN_input">
-                    <button type="submit" name="submitBtn">Add</button>
-                </form>
-            </div>
+    <section>
+        <h1>Register Your Station</h1>
+        <div class="">
+            <form method="post">
+                <h3>Enter Station Serial Number</h3>
+                <input type="text" name="serialN_input">
+                <button type="submit" name="submitBtn">Register</button>
+            </form>
         </div>
-    </div>
+        <h2>My Stations</h2>
+        <!-- display stations -->
+        <div class="mainStationDisplay">
+            <?php
+            $curentUser = getUserInfo($_SESSION['username']);
+            if ($curentUser) {
+                $curentUser_ID = $curentUser['UserID'];
+            }
+            $displyStations = $connection->prepare("SELECT * FROM Station WHERE Owner_ID = ?");
+            $displyStations->bind_param('i', $curentUser_ID);
+            $displyStations->execute();
+            $result = $displyStations->get_result();
+            if ($result->num_rows > 0) {
+                while ($stationRow = $result->fetch_assoc()) {
+                    $name = $stationRow['Name'];
+                    $Description = $stationRow['Description'];
+            ?>
+                    <div class="stationCard">
+                        <h3><?= $name ?></h3>
+                        <p><?= $Description ?></p>
+                    </div>
+            <?php
+                }
+            } else {
+                /* what if there is no station assigned */
+                ?>
+                <p>There is no station assigned to you</p>
+                <?php
+            }
+            ?>
+        </div>
+    </section>
 
 
 </body>

@@ -1,4 +1,7 @@
 <?php
+
+use LDAP\Result;
+
 include_once("../MyLibrary.php");
 ?>
 <!DOCTYPE html>
@@ -207,9 +210,19 @@ include_once("../MyLibrary.php");
                                 <div class="info_row" data-field="stations">
                                     <strong>Assigned Stations</strong>
                                     <span class="value" id="stationsValue">
-                                        <span class="station_badge">Station A</span>
-                                        <span class="station_badge">Station B</span>
-                                        <span class="station_badge">Station C</span>
+                                        <!-- <span class="station_badge">Station A</span> -->
+                                        <?php
+                                        $myStations = $connection->prepare("SELECT Name FROM Station INNER JOIN Users ON Station.Owner_ID = Users.UserID");
+                                        $myStations->execute();
+                                        $result = $myStations->get_result();
+                                        while ($stationRow = $result->fetch_assoc()) {
+                                            $stationName = $stationRow['Name'];
+                                        ?>
+                                            <span class="station_badge"><?= $stationName ?></span>
+                                        <?php
+                                        }
+                                        ?>
+
                                     </span>
 
                                     <!-- <span class="edit-icon" onclick="editField('stations')">✏️</span> -->

@@ -30,6 +30,13 @@ include_once("../MyLibrary.php");
     ?>
     <?php
     if (isset($_POST['submitBtn'])) {
+        if (!$_SESSION["userLogin"]) {
+            echo "<script>
+        alert('Please login first');
+        window.location.href = 'sign_in_up.php';
+    </script>";
+            exit;
+        }
         if (isset($_POST['public_id']) && !empty(trim($_POST['public_id']))) {
             $friendFinder = $connection->prepare("SELECT * FROM Users WHERE Public_UserID =?");
             $friendFinder->bind_param('s', $_POST['public_id']);
@@ -43,7 +50,9 @@ include_once("../MyLibrary.php");
                 if ($userA) {
                     $UserA_ID = $userA['UserID'];
                     if ($UserA_ID == $UserB_ID) {
-                        echo "You cannot add yourself as a friend!";
+                        echo "<script>alert('You cannot add yourself as a friend!');
+                       window.location.href = 'index.php';
+                        </script>";
                     }
 
                     $checkQuery = $connection->prepare("SELECT * FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?) ");
@@ -56,9 +65,9 @@ include_once("../MyLibrary.php");
                         $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID) VALUES (?,?)");
                         $createFriendship->bind_param('ii', $UserA_ID, $UserB_ID);
                         if ($createFriendship->execute()) {
-                            echo "Friend added successfully!";
+                            echo "<script>alert('Friend added successfully!');</script>";
                         } else {
-                            echo "Error adding friend: " . $connection->error;
+                            echo "<script>alert('Error adding friend: ' . $connection->error);</script>";
                         }
                     }
                 }
@@ -89,7 +98,7 @@ include_once("../MyLibrary.php");
             <div class="friendFinderContainer">
                 <form method="post">
                     <h2>Find</h2>
-                    <input type="text" name="public_id">
+                    <input type="text" name="public_id" placeholder="Enter ID here">
                     <button type="submit" name="submitBtn">Add</button>
                 </form>
             </div>

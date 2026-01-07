@@ -1,0 +1,15 @@
+Stations
+
+- each assigned station must be display like a card in stationRegistration
+
+Friends
+
+- total number of friends
+- WebChat
+- Pending requests
+- display each Friend in a card in Friendship.php
+
+User
+
+- add a login btn
+- stop over writing column of owner_of_station
