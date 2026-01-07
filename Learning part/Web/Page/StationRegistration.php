@@ -59,6 +59,8 @@ include_once("../MyLibrary.php");
                     if ($addStation->execute()) {
                         echo "<script>alert('Station $Name with $SerialNumber serial number added to your list successfully!');</script>";
                     }
+                } else {
+                    /* if user is not login there must be an error */
                 }
             } else {
                 echo "<script>alert('Station didnt found');</script>";
