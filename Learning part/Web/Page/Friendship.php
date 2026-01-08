@@ -29,6 +29,7 @@ include_once("../MyLibrary.php");
     NavigationBarE();
     ?>
     <?php
+
     if (isset($_POST['submitBtn'])) {
         if (!$_SESSION["userLogin"]) {
             echo "<script>
@@ -59,7 +60,8 @@ include_once("../MyLibrary.php");
                     $checkQuery->bind_param("iiii", $UserA_ID, $UserB_ID, $UserB_ID, $UserA_ID);
                     $checkQuery->execute();
                     $checkResult = $checkQuery->get_result();
-                    if ($checkResult->num_rows > 0) {
+                    $numberOfRow = $checkResult->num_rows;
+                    if ($numberOfRow > 0) {
                         echo "You are already friend with this user";
                     } else {
                         $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID) VALUES (?,?)");
@@ -78,6 +80,14 @@ include_once("../MyLibrary.php");
             echo "User ID is required";
         }
     }
+    $currentUser = getUserInfo($_SESSION["username"]);
+    $currentUserID = $currentUser['UserID'];
+    $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE UserA_ID = ? OR UserB_ID = ? ");
+    $totalNumberOfFreinds->bind_param("ii", $currentUserID, $currentUserID);
+    $totalNumberOfFreinds->execute();
+    $result = $totalNumberOfFreinds->get_result();
+    $totalFriends = $result->fetch_row()[0];
+
     ?>
     <div>
         <div class="layer-content">
@@ -85,7 +95,7 @@ include_once("../MyLibrary.php");
             <div class="cards-grid">
                 <div class="card">
                     <span>Totol Friends:</span>
-                    <span>0</span>
+                    <span><?= $totalFriends ?></span>
                 </div>
                 <div class="card" onclick="MessageAll()">
                     <span>Message all</span>

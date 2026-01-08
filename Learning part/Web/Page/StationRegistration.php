@@ -43,28 +43,22 @@ include_once("../MyLibrary.php");
                 $Name = $row['Name'];
                 $Status = $row['Status'];
                 $New_status = 'assigned';
-                $station_owner = $row['Owner_ID'];
                 $curentUser = getUserInfo($_SESSION['username']);
                 if ($curentUser) {
                     $curentUser_ID = $curentUser['UserID'];
-                    /* assign the station if station is not already assigned to someone or current user */
-                    if ($Status == 'assigned' && $station_owner == $curentUser_ID) {
-                        echo "<script>alert('This station already assigned to you!');</script>";
-                    }
                     if ($Status == 'assigned') {
-                        echo "<script>alert('This station already assigned to another user!');</script>";
-                    }
-                    /* update station table (assigning owner) */
-                    $updateStationOwner = $connection->prepare("UPDATE Station SET Owner_ID = ? , Status = ? WHERE Serial_number =? AND Owner_ID IS NULL");
-                    $updateStationOwner->bind_param("iss", $curentUser_ID, $New_status, $_POST['serialN_input']);
-
-                    /* update user table(assigning station) */
-                    $updateUserStation = $connection->prepare("UPDATE Users SET owner_of_station = ?  WHERE UserID =?");
-                    $updateUserStation->bind_param("si", $station_ID, $curentUser_ID);
-                    $updateUserStation->execute();
-
-                    if ($updateStationOwner->execute()) {
-                        echo "<script>alert('$Name with $SerialNumber serial number added to your list successfully!');</script>";
+                        echo "<script>alert('This station already assigned!');</script>";
+                    } else {
+                        /* update StationOwnership table (assigning owner) */
+                        $recordOwnership = $connection->prepare("INSERT INTO StationOwnership (Owner_ID,station_ID) VALUES (?,?)");
+                        $recordOwnership->bind_param("ii", $curentUser_ID, $station_ID);
+                        if ($recordOwnership->execute()) {
+                            echo "<script>alert('$Name with $SerialNumber serial number added to your list successfully!');</script>";
+                            /* update user table(assigning station) */
+                            $updateUserStation = $connection->prepare("UPDATE Station SET Status = ?  WHERE Station_id =?");
+                            $updateUserStation->bind_param("si", $New_status, $station_ID);
+                            $updateUserStation->execute();
+                        }
                     }
                 } else {
                     /* if user is not login there must be an error */
@@ -94,7 +88,7 @@ include_once("../MyLibrary.php");
             if ($curentUser) {
                 $curentUser_ID = $curentUser['UserID'];
             }
-            $displyStations = $connection->prepare("SELECT * FROM Station WHERE Owner_ID = ?");
+            $displyStations = $connection->prepare("SELECT * FROM StationOwnership o JOIN Station s ON o.station_ID = s.Station_id  WHERE Owner_ID = ?");
             $displyStations->bind_param('i', $curentUser_ID);
             $displyStations->execute();
             $result = $displyStations->get_result();
@@ -107,13 +101,13 @@ include_once("../MyLibrary.php");
                         <h3><?= $name ?></h3>
                         <p><?= $Description ?></p>
                     </div>
-            <?php
+                <?php
                 }
             } else {
                 /* what if there is no station assigned */
                 ?>
                 <p>There is no station assigned to you</p>
-                <?php
+            <?php
             }
             ?>
         </div>

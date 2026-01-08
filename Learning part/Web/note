@@ -1,6 +1,5 @@
 Stations
 
-- each assigned station must be display like a card in stationRegistration
 
 Friends
 
@@ -12,4 +11,4 @@ Friends
 User
 
 - add a login btn
-- stop over writing column of owner_of_station
+

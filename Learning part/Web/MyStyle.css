@@ -920,10 +920,10 @@ button:disabled {
 .friendFinderContainer {
   width: auto;
   height: auto;
-  background-color: var(--bg-white);
   display: inline-block;
 }
 .friendFinderContainer form {
+  background-color: #1976d2;
   display: flex;
   flex-direction: column;
 }

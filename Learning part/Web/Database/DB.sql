@@ -20,7 +20,6 @@ CREATE TABLE Users(
     Username VARCHAR(255) UNIQUE NOT NULL,
     Password VARCHAR(255),
     AccessLevelID int NOT NULL,
-    owner_of_station int,
     FOREIGN KEY (AccessLevelID) REFERENCES Role(AccessLevelID)
 );
 
@@ -30,8 +29,7 @@ CREATE TABLE Station(
     Serial_number VARCHAR(255) NOT NULL,
     Name VARCHAR(50),
     Description VARCHAR(255),
-    Status ENUM('available', 'assigned') DEFAULT 'available',
-    Owner_ID int
+    Status ENUM('available', 'assigned') DEFAULT 'available'
 );
 insert into Station(Serial_number, Name, Description) values ("WST-202601-001" ,"s1 Station" ,"This station can be changed after registration");
 insert into Station(Serial_number, Name, Description) values ("WST-202601-002" ,"s2 Station" ,"This station can be changed after registration");
@@ -39,16 +37,16 @@ insert into Station(Serial_number, Name, Description) values ("WST-202601-003" ,
 insert into Station(Serial_number, Name, Description) values ("WST-202601-004" ,"s4 Station" ,"This station can be changed after registration");
 insert into Station(Serial_number, Name, Description) values ("WST-202601-005" ,"s5 Station" ,"This station can be changed after registration");
 
--- Now add the foreign key constraints after both tables exist
-ALTER TABLE Users
-ADD CONSTRAINT fk_user_station
-    FOREIGN KEY (owner_of_station) REFERENCES Station(Station_id)
-    ON DELETE SET NULL;
 
-ALTER TABLE Station
-ADD CONSTRAINT fk_station_owner
-    FOREIGN KEY (Owner_ID) REFERENCES Users(UserID)
-    ON DELETE SET NULL;
+CREATE TABLE StationOwnership (
+    Owner_ID int NOT NULL,
+    station_ID int NOT NULL,
+    PRIMARY KEY (Owner_ID, station_ID),
+    OwnershipStart DATETIME, /* no obligation to have */
+    OwnershipEnd DATETIME, /* no obligation to have */
+    FOREIGN KEY (Owner_ID) REFERENCES Users(UserID),
+    FOREIGN KEY (station_ID) REFERENCES Station(Station_id)
+);
 
 -- Collection table
 CREATE TABLE Collection(

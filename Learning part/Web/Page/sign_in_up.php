@@ -212,7 +212,7 @@ include_once("../MyLibrary.php");
                                     <span class="value" id="stationsValue">
                                         <!-- <span class="station_badge">Station A</span> -->
                                         <?php
-                                        $myStations = $connection->prepare("SELECT Name FROM Station INNER JOIN Users ON Station.Owner_ID = Users.UserID");
+                                        $myStations = $connection->prepare("SELECT Name FROM Station s JOIN StationOwnership o ON s.Station_id = o.station_id");
                                         $myStations->execute();
                                         $result = $myStations->get_result();
                                         while ($stationRow = $result->fetch_assoc()) {
@@ -231,7 +231,7 @@ include_once("../MyLibrary.php");
                         </div>
                         <div id="secondSide">
                             <img src="../img/User.png" alt="not found">
-                            <p><?= $Public_UserID ?></p>
+                            <span><?= $Public_UserID ?></span>
                             <span>Share the ID above with your friends to ...</span>
                         </div>
 
