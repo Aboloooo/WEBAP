@@ -103,3 +103,10 @@ CREATE TABLE CollectionShare(
     FOREIGN KEY (Shared_by) REFERENCES Users(UserID),
     FOREIGN KEY (Shared_with) REFERENCES Users(UserID)
 );
+
+CREATE TABLE Message(
+    Message_ID INT NOT NULL PRIMARY KEY,
+    Message_content VARCHAR(255),
+    Sender_ID int,
+    FOREIGN KEY (Sender_ID) REFERENCES Users(UserID)
+)

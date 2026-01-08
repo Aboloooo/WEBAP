@@ -115,5 +115,11 @@ include_once("../MyLibrary.php");
         </div>
     </div>
 
+    <!-- <div class="blur-background">blur background</div> -->
+
+    <!-- <section class="content">
+        <span>ChatBox</span>
+        <button onclick="CloseChatBox()">X</button>
+    </section> -->
 
 </body>

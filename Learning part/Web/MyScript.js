@@ -116,10 +116,26 @@ let orginalData = {};
 function initializeOriginalData() {}
 
 function MessageAll() {
+  let blurDiv = $("<div>").attr("class", "blur-background");
+  let sectionContent = $("<section>").attr("class", "content");
+  let exitBtn = $("<button>")
+    .on("click", CloseChatBox)
+    .text("X")
+    .addClass("exitChatBox");
+  sectionContent.append(exitBtn);
+
+  blurDiv.on("click", CloseChatBox);
+
+  $("body").append(blurDiv).append(sectionContent);
   /* 
   - check if user is login 
-  - keep the blue background 
-  - replace the find form with a div container to display all messages
   - for each new message there must be a notification in message all option 
   */
+}
+function CloseChatBox() {
+  /* close the chatbox */
+  /* $(".blur-background").hide();
+  $(".content").hide(); */
+  $(".blur-background").remove();
+  $(".content").remove();
 }
