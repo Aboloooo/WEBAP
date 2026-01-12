@@ -11,6 +11,12 @@ function start() {
     };
     $.post("./startup.php", data, function (htmlReply) {
       console.log(htmlReply);
+      /*   let result =
+        JSON.parse(htmlReply) > 0
+          ? "Quantity in stock: " + JSON.parse(htmlReply)
+          : "Product out of stock"; */
+      let result = JSON.parse(htmlReply);
+      $("#FruitData").text(result.Quantity);
     });
   });
 }
