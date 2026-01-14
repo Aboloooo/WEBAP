@@ -108,5 +108,6 @@ CREATE TABLE Message(
     Message_ID INT NOT NULL PRIMARY KEY,
     Message_content VARCHAR(255),
     Sender_ID int,
+    isViewed ENUM('unseen', 'seen') DEFAULT 'unseen',
     FOREIGN KEY (Sender_ID) REFERENCES Users(UserID)
 )
