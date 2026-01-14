@@ -26,6 +26,8 @@ function start() {
       selectedOptionValue: selectedOptionValue,
     };
     $.post("./AhmAb795.php", data, function (htmlReply) {
+      $("#OrderResult").empty();
+
       console.log(htmlReply);
       let result = JSON.parse(htmlReply);
       let ProductId = result.ID;
@@ -56,27 +58,31 @@ function start() {
           .text("Order")
           .attr("id", "submitOrderBtn");
         $("#FruitOrder").append(inputTag).append(submitOrderBtn);
+        $("#OrderResult").empty();
         $("#submitOrderBtn").on("click", function () {
           let QunatityOrdered = $("#orderInputQantity").val();
           let QuantityLeft = Quantity - QunatityOrdered;
+          let updateQunatity = false;
           if (QuantityLeft > 0) {
-            alert("Order placed successfully ");
-            return;
+            $("#OrderResult").append("Order placed successfully");
+            updateQunatity = true;
           } else if (QuantityLeft == 0) {
-            alert("You have emptied our stock ");
-            return;
+            $("#OrderResult").append("You have emptied our stock");
+            updateQunatity = true;
           } else {
-            alert("Please enter a valid order ");
-            return;
+            $("#OrderResult").append("Please enter a valid order ");
+            updateQunatity = false;
           }
-          let data1 = {
-            btnClicked: true,
-            ProductId: ProductId,
-            newQuantity: QuantityLeft,
-          };
-          $.post("./AhmAb795.php", data1, function (htmlReply1) {
-            console.log(htmlReply1);
-          });
+          if (updateQunatity) {
+            let data1 = {
+              btnClicked: true,
+              ProductId: ProductId,
+              newQuantity: QuantityLeft,
+            };
+            $.post("./AhmAb795.php", data1, function (htmlReply1) {
+              console.log(htmlReply1);
+            });
+          }
         });
       } else {
         $("#FruitOrder").empty();
