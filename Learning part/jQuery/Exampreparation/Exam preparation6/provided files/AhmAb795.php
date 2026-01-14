@@ -26,19 +26,27 @@
 
     /* selected option */
     if (isset($_POST['optionSelected'], $_POST['selectedOptionValue'])) {
-        $productQuantity = $connection->prepare("SELECT availability FROM fruits where fruitId = ?");
+        $productQuantity = $connection->prepare("SELECT fruitId,availability FROM fruits where fruitId = ?");
         $productQuantity->bind_param('i', $_POST['selectedOptionValue']);
         $productQuantity->execute();
         $resultQ = $productQuantity->get_result();
         $row = $resultQ->fetch_assoc();
-        $availableQuantity = ($row['availability'] > 0) ? "Quantity available: " . $row['availability'] : "Product out of stock";
-        if ($row && $availableQuantity > 0) {
+        $productId = $row['fruitId'];
+        $availableQuantity = $row['availability'];
+        if ($row) {
             echo json_encode([
+                "ID" => $productId,
                 "Quantity" => $availableQuantity
             ]);
             exit;
         } else {
             echo "Target product not exits";
         }
+    }
+
+    if (isset($_POST['btnClicked'], $_POST['ProductId'], $_POST['newQuantity'])) {
+        $orderUpdate = $connection->prepare("UPDATE fruits set availability = ? where fruitId = ?");
+        $orderUpdate->bind_param('ii', $_POST['newQuantity'], $_POST['ProductId']);
+        $orderUpdate->execute();
     }
     ?>
