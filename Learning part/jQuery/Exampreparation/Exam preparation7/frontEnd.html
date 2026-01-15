@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script src="jquery-3.6.3.min.js"></script>
-        <script src="frontEnd.js?t=<?= time(); ?>"></script>
-        <title>Document</title>
-        <script></script>
-    </head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="jquery-3.6.3.min.js"></script>
+    <script src="frontEnd.js?t=<?= time(); ?>"></script>
+    <title>Document</title>
+    <script></script>
+  </head>
 
-    <body>
-        <div><input id="NewUser" placeholder="new username" /><button id="AddUser">Add new user</button></div>
-        <div>
-            Users:<select id="Users"></select>
-            <input id="NewMessage" placeholder="type new message" />
-            <button id="sendMessage">Send Message</button>
-<option value=""></option>
-        </div>
-        <div id="messages">List of messages for the user</div>
-    </body>
+  <body>
+    <div>
+      <input id="NewUser" placeholder="new username" />
+      <button id="AddUser">Add new user</button>
+    </div>
+    <div>
+      Users:<select id="Users"></select>
+      <input id="NewMessage" placeholder="type new message" />
+      <button id="sendMessage">Send Message</button>
+    </div>
+    <div id="messages">List of messages for the user</div>
+  </body>
 </html>
