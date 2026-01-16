@@ -11,4 +11,5 @@ Friends
 User
 
 - add a login btn
+-   Public_UserID not needed since username is already UNIQUE
 

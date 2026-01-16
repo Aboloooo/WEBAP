@@ -38,7 +38,7 @@ include_once("../MyLibrary.php");
 
         <div class="cta-banner">
             <p><strong>Register stations</strong></p>
-            <p>Register your stations using their serai number and make them yours.</p>
+            <p>Register your stations using their serail number and make them yours.</p>
             <a href="StationRegistration.php" class="link-arrow">Add your station →</a>
         </div>
     </section>
