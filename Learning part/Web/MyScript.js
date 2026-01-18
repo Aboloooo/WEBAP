@@ -1,4 +1,5 @@
 $(start);
+
 function start() {
   // we can start writing here
 
@@ -10,6 +11,7 @@ function start() {
   });
 
   PageScrollDetector();
+  DisplayStationData();
 
   $("#goToLogin").on("click", function () {
     window.location.href = "./sign_in_up.php";
@@ -138,4 +140,56 @@ function CloseChatBox() {
   $(".content").hide(); */
   $(".blur-background").remove();
   $(".content").remove();
+}
+
+function extractMeasurements() { };
+
+
+function DisplayStationData() {
+  let displayContainer = $(".tempretureDisplay");
+
+  let selectBar = $("<select>").attr("id", "selectStation");
+  let optionDefault = $("<option>").attr("value", "0").text("--choose--");
+  selectBar.append(optionDefault);
+  displayContainer.append(selectBar);
+
+  let assingedStation = {
+    displayStaion: true,
+  };
+  $.post(
+    "../MyLibrary.php",
+    assingedStation,
+    function (replay) {
+      replay.forEach((row) => {
+        let option = $("<option>")
+          .attr("value", row.stationId)
+          .text(row.stationName);
+        selectBar.append(option);
+      });
+
+      let tableMeasurement = $("<table>");
+      let tableRows = [
+        "Measurement id",
+        "Timestamp",
+        "Humidity",
+        "Air pressure",
+        "Light intensity",
+        "Air quality",
+        "Station id",
+        "Collection id",
+      ];
+      let tr = $("<tr>");
+      tableRows.forEach((tableRow) => {
+        tr.append($("<th>").text(tableRow));
+        tableMeasurement.append(tr);
+      });
+
+      let extractedData = extractMeasurements();
+
+      let dev = $("<dev>").addClass("displayTable");
+      displayContainer.append(selectBar).append(dev);
+      displayContainer.append(tableMeasurement);
+    },
+    "json",
+  );
 }

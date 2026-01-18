@@ -1,5 +1,7 @@
 Stations
 
+- Measurement data from your own stations can be viewed
+- filtered by date/time and then display
 
 Friends
 
@@ -11,5 +13,7 @@ Friends
 User
 
 - add a login btn
--   Public_UserID not needed since username is already UNIQUE
+- Public_UserID not needed since username is already UNIQUE
 
+Create a select list in live dashboard to select desire station
+and according to selected option display corresponding data.

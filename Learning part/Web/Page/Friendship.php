@@ -38,9 +38,9 @@ include_once("../MyLibrary.php");
     </script>";
             exit;
         }
-        if (isset($_POST['public_id']) && !empty(trim($_POST['public_id']))) {
-            $friendFinder = $connection->prepare("SELECT * FROM Users WHERE Public_UserID =?");
-            $friendFinder->bind_param('s', $_POST['public_id']);
+        if (isset($_POST['username']) && !empty(trim($_POST['username']))) {
+            $friendFinder = $connection->prepare("SELECT * FROM Users WHERE username =?");
+            $friendFinder->bind_param('s', $_POST['username']);
             $friendFinder->execute();
             $result = $friendFinder->get_result();
 
@@ -52,8 +52,9 @@ include_once("../MyLibrary.php");
                     $UserA_ID = $userA['UserID'];
                     if ($UserA_ID == $UserB_ID) {
                         echo "<script>alert('You cannot add yourself as a friend!');
-                       window.location.href = 'index.php';
+                       window.location.href = 'Friendship.php';
                         </script>";
+                        return;
                     }
 
                     $checkQuery = $connection->prepare("SELECT * FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?) ");
@@ -108,7 +109,7 @@ include_once("../MyLibrary.php");
             <div class="friendFinderContainer">
                 <form method="post">
                     <h2>Find</h2>
-                    <input type="text" name="public_id" placeholder="Enter ID here">
+                    <input type="text" name="username" placeholder="Enter username here">
                     <button type="submit" name="submitBtn">Add</button>
                 </form>
             </div>

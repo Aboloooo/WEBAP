@@ -45,11 +45,20 @@ include_once("../MyLibrary.php");
                     $confirmPassword = $_POST['confirmPassword'];
                     /* password doesnt match possible error */
                     if ($Password == $confirmPassword) {
-                        $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
-                        $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $hashedPass, $DefaultAccessLevel);
-                        if ($insertValues->execute()) {
-                            echo "<script>alert('Form submitted successfully');</script>";
-                        };
+                        /* check for any doblicaiton based on Username */
+                        $checkDublication = $connection->prepare("SELECT * from Users where Username = ?");
+                        $checkDublication->bind_param('s', $Username);
+                        $checkDublication->execute();
+                        $resultDublication = $checkDublication->get_result();
+                        if ($resultDublication->num_rows > 0) {
+                            echo "<script>alert('This username already taken. Please choose a different username.');</script>";
+                        } else {
+                            $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
+                            $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $hashedPass, $DefaultAccessLevel);
+                            if ($insertValues->execute()) {
+                                echo "<script>alert('Form submitted successfully');</script>";
+                            };
+                        }
                     } else {
                         echo "<script>alert('Passwords do not match');</script>";
                     }

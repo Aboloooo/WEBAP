@@ -82,6 +82,32 @@ include_once("../MyLibrary.php");
             View real-time readings directly from the database. Analyze trends, compare sensors, and check
             system health all in one place.
         </p>
+        <div class="tempretureDisplay">
+            <!-- <table>
+                <tr>
+                    <th>Measurement_id</th>
+                    <th>Timestamp</th>
+                    <th>Humidity</th>
+                    <th>Air_pressure</th>
+                    <th>Light_intensity</th>
+                    <th>Air_quality</th>
+                    <th>Station_id</th>
+                    <th>Collection_id</th>
+                </tr>
+
+                <tr>
+                    <td>test</td>
+                    <td>1</td>
+                    <td>2</td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td>5</td>
+                    <td>6</td>
+                    <td>7</td>
+                </tr>
+            </table> -->
+        </div>
+
 
         <ul class="dashboard-list">
             <li>Current temperature per sensor</li>

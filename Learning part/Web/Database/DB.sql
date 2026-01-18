@@ -78,6 +78,16 @@ CREATE TABLE Measurement(
     FOREIGN KEY (Station_id) REFERENCES Station(Station_id),
     FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id)
 );
+INSERT INTO Measurement (Timestamp, Humidity, Air_pressure, Light_intensity, Air_quality, Station_id) 
+VALUES 
+('2026-01-18 08:00:00', '45%', '1013 hPa', '350 lux', 'Good', 1),
+('2026-01-18 10:00:00', '42%', '1012 hPa', '850 lux', 'Good', 1),
+('2026-01-18 12:00:00', '38%', '1011 hPa', '1200 lux', 'Moderate', 1),
+('2026-01-18 14:00:00', '40%', '1010 hPa', '1100 lux', 'Moderate', 2),
+('2026-01-18 16:00:00', '48%', '1009 hPa', '600 lux', 'Good', 2),
+('2026-01-18 18:00:00', '55%', '1009 hPa', '50 lux', 'Excellent', 3),
+('2026-01-18 20:00:00', '60%', '1010 hPa', '0 lux', 'Excellent', 3),
+('2026-01-18 22:00:00', '65%', '1011 hPa', '0 lux', 'Excellent', 1);
 
 -- Now update the CollectionContains foreign keys to reference the tables
 ALTER TABLE CollectionContains

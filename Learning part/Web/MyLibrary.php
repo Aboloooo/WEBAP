@@ -69,7 +69,22 @@ if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $
 
     print("Update successful");
 }
-
+if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
+    $stationInfo = $connection->prepare("select * from Station s join StationOwnership sw on s.Station_id = sw.station_ID join  Users u on sw.Owner_ID = u.UserID  where u.UserID = (select UserID from Users where Username =?)");
+    $stationInfo->bind_param('s', $_SESSION["username"]);
+    $stationInfo->execute();
+    $result = $stationInfo->get_result();
+    $stationDetails = [];
+    while ($row = $result->fetch_assoc()) {
+        $sId = $row['Station_id'];
+        $sName = $row['Name'];
+        $stationDetails[] = [
+            "stationId" => $sId,
+            "stationName" => $sName,
+        ];
+    }
+    echo json_encode($stationDetails);
+}
 /* save changes of user credentials */
 //if (isset(""));
 
