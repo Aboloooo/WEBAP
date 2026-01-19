@@ -240,8 +240,8 @@ include_once("../MyLibrary.php");
                         </div>
                         <div id="secondSide">
                             <img src="../img/User.png" alt="not found">
-                            <span><?= $Public_UserID ?></span>
-                            <span>Share the ID above with your friends to ...</span>
+                            <span><?= $username ?></span>
+                            <span>Share your username to establish a friendship</span>
                         </div>
 
                     </div>
