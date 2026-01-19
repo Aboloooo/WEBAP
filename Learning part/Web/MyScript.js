@@ -114,8 +114,6 @@ function overlayoutTrigger() {
 // state managment
 /* everytime we want to edit the initial data, we simply change the
 value of the field and call function initializeOriginalData() */
-let orginalData = {};
-function initializeOriginalData() {}
 
 function MessageAll() {
   let blurDiv = $("<div>").attr("class", "blur-background");
@@ -142,8 +140,7 @@ function CloseChatBox() {
   $(".content").remove();
 }
 
-function extractMeasurements() { };
-
+function extractMeasurements() {}
 
 function DisplayStationData() {
   let displayContainer = $(".tempretureDisplay");
@@ -184,7 +181,7 @@ function DisplayStationData() {
         tableMeasurement.append(tr);
       });
 
-      let extractedData = extractMeasurements();
+      /* let extractedData = extractMeasurements(); */
 
       let dev = $("<dev>").addClass("displayTable");
       displayContainer.append(selectBar).append(dev);
