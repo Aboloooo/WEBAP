@@ -50,8 +50,8 @@ include_once("../MyLibrary.php");
                         echo "<script>alert('This station already assigned!');</script>";
                     } else {
                         /* update StationOwnership table (assigning owner) */
-                        $recordOwnership = $connection->prepare("INSERT INTO StationOwnership (Owner_ID,station_ID) VALUES (?,?)");
-                        $recordOwnership->bind_param("ii", $curentUser_ID, $station_ID);
+                        $recordOwnership = $connection->prepare("UPDATE Station SET Status = ?, Owner_id = ? where Station_id = ?");
+                        $recordOwnership->bind_param("sii", $New_status, $curentUser_ID, $station_ID);
                         if ($recordOwnership->execute()) {
                             echo "<script>alert('$Name with $SerialNumber serial number added to your list successfully!');</script>";
                             /* update user table(assigning station) */
@@ -88,7 +88,7 @@ include_once("../MyLibrary.php");
             if ($curentUser) {
                 $curentUser_ID = $curentUser['UserID'];
             }
-            $displyStations = $connection->prepare("SELECT * FROM StationOwnership o JOIN Station s ON o.station_ID = s.Station_id  WHERE Owner_ID = ?");
+            $displyStations = $connection->prepare("SELECT * FROM Station WHERE Owner_id = ?");
             $displyStations->bind_param('i', $curentUser_ID);
             $displyStations->execute();
             $result = $displyStations->get_result();

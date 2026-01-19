@@ -2,7 +2,6 @@ $(start);
 
 function start() {
   // we can start writing here
-
   $(window).on("scroll", function () {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -140,53 +139,166 @@ function CloseChatBox() {
   $(".content").remove();
 }
 
-function extractMeasurements() {}
-
-function DisplayStationData() {
-  let displayContainer = $(".tempretureDisplay");
-
-  let selectBar = $("<select>").attr("id", "selectStation");
-  let optionDefault = $("<option>").attr("value", "0").text("--choose--");
-  selectBar.append(optionDefault);
-  displayContainer.append(selectBar);
-
-  let assingedStation = {
-    displayStaion: true,
-  };
+function loadMeasurements(stationId, dateTime) {
   $.post(
     "../MyLibrary.php",
-    assingedStation,
-    function (replay) {
-      replay.forEach((row) => {
-        let option = $("<option>")
-          .attr("value", row.stationId)
-          .text(row.stationName);
-        selectBar.append(option);
+    {
+      selectedOption: stationId,
+      filterDate: dateTime,
+    },
+    function (measurements) {
+      $("#measurementsTable tbody").remove();
+      let tbody = $("<tbody>");
+
+      measurements.forEach((row) => {
+        let tr = $("<tr>");
+        tr.append($("<td>").text(row.Measurement_id));
+        tr.append($("<td>").text(row.Timestamp));
+        tr.append($("<td>").text(row.Humidity));
+        tr.append($("<td>").text(row.Air_pressure));
+        tr.append($("<td>").text(row.Light_intensity));
+        tr.append($("<td>").text(row.Air_quality));
+        tr.append($("<td>").text(row.Station_id));
+        tr.append($("<td>").text(row.Collection_id));
+        tbody.append(tr);
       });
 
-      let tableMeasurement = $("<table>");
-      let tableRows = [
-        "Measurement id",
-        "Timestamp",
-        "Humidity",
-        "Air pressure",
-        "Light intensity",
-        "Air quality",
-        "Station id",
-        "Collection id",
-      ];
-      let tr = $("<tr>");
-      tableRows.forEach((tableRow) => {
-        tr.append($("<th>").text(tableRow));
-        tableMeasurement.append(tr);
-      });
-
-      /* let extractedData = extractMeasurements(); */
-
-      let dev = $("<dev>").addClass("displayTable");
-      displayContainer.append(selectBar).append(dev);
-      displayContainer.append(tableMeasurement);
+      $("#measurementsTable").append(tbody);
     },
     "json",
   );
+}
+
+function DisplayStationData() {
+  const displayContainer = $(".tempretureDisplay");
+  displayContainer.empty(); // Clear previous content
+
+  // ===== Date & Time Input =====
+  const DateAndTime = $("<input>")
+    .attr("type", "datetime-local")
+    .attr("name", "meeting-time")
+    .attr("id", "meeting-time")
+    .attr("value", "2026-01-01T00:00")
+    .attr("min", "2026-01-01T00:00")
+    .attr("max", "2026-12-31T00:00");
+
+  // ===== Filter Button =====
+  const filterBtn = $("<button>")
+    .attr("id", "filterDateBtn")
+    .attr("type", "button")
+    .addClass("btn btn-save")
+    .text("Filter Measurements");
+
+  // ===== Create Collection Button =====
+  const collectionCreateBtn = $("<button>")
+    .attr("id", "createCollectionBtn")
+    .attr("type", "button")
+    .addClass("btn btn-approve")
+    .prop("disabled", true) // Disabled by default
+    .text("Create Collection");
+
+  // ===== Select Dropdown for Stations =====
+  const selectBar = $("<select>").attr("id", "selectStation");
+  const optionDefault = $("<option>").attr("value", "0").text("-- choose --");
+  selectBar.append(optionDefault);
+
+  // Append controls to display container
+  displayContainer.append(
+    selectBar,
+    DateAndTime,
+    filterBtn,
+    collectionCreateBtn,
+  );
+
+  // ===== Table Container =====
+  const tableContainer = $("<div>").addClass("displayTable");
+  const tableMeasurement = $("<table>").attr("id", "measurementsTable");
+  const tableHeader = $("<tr>");
+  const tableRows = [
+    "Measurement id",
+    "Timestamp",
+    "Humidity",
+    "Air pressure",
+    "Light intensity",
+    "Air quality",
+    "Station id",
+    "Collection id",
+  ];
+  tableRows.forEach((header) => tableHeader.append($("<th>").text(header)));
+  tableMeasurement.append(tableHeader);
+  tableContainer.append(tableMeasurement);
+  displayContainer.append(tableContainer);
+
+  // ===== Fetch Stations from Backend =====
+  $.post(
+    "../MyLibrary.php",
+    { displayStaion: true },
+    function (stations) {
+      stations.forEach((station) => {
+        selectBar.append(
+          $("<option>").val(station.stationId).text(station.stationName),
+        );
+      });
+
+      // Optional: auto-load first station if available
+      const firstStationId = stations.length ? stations[0].stationId : "0";
+      const defaultDate = $("#meeting-time").val();
+      if (firstStationId !== "0") loadMeasurements(firstStationId, defaultDate);
+    },
+    "json",
+  ).fail(function (jqXHR, textStatus, errorThrown) {
+    console.error("Failed to load stations:", textStatus, errorThrown);
+  });
+
+  // ===== Filter Button Click Event =====
+  $(document)
+    .off("click", "#filterDateBtn")
+    .on("click", "#filterDateBtn", function (e) {
+      e.preventDefault();
+
+      const stationId = $("#selectStation").val();
+      const dateTime = $("#meeting-time").val();
+
+      if (stationId === "0") {
+        alert("Please select a station");
+        return;
+      }
+
+      loadMeasurements(stationId, dateTime);
+    });
+
+  // ===== Create Collection Button Click Event =====
+  $(document)
+    .off("click", "#createCollectionBtn")
+    .on("click", "#createCollectionBtn", function () {
+      const stationId = $("#selectStation").val();
+      const dateTime = $("#meeting-time").val();
+
+      if (stationId === "0") {
+        alert("Please select a station before creating a collection");
+        return;
+      }
+
+      // Collect displayed measurements
+      const measurements = [];
+      $("#measurementsTable tbody tr").each(function () {
+        const rowData = $(this)
+          .find("td")
+          .map(function () {
+            return $(this).text();
+          })
+          .get();
+        measurements.push(rowData);
+      });
+
+      if (measurements.length === 0) {
+        alert("No measurements to save!");
+        return;
+      }
+
+      // TODO: send measurements to backend for creating a collection
+      console.log("Create collection with data:", measurements);
+
+      alert("Collection creation triggered!"); // placeholder
+    });
 }

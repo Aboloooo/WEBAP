@@ -14,7 +14,6 @@ insert into Role(level) values("User");
 -- First create Users without the circular dependency
 CREATE TABLE Users(
     UserID int PRIMARY KEY AUTO_INCREMENT,
-    Public_UserID CHAR(36) UNIQUE NOT NULL DEFAULT (UUID()),    
     Fullname VARCHAR(100) NOT NULL,
     Email VARCHAR(255) not null,
     Username VARCHAR(255) UNIQUE NOT NULL,
@@ -29,24 +28,15 @@ CREATE TABLE Station(
     Serial_number VARCHAR(255) NOT NULL,
     Name VARCHAR(50),
     Description VARCHAR(255),
-    Status ENUM('available', 'assigned') DEFAULT 'available'
+    Status ENUM('available', 'assigned') DEFAULT 'available',
+    Owner_id INT,
+    FOREIGN KEY (Owner_id) REFERENCES Users(UserID)
 );
 insert into Station(Serial_number, Name, Description) values ("WST-202601-001" ,"s1 Station" ,"This station can be changed after registration");
 insert into Station(Serial_number, Name, Description) values ("WST-202601-002" ,"s2 Station" ,"This station can be changed after registration");
 insert into Station(Serial_number, Name, Description) values ("WST-202601-003" ,"s3 Station" ,"This station can be changed after registration");
 insert into Station(Serial_number, Name, Description) values ("WST-202601-004" ,"s4 Station" ,"This station can be changed after registration");
 insert into Station(Serial_number, Name, Description) values ("WST-202601-005" ,"s5 Station" ,"This station can be changed after registration");
-
-
-CREATE TABLE StationOwnership (
-    Owner_ID int NOT NULL,
-    station_ID int NOT NULL,
-    PRIMARY KEY (Owner_ID, station_ID),
-    OwnershipStart DATETIME, /* no obligation to have */
-    OwnershipEnd DATETIME, /* no obligation to have */
-    FOREIGN KEY (Owner_ID) REFERENCES Users(UserID),
-    FOREIGN KEY (station_ID) REFERENCES Station(Station_id)
-);
 
 -- Collection table
 CREATE TABLE Collection(

@@ -70,7 +70,7 @@ if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $
     print("Update successful");
 }
 if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
-    $stationInfo = $connection->prepare("select * from Station s join StationOwnership sw on s.Station_id = sw.station_ID join  Users u on sw.Owner_ID = u.UserID  where u.UserID = (select UserID from Users where Username =?)");
+    $stationInfo = $connection->prepare("SELECT s.Station_id, s.Name FROM Station s JOIN Users u ON s.Owner_id = u.UserID where username = ?");
     $stationInfo->bind_param('s', $_SESSION["username"]);
     $stationInfo->execute();
     $result = $stationInfo->get_result();
@@ -84,6 +84,56 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
         ];
     }
     echo json_encode($stationDetails);
+}
+
+if (isset($_POST['selectedOption'])) {
+
+    $stationId = (int) $_POST['selectedOption'];
+    $filterDate = $_POST['filterDate'] ?? null;
+
+    if ($filterDate) {
+        // ✅ Filter by station AND date
+        $sql = "
+            SELECT *
+            FROM Measurement
+            WHERE Station_id = ?
+            AND Timestamp >= ?
+            ORDER BY Timestamp ASC
+        ";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param("is", $stationId, $filterDate);
+    } else {
+        // ✅ Filter by station only
+        $sql = "
+            SELECT *
+            FROM Measurement
+            WHERE Station_id = ?
+            ORDER BY Timestamp ASC
+        ";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param("i", $stationId);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $measurementsArray = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $measurementsArray[] = [
+            "Measurement_id"   => $row['Measurement_id'],
+            "Timestamp"        => $row['Timestamp'],
+            "Humidity"         => $row['Humidity'],
+            "Air_pressure"     => $row['Air_pressure'],
+            "Light_intensity"  => $row['Light_intensity'],
+            "Air_quality"      => $row['Air_quality'],
+            "Station_id"       => $row['Station_id'],
+            "Collection_id"    => $row['Collection_id'], // ✅ fixed key
+        ];
+    }
+
+    echo json_encode($measurementsArray);
+    exit;
 }
 /* save changes of user credentials */
 //if (isset(""));
