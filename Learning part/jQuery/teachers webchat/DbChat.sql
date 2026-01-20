@@ -1,0 +1,14 @@
+CREATE OR REPLACE DATABASE MiniWebchat;
+USE MiniWebchat;
+
+CREATE TABLE Users (
+    userId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    userName VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Messages (
+    MessageId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    MessageText VARCHAR(500),
+    userId INT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES Users(userId)
+);
