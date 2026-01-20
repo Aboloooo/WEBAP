@@ -21,6 +21,26 @@ function start() {
 
   $("#saveBtn").on("click", saveChanges);
 }
+
+/* date formater for database */
+function formatThisDate(input) {
+  var date = new Date(input.replace("T", " "));
+
+  var formatted =
+    date.getFullYear() +
+    "-" +
+    String(date.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(date.getDate()).padStart(2, "0") +
+    " " +
+    String(date.getHours()).padStart(2, "0") +
+    ":" +
+    String(date.getMinutes()).padStart(2, "0") +
+    ":00";
+
+  return formatted;
+}
+
 /* class toggle function */
 function toggleMyClass(classTarget, className) {
   $("." + classTarget).each(function () {
@@ -139,12 +159,13 @@ function CloseChatBox() {
   $(".content").remove();
 }
 
-function loadMeasurements(stationId, dateTime) {
+function loadMeasurements(stationId, start, end) {
   $.post(
     "../MyLibrary.php",
     {
       selectedOption: stationId,
-      filterDate: dateTime,
+      filterDateStart: start,
+      filterDateEnd: end,
     },
     function (measurements) {
       $("#measurementsTable tbody").remove();
@@ -174,13 +195,20 @@ function DisplayStationData() {
   displayContainer.empty(); // Clear previous content
 
   // ===== Date & Time Input =====
-  const DateAndTime = $("<input>")
+  const DateAndTimeStart = $("<input>")
     .attr("type", "datetime-local")
     .attr("name", "meeting-time")
-    .attr("id", "meeting-time")
+    .attr("id", "meeting-time-start")
     .attr("value", "2026-01-01T00:00")
     .attr("min", "2026-01-01T00:00")
     .attr("max", "2026-12-31T00:00");
+  const DateAndTimeEnd = $("<input>")
+    .attr("type", "datetime-local")
+    .attr("name", "meeting-time")
+    .attr("id", "meeting-time-end")
+    .attr("value", "2026-12-31T23:59")
+    .attr("min", "2026-01-01T00:00")
+    .attr("max", "2026-12-31T23:59");
 
   // ===== Filter Button =====
   const filterBtn = $("<button>")
@@ -205,7 +233,8 @@ function DisplayStationData() {
   // Append controls to display container
   displayContainer.append(
     selectBar,
-    DateAndTime,
+    DateAndTimeStart,
+    DateAndTimeEnd,
     filterBtn,
     collectionCreateBtn,
   );
@@ -257,14 +286,15 @@ function DisplayStationData() {
       e.preventDefault();
 
       const stationId = $("#selectStation").val();
-      const dateTime = $("#meeting-time").val();
+      const dateTimeStart = formatThisDate($("#meeting-time-start").val());
+      const dateTimeEnd = formatThisDate($("#meeting-time-end").val());
 
       if (stationId === "0") {
         alert("Please select a station");
         return;
       }
 
-      loadMeasurements(stationId, dateTime);
+      loadMeasurements(stationId, dateTimeStart, dateTimeEnd);
     });
 
   // ===== Create Collection Button Click Event =====

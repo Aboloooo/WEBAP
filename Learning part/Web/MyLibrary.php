@@ -89,7 +89,8 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
 if (isset($_POST['selectedOption'])) {
 
     $stationId = (int) $_POST['selectedOption'];
-    $filterDate = $_POST['filterDate'] ?? null;
+    $filterDateStart = $_POST['filterDateStart'] ?? null;
+    $filterDateEnd = $_POST['filterDateEnd'] ?? null;
 
     if ($filterDate) {
         // ✅ Filter by station AND date
@@ -97,11 +98,11 @@ if (isset($_POST['selectedOption'])) {
             SELECT *
             FROM Measurement
             WHERE Station_id = ?
-            AND Timestamp >= ?
+            AND Timestamp between ? and ?
             ORDER BY Timestamp ASC
         ";
         $stmt = $connection->prepare($sql);
-        $stmt->bind_param("is", $stationId, $filterDate);
+        $stmt->bind_param("iss", $stationId, $filterDateStart, $filterDateEnd);
     } else {
         // ✅ Filter by station only
         $sql = "
