@@ -2,6 +2,7 @@ Stations
 
 - Measurement data from your own stations can be viewed
 - filtered by date/time and then display
+- I need to check and verify that I always get measurements of my own station
 
 Friends
 
@@ -13,4 +14,4 @@ Friends
 User
 
 - add a login btn
-- display corresponding data for selected option.
+- display corresponding data for selected option.(write a query where it can only fetch the meansurements of a station which belongs to you)

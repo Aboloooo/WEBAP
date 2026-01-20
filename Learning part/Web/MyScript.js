@@ -211,11 +211,11 @@ function DisplayStationData() {
     .attr("max", "2026-12-31T23:59");
 
   // ===== Filter Button =====
-  const filterBtn = $("<button>")
-    .attr("id", "filterDateBtn")
+  const dispalyMeasuBtn = $("<button>")
+    .attr("id", "displayDateBtn")
     .attr("type", "button")
     .addClass("btn btn-save")
-    .text("Filter Measurements");
+    .text("Display Measurements");
 
   // ===== Create Collection Button =====
   const collectionCreateBtn = $("<button>")
@@ -235,7 +235,7 @@ function DisplayStationData() {
     selectBar,
     DateAndTimeStart,
     DateAndTimeEnd,
-    filterBtn,
+    dispalyMeasuBtn,
     collectionCreateBtn,
   );
 
@@ -269,28 +269,30 @@ function DisplayStationData() {
         );
       });
 
-      // Optional: auto-load first station if available
-      const firstStationId = stations.length ? stations[0].stationId : "0";
+      const defaultStationChose = stations.length ? stations[0].stationId : "0";
       const defaultDate = $("#meeting-time").val();
-      if (firstStationId !== "0") loadMeasurements(firstStationId, defaultDate);
+      if (firstStationId !== "0")
+        loadMeasurements(defaultStationChose, defaultDate);
     },
     "json",
   ).fail(function (jqXHR, textStatus, errorThrown) {
     console.error("Failed to load stations:", textStatus, errorThrown);
   });
 
-  // ===== Filter Button Click Event =====
+  // ===== Display Button Click Event =====
   $(document)
-    .off("click", "#filterDateBtn")
-    .on("click", "#filterDateBtn", function (e) {
+    .off("click", "#displayDateBtn")
+    .on("click", "#displayDateBtn", function (e) {
       e.preventDefault();
 
       const stationId = $("#selectStation").val();
       const dateTimeStart = formatThisDate($("#meeting-time-start").val());
       const dateTimeEnd = formatThisDate($("#meeting-time-end").val());
 
-      if (stationId === "0") {
-        alert("Please select a station");
+      const start = new Date(dateTimeStart);
+      const end = new Date(dateTimeEnd);
+      if (start > end) {
+        alert("End time cannot be earlier than start time");
         return;
       }
 

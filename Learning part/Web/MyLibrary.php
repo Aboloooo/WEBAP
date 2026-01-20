@@ -86,33 +86,42 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     echo json_encode($stationDetails);
 }
 
-if (isset($_POST['selectedOption'])) {
+if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDateEnd'])) {
 
+    // I need to check and verify that I always get measurements of my own station
+    $user = getUserInfo($_SESSION['username']);
+    $Owner_id = $user['UserID'];
     $stationId = (int) $_POST['selectedOption'];
-    $filterDateStart = $_POST['filterDateStart'] ?? null;
-    $filterDateEnd = $_POST['filterDateEnd'] ?? null;
-
-    if ($filterDate) {
-        // ✅ Filter by station AND date
+    $filterDateStart = $_POST['filterDateStart'];
+    $filterDateEnd = $_POST['filterDateEnd'];
+    if ($stationId == 0) {
+        // Filter based on date only
         $sql = "
-            SELECT *
-            FROM Measurement
-            WHERE Station_id = ?
-            AND Timestamp between ? and ?
+            select m.*
+           FROM Measurement m
+            INNER JOIN Station s
+                ON m.Station_id = s.Station_id
+            WHERE s.Owner_id = ?
+                AND Timestamp between ? and ?
             ORDER BY Timestamp ASC
         ";
         $stmt = $connection->prepare($sql);
-        $stmt->bind_param("iss", $stationId, $filterDateStart, $filterDateEnd);
+        $stmt->bind_param("iss", $Owner_id, $filterDateStart, $filterDateEnd);
     } else {
-        // ✅ Filter by station only
+        // ✅ Filter by station and date and ownership only
         $sql = "
-            SELECT *
-            FROM Measurement
-            WHERE Station_id = ?
-            ORDER BY Timestamp ASC
+           SELECT m.*
+            FROM Measurement m
+                INNER JOIN Station s
+                ON m.Station_id = s.Station_id
+            WHERE 
+                m.Station_id = ?
+                AND s.Owner_id = ?
+                AND m.Timestamp BETWEEN ? AND ?
+            ORDER BY m.Timestamp ASC
         ";
         $stmt = $connection->prepare($sql);
-        $stmt->bind_param("i", $stationId);
+        $stmt->bind_param("iiss", $stationId, $Owner_id, $filterDateStart, $filterDateEnd);
     }
 
     $stmt->execute();
