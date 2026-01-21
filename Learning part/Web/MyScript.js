@@ -189,7 +189,6 @@ function DisplayFriends() {
     .on("click", CloseChatBox);
 
   sectionContent.append(exitBtn);
-
   // Example friend data (replace with AJAX)
   /*   let friends = [
     {
