@@ -86,6 +86,12 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     echo json_encode($stationDetails);
 }
 
+
+if (isset($_POST['measurementValues'])) {
+    $input = json_decode($_POST['measurementValues'], true);
+    echo "received: " . $input;
+}
+
 // unassign my station
 if (isset($_POST['targetID'])) {
     $newStatus = "available";

@@ -237,7 +237,7 @@ function loadMeasurements(stationId, start, end) {
     },
     function (measurements) {
       $("#measurementsTable tbody").remove();
-      let tbody = $("<tbody>");
+      let tbody = $("<tbody>").addClass("");
 
       measurements.forEach((row) => {
         let tr = $("<tr>");
@@ -253,9 +253,11 @@ function loadMeasurements(stationId, start, end) {
       });
 
       $("#measurementsTable").append(tbody);
+      $("#createCollectionBtn").prop("disabled", measurements.length === 0);
     },
     "json",
   );
+  $("#createCollectionBtn").css("float", "right");
 }
 
 function DisplayStationData() {
@@ -289,7 +291,7 @@ function DisplayStationData() {
   const collectionCreateBtn = $("<button>")
     .attr("id", "createCollectionBtn")
     .attr("type", "button")
-    .addClass("btn btn-approve")
+    .addClass("btn btn-approve collectionBtn")
     .prop("disabled", true) // Disabled by default
     .text("Create Collection");
 
@@ -346,7 +348,6 @@ function DisplayStationData() {
   ).fail(function (jqXHR, textStatus, errorThrown) {
     console.error("Failed to load stations:", textStatus, errorThrown);
   });
-
   // ===== Display Button Click Event =====
   $(document)
     .off("click", "#displayDateBtn")
@@ -371,14 +372,6 @@ function DisplayStationData() {
   $(document)
     .off("click", "#createCollectionBtn")
     .on("click", "#createCollectionBtn", function () {
-      const stationId = $("#selectStation").val();
-      const dateTime = $("#meeting-time").val();
-
-      if (stationId === "0") {
-        alert("Please select a station before creating a collection");
-        return;
-      }
-
       // Collect displayed measurements
       const measurements = [];
       $("#measurementsTable tbody tr").each(function () {
@@ -399,10 +392,17 @@ function DisplayStationData() {
       // TODO: send measurements to backend for creating a collection
       console.log("Create collection with data:", measurements);
 
-      alert("Collection creation triggered!"); // placeholder
+      // if you want to send a array it must be properly formatted
+      ($.post(
+        "../MyLibrary.php",
+        { measurementValues: JSON.stringify(measurements) },
+        function (serverAnswer) {
+          console.log(serverAnswer);
+        },
+      ),
+        "json");
     });
 }
-
 // unassign my station
 function removeMyStation(targetStationId) {
   $.post(
