@@ -134,6 +134,34 @@ function overlayoutTrigger() {
 /* everytime we want to edit the initial data, we simply change the
 value of the field and call function initializeOriginalData() */
 
+function createFriendCard(friend) {
+  let card = $("<div>").addClass("friendCard");
+
+  let avatar = $("<img>")
+    .addClass("friendAvatar")
+    .attr("src", friend.image || "default-profile.png")
+    .attr("alt", "Profile");
+
+  let info = $("<div>").addClass("friendInfo");
+  let username = $("<span>").addClass("friendUsername").text(friend.username);
+
+  let email = $("<span>").addClass("friendEmail").text(friend.email);
+
+  info.append(username, email);
+
+  let removeBtn = $("<button>")
+    .addClass("removeFriendBtn")
+    .html("&times;")
+    .on("click", function (e) {
+      e.stopPropagation(); // prevent closing modal
+      removeFriend(friend.id);
+      card.remove();
+    });
+
+  card.append(avatar, info, removeBtn);
+  return card;
+}
+
 function MessageAll() {
   let blurDiv = $("<div>").attr("class", "blur-background");
   let sectionContent = $("<section>").attr("class", "content");
@@ -151,6 +179,47 @@ function MessageAll() {
   - for each new message there must be a notification in message all option 
   */
 }
+function DisplayFriends() {
+  let blurDiv = $("<div>").addClass("blur-background");
+  let sectionContent = $("<section>").addClass("content");
+
+  let exitBtn = $("<button>")
+    .text("X")
+    .addClass("exitChatBox")
+    .on("click", CloseChatBox);
+
+  sectionContent.append(exitBtn);
+
+  // Example friend data (replace with AJAX)
+  /*   let friends = [
+    {
+      id: 1,
+      username: "john_doe",
+      email: "john@example.com",
+      image: null,
+    },
+    {
+      id: 2,
+      username: "jane_smith",
+      email: "jane@example.com",
+      image: null,
+    },
+  ]; */
+
+  ($.post("../MyLibrary.php"),
+    { showFriends: true },
+    function (friends) {
+      console.log(friends);
+      /*  friends.forEach((friend) => {
+        sectionContent.append(createFriendCard(friend));
+      }); */
+    });
+
+  blurDiv.on("click", CloseChatBox);
+
+  $("body").append(blurDiv, sectionContent);
+}
+
 function CloseChatBox() {
   /* close the chatbox */
   /* $(".blur-background").hide();
@@ -271,8 +340,8 @@ function DisplayStationData() {
 
       const defaultStationChose = stations.length ? stations[0].stationId : "0";
       const defaultDate = $("#meeting-time").val();
-      if (firstStationId !== "0")
-        loadMeasurements(defaultStationChose, defaultDate);
+
+      loadMeasurements(defaultStationChose, defaultDate);
     },
     "json",
   ).fail(function (jqXHR, textStatus, errorThrown) {
@@ -333,4 +402,16 @@ function DisplayStationData() {
 
       alert("Collection creation triggered!"); // placeholder
     });
+}
+
+// unassign my station
+function removeMyStation(targetStationId) {
+  $.post(
+    "..//MyLibrary.php",
+    { targetID: targetStationId },
+    function (removeRespond) {
+      console.log(removeRespond);
+      window.location.href = "./StationRegistration.php";
+    },
+  );
 }

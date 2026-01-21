@@ -94,7 +94,7 @@ include_once("../MyLibrary.php");
         <div class="layer-content">
             <h3>Friend Statistics</h3>
             <div class="cards-grid">
-                <div class="card">
+                <div class="card" onclick="DisplayFriends()">
                     <span>Totol Friends:</span>
                     <span><?= $totalFriends ?></span>
                 </div>

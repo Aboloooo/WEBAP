@@ -41,12 +41,12 @@ if (isset($_GET["lastMessageSeen"])) {
     $result = $sqlSelectMessages->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        ?>
+?>
         <div>
             <span class="MsgId"><?= $row["MessageId"] ?></span>
             <?= $row["userName"] ?> wrote: <?= $row["MessageText"] ?>
         </div>
-        <?php
+<?php
     }
 }
 ?>

@@ -86,6 +86,24 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     echo json_encode($stationDetails);
 }
 
+// unassign my station
+if (isset($_POST['targetID'])) {
+    $newStatus = "available";
+    $unassignStation = null;
+    $stst = $connection->prepare("UPDATE Station set Status = ? , Owner_id = ? where Station_id = ?");
+    $stst->bind_param('ssi', $newStatus, $unassignStation, $_POST['targetID']);
+
+    if ($stst->execute()) {
+        echo "Station with ID " .  $_POST['targetID'] . " unassigned successfully";
+    }
+};
+
+// show my Friends
+if (isset($_POST['showFriends']) && $_POST['showFriends'] == true) {
+    echo "showing friends";
+}
+
+
 if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDateEnd'])) {
 
     // I need to check and verify that I always get measurements of my own station

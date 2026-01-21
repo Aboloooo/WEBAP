@@ -94,10 +94,12 @@ include_once("../MyLibrary.php");
             $result = $displyStations->get_result();
             if ($result->num_rows > 0) {
                 while ($stationRow = $result->fetch_assoc()) {
+                    $ID = $stationRow['Station_id'];
                     $name = $stationRow['Name'];
                     $Description = $stationRow['Description'];
             ?>
                     <div class="stationCard">
+                        <button onclick="removeMyStation(<?= $ID ?>)">X</BUtton>
                         <h3><?= $name ?></h3>
                         <p><?= $Description ?></p>
                     </div>
