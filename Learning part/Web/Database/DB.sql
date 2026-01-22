@@ -77,7 +77,12 @@ VALUES
 ('2026-01-18 16:00:00', '48%', '1009 hPa', '600 lux', 'Good', 2),
 ('2026-01-18 18:00:00', '55%', '1009 hPa', '50 lux', 'Excellent', 3),
 ('2026-01-18 20:00:00', '60%', '1010 hPa', '0 lux', 'Excellent', 3),
-('2026-01-18 22:00:00', '65%', '1011 hPa', '0 lux', 'Excellent', 1);
+('2026-01-18 22:00:00', '65%', '1011 hPa', '0 lux', 'Excellent', 5),
+('2026-01-18 14:00:00', '40%', '1010 hPa', '1100 lux', 'Moderate', 5),
+('2026-01-18 16:00:00', '48%', '1009 hPa', '600 lux', 'Good', 4),
+('2026-01-18 18:00:00', '55%', '1009 hPa', '50 lux', 'Excellent', 4),
+('2026-01-18 20:00:00', '60%', '1010 hPa', '0 lux', 'Excellent', 4),
+('2026-01-18 22:00:00', '65%', '1011 hPa', '0 lux', 'Excellent', 5);
 
 -- Now update the CollectionContains foreign keys to reference the tables
 ALTER TABLE CollectionContains

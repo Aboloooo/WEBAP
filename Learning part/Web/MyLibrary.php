@@ -87,9 +87,24 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
 }
 
 
-if (isset($_POST['measurementValues'])) {
-    $input = json_decode($_POST['measurementValues'], true);
-    echo "received: " . $input;
+if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'])) {
+    $user = getUserInfo($_SESSION['username']);
+    $currentUserID = $user['UserID'];
+    $createCollection = $connection->prepare("INSERT INTO Collection(Name, Description ,Creator_ID) VALUES (?,?,?)");
+    $createCollection->bind_param('ssi', $_POST['CollecionN'], $_POST['CollecionD'], $currentUserID);
+    if ($createCollection->execute()) {
+        // After creation of collection you can start inserting measurement IDs and collection ID into CollectionContains
+        $collectionId = $connection->insert_id;
+        $inputs = json_decode($_POST['measurementValues'], true);
+        foreach ($inputs as $stationId) {
+            $Measurement_id = $stationId[0];
+            $saveIntoCollectionContains = $connection->prepare("INSERT INTO CollectionContains values(?,?)");
+            $saveIntoCollectionContains->bind_param('ii', $collectionId, $Measurement_id);
+            if ($saveIntoCollectionContains->execute()) {
+                echo "Collection: " . $_POST['CollecionN'] . " now contains the follwing measurements(ID): " . $stationId[0] . "\n";
+            }
+        }
+    }
 }
 
 // unassign my station

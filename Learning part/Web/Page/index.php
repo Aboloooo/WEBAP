@@ -83,14 +83,6 @@ include_once("../MyLibrary.php");
             system health all in one place.
         </p>
         <div class="tempretureDisplay"></div>
-        <ul class="dashboard-list">
-            <li>Current temperature per sensor</li>
-            <li>Last update timestamp</li>
-            <li>Sensor connection status</li>
-            <li>Minimum / maximum values</li>
-            <li>24-hour and custom-range charts</li>
-            <li>Database-powered analytics</li>
-        </ul>
     </section>
 
     <section id="Contact">

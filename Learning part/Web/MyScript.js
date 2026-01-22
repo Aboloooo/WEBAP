@@ -248,7 +248,6 @@ function loadMeasurements(stationId, start, end) {
         tr.append($("<td>").text(row.Light_intensity));
         tr.append($("<td>").text(row.Air_quality));
         tr.append($("<td>").text(row.Station_id));
-        tr.append($("<td>").text(row.Collection_id));
         tbody.append(tr);
       });
 
@@ -295,6 +294,11 @@ function DisplayStationData() {
     .prop("disabled", true) // Disabled by default
     .text("Create Collection");
 
+  // ===== Controller Container =====
+  const btnContainer = $("<div>")
+    .attr("id", "btnContainer")
+    .append(dispalyMeasuBtn, collectionCreateBtn);
+
   // ===== Select Dropdown for Stations =====
   const selectBar = $("<select>").attr("id", "selectStation");
   const optionDefault = $("<option>").attr("value", "0").text("-- choose --");
@@ -305,8 +309,7 @@ function DisplayStationData() {
     selectBar,
     DateAndTimeStart,
     DateAndTimeEnd,
-    dispalyMeasuBtn,
-    collectionCreateBtn,
+    btnContainer,
   );
 
   // ===== Table Container =====
@@ -321,7 +324,6 @@ function DisplayStationData() {
     "Light intensity",
     "Air quality",
     "Station id",
-    "Collection id",
   ];
   tableRows.forEach((header) => tableHeader.append($("<th>").text(header)));
   tableMeasurement.append(tableHeader);
@@ -391,11 +393,17 @@ function DisplayStationData() {
 
       // TODO: send measurements to backend for creating a collection
       console.log("Create collection with data:", measurements);
-
+      let collectionName = prompt("Collection name: ");
+      let collectionDescription = prompt("A description: ");
+      console.log(collectionName);
       // if you want to send a array it must be properly formatted
       ($.post(
         "../MyLibrary.php",
-        { measurementValues: JSON.stringify(measurements) },
+        {
+          measurementValues: JSON.stringify(measurements),
+          CollecionN: collectionName,
+          CollecionD: collectionDescription,
+        },
         function (serverAnswer) {
           console.log(serverAnswer);
         },

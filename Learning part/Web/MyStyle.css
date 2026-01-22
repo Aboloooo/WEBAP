@@ -920,6 +920,11 @@ button:disabled {
 }
 
 /* Table */
+.displayTable {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 3px solid black;
+}
 #measurementsTable {
   border: 4px solid black;
   width: 100%;
@@ -927,6 +932,7 @@ button:disabled {
   font-family: Arial, sans-serif;
   font-size: 14px;
   text-align: center;
+  max-height: 400px;
 }
 
 /* Table header */
@@ -1137,6 +1143,11 @@ button:disabled {
   width: 100%;
   height: auto;
   padding: 2%;
+}
+#btnContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* === Mobile Responsive === */
