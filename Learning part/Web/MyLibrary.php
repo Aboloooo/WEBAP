@@ -85,6 +85,24 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     }
     echo json_encode($stationDetails);
 }
+if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
+    $MyInfo = getUserInfo($_SESSION["username"]);
+    $MyID = $MyInfo['UserID'];
+    $CollectionInfo = $connection->prepare("select * from Collection where Creator_ID = ?");
+    $CollectionInfo->bind_param('i', $MyID);
+    $CollectionInfo->execute();
+    $result = $CollectionInfo->get_result();
+    $CollectionDetails = [];
+    while ($row = $result->fetch_assoc()) {
+        $Collection_id = $row['Collection_id'];
+        $Collection_name = $row['Name'];
+        $CollectionDetails[] = [
+            "Collection_id" => $Collection_id,
+            "Collection_name" => $Collection_name,
+        ];
+    }
+    echo json_encode($CollectionDetails);
+}
 
 
 if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'])) {
@@ -119,10 +137,57 @@ if (isset($_POST['targetID'])) {
     }
 };
 
-// show my Friends
-if (isset($_POST['showFriends']) && $_POST['showFriends'] == true) {
-    echo "showing friends";
+if (isset($_POST['removeFriend']) && isset($_POST['target_user'])) {
+    $MyInfo = getUserInfo($_SESSION["username"]);
+    $MyID = $MyInfo['UserID'];
+    $removeFriend = $connection->prepare("DELETE FROM FriendList WHERE UserA_ID = ? and UserB_ID = ? or UserB_ID = ? and UserA_ID = ?;");
+    $removeFriend->bind_param('iiii', $MyID, $_POST['target_user'], $_POST['target_user'], $MyID);
+    if ($removeFriend->execute()) {
+        echo "Friendship with user ID: " . $_POST['target_user'] . " eneded successfully.";
+    }
 }
+
+// show my Friends
+if (isset($_POST['showFriends']) && $_POST['showFriends'] == "true") {
+
+    $MyInfo = getUserInfo($_SESSION["username"]);
+    $MyID = $MyInfo['UserID'];
+
+    $friends = [];
+
+    $friendsInfo = $connection->prepare(
+        "SELECT * FROM FriendList WHERE UserA_ID = ? OR UserB_ID = ?"
+    );
+    $friendsInfo->bind_param('ii', $MyID, $MyID);
+    $friendsInfo->execute();
+    $result = $friendsInfo->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+
+        $friend_id = ($MyID == $row['UserA_ID'])
+            ? $row['UserB_ID']
+            : $row['UserA_ID'];
+
+        $ststm = $connection->prepare(
+            "SELECT UserID, Username, Email FROM Users WHERE UserID = ?"
+        );
+        $ststm->bind_param('i', $friend_id);
+        $ststm->execute();
+        $userResult = $ststm->get_result();
+
+        if ($user = $userResult->fetch_assoc()) {
+            $friends[] = [
+                "id" => $user['UserID'],
+                "username" => $user['Username'],
+                "email" => $user['Email'],
+            ];
+        }
+    }
+
+    echo json_encode($friends);
+    exit;
+}
+
 
 
 if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDateEnd'])) {

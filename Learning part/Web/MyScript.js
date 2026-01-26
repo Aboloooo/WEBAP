@@ -133,13 +133,24 @@ function overlayoutTrigger() {
 // state managment
 /* everytime we want to edit the initial data, we simply change the
 value of the field and call function initializeOriginalData() */
-
+function removeFriend(target_user) {
+  console.log(target_user);
+  $.post(
+    "../MyLibrary.php",
+    { removeFriend: true, target_user: target_user },
+    function (friendRemoved) {
+      alert(friendRemoved);
+      window.location.href = "./Friendship.php";
+    },
+  );
+}
 function createFriendCard(friend) {
   let card = $("<div>").addClass("friendCard");
+  let defaultProfileImg = "../img/User.png";
 
   let avatar = $("<img>")
     .addClass("friendAvatar")
-    .attr("src", friend.image || "default-profile.png")
+    .attr("src", friend.image || defaultProfileImg)
     .attr("alt", "Profile");
 
   let info = $("<div>").addClass("friendInfo");
@@ -190,7 +201,7 @@ function DisplayFriends() {
 
   sectionContent.append(exitBtn);
   // Example friend data (replace with AJAX)
-  /*   let friends = [
+  /* let friends = [
     {
       id: 1,
       username: "john_doe",
@@ -204,15 +215,19 @@ function DisplayFriends() {
       image: null,
     },
   ]; */
+  console.log("btn friends clicked");
 
-  ($.post("../MyLibrary.php"),
-    { showFriends: true },
+  $.post(
+    "../MyLibrary.php",
+    { showFriends: "true" },
     function (friends) {
-      console.log(friends);
-      /*  friends.forEach((friend) => {
+      console.log(friends); // should log an array
+      friends.forEach((friend) => {
         sectionContent.append(createFriendCard(friend));
-      }); */
-    });
+      });
+    },
+    "json", // <-- important
+  );
 
   blurDiv.on("click", CloseChatBox);
 
@@ -300,15 +315,25 @@ function DisplayStationData() {
     .append(dispalyMeasuBtn, collectionCreateBtn);
 
   // ===== Select Dropdown for Stations =====
-  const selectBar = $("<select>").attr("id", "selectStation");
-  const optionDefault = $("<option>").attr("value", "0").text("-- choose --");
-  selectBar.append(optionDefault);
+  const selectBarStations = $("<select>").attr("id", "selectStation");
+  const optionDefaultStations = $("<option>")
+    .attr("value", "0")
+    .text("-- Stations --");
+  selectBarStations.append(optionDefaultStations);
+
+  // ===== Select Dropdown for Collection =====
+  const selectBarCollection = $("<select>").attr("id", "selectStation2");
+  const optionDefaultCollecton = $("<option>")
+    .attr("value", "0")
+    .text("-- Collections --");
+  selectBarCollection.append(optionDefaultCollecton);
 
   // Append controls to display container
   displayContainer.append(
-    selectBar,
+    selectBarStations,
     DateAndTimeStart,
     DateAndTimeEnd,
+    selectBarCollection,
     btnContainer,
   );
 
@@ -336,7 +361,7 @@ function DisplayStationData() {
     { displayStaion: true },
     function (stations) {
       stations.forEach((station) => {
-        selectBar.append(
+        selectBarStations.append(
           $("<option>").val(station.stationId).text(station.stationName),
         );
       });
@@ -349,6 +374,23 @@ function DisplayStationData() {
     "json",
   ).fail(function (jqXHR, textStatus, errorThrown) {
     console.error("Failed to load stations:", textStatus, errorThrown);
+  });
+  // ===== Fetch Collections from Backend =====
+  $.post(
+    "../MyLibrary.php",
+    { displayCollections: true },
+    function (Collections) {
+      Collections.forEach((Collection) => {
+        selectBarCollection.append(
+          $("<option>")
+            .val(Collection.Collection_id)
+            .text(Collection.Collection_name),
+        );
+      });
+    },
+    "json",
+  ).fail(function (jqXHR, textStatus, errorThrown) {
+    console.error("Failed to load Collections:", textStatus, errorThrown);
   });
   // ===== Display Button Click Event =====
   $(document)

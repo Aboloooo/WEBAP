@@ -1149,7 +1149,9 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
 }
-
+#selectStation2{
+  float: right;
+}
 /* === Mobile Responsive === */
 @media (max-width: 768px) {
   .nav-container {

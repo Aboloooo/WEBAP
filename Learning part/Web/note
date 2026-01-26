@@ -1,17 +1,12 @@
-Stations
+Measurements
 
-- Measurement data from your own stations can be viewed
-- filtered by date/time and then display
-- I need to check and verify that I always get measurements of my own station
+- add measurements to a collection(add id of collection to measurement)
 
 Friends
 
-- total number of friends
 - WebChat
 - Pending requests
-- display each Friend in a card in Friendship.php
 
 User
 
 - add a login btn
-- display corresponding data for selected option.(write a query where it can only fetch the meansurements of a station which belongs to you)
