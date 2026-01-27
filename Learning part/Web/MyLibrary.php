@@ -112,7 +112,7 @@ if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'
     $createCollection->bind_param('ssi', $_POST['CollecionN'], $_POST['CollecionD'], $currentUserID);
     if ($createCollection->execute()) {
         // After creation of collection you can start inserting measurement IDs and collection ID into CollectionContains
-        $collectionId = $connection->insert_id;
+        $collectionId = $connection->insert_id; //last column id (last collection id)
         $inputs = json_decode($_POST['measurementValues'], true);
         foreach ($inputs as $stationId) {
             $Measurement_id = $stationId[0];
