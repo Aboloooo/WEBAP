@@ -187,6 +187,21 @@ body {
 }
 
 /* === Main Content Styles === */
+/* Base header reset */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0 0 1rem 0;
+  padding: 0;
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--text-dark);
+}
+
+/* Main Page Title - Hero Style */
 h1 {
   display: flex;
   justify-content: center;
@@ -195,6 +210,8 @@ h1 {
   margin: 2rem 0;
   color: var(--text-white);
 }
+
+/* h2 styles from your original code */
 h2 {
   text-align: center;
   margin: 1.5rem 0 1rem;
@@ -203,6 +220,7 @@ h2 {
   font-weight: 600;
 }
 
+/* h3 styles from your original code */
 h3 {
   text-align: center;
   margin: 1rem 0 0.5rem;
@@ -212,11 +230,13 @@ h3 {
   opacity: 0.9;
 }
 p {
-  text-align: center;
-  margin: 1.5rem 0 1rem;
-  color: var(--text-white);
-  font-size: 1rem;
-  font-weight: 200;
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-relaxed);
+  color: var(--text-medium);
+  margin: 1rem 0;
+  text-align: left;
+  max-width: 65ch; /* Optimal reading width */
 }
 
 section {
@@ -1149,9 +1169,146 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
 }
-#selectStation2{
+#selectBarCollection {
   float: right;
 }
+
+/* === Collection Page === */
+/* Collections Page Specific Styles */
+.main_container_Collection {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--bg-white);
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.sections_container {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  background-color: var(--bg-white);
+  padding: 10px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-light);
+}
+
+.Collections_container,
+.Collections_shared_container {
+  padding: 15px 30px;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  background-color: var(--bg-white);
+  border: 2px solid var(--border-light);
+  transition: all 0.3s;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-medium);
+}
+
+.Collections_container:hover,
+.Collections_shared_container:hover {
+  background-color: var(--bg-light);
+  border-color: var(--border-medium);
+}
+
+.Collections_container.active,
+.Collections_shared_container.active {
+  background: var(--primary-gradient);
+  color: var(--text-white);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 15px var(--shadow-light);
+}
+
+.section_info {
+  width: 100%;
+  max-width: 800px;
+  min-height: 400px;
+  background-color: var(--bg-white);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  box-shadow: 0 5px 20px var(--shadow-light);
+  border: 1px solid var(--border-light);
+}
+
+.section_info h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--text-dark);
+  font-size: 1.75rem;
+}
+
+.section_info p {
+  margin-bottom: 15px;
+  color: var(--text-medium);
+  line-height: 1.6;
+}
+
+.collections-list {
+  margin-left: 20px;
+  margin-top: 15px;
+  margin-bottom: 25px;
+}
+
+.collections-list li {
+  margin-bottom: 8px;
+  color: var(--text-medium);
+  padding-left: 5px;
+}
+
+.collection-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+  flex-wrap: wrap;
+}
+
+/* Use your existing button classes */
+.collection-btn {
+  padding: 12px 24px;
+  border-radius: var(--border-radius-small);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sections_container {
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .Collections_container,
+  .Collections_shared_container {
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+
+  .section_info {
+    padding: 20px;
+  }
+
+  .collection-actions {
+    flex-direction: column;
+  }
+
+  .collection-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* === Mobile Responsive === */
 @media (max-width: 768px) {
   .nav-container {

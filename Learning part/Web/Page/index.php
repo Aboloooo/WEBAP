@@ -23,7 +23,7 @@ include_once("../MyLibrary.php");
     ?>
 
     <section id="Home">
-        <h1>Home_page</h1>
+        <h1>Home page</h1>
         <h2><?= $_SESSION["userLogin"] ? "Welcome " . $_SESSION["username"] . "!" : "" ?></h2>
         <?php if ($_SESSION["userLogin"]) {
         ?>
@@ -43,7 +43,7 @@ include_once("../MyLibrary.php");
         </div>
     </section>
     <section id="About">
-        <h1>About_page</h1>
+        <h1>About page</h1>
     </section>
     <section id="Service">
         <h1 class="section-title">Our Services</h1>
@@ -84,7 +84,7 @@ include_once("../MyLibrary.php");
         </p>
 
         <div class="tempretureDisplay">
-            
+
         </div>
     </section>
 

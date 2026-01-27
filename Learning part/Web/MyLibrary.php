@@ -24,6 +24,24 @@ if (!isset($_SESSION["Admin"])) {
 if (!isset($_SESSION["SecurityAccess"])) {
     $_SESSION["SecurityAccess"] = false;
 }
+function userHasCollections(int $userId): bool
+{
+    global $connection;
+    // Prepare the statement
+    $stmt = mysqli_prepare($connection, "SELECT 1 FROM Collection WHERE Creator_ID = ? LIMIT 1");
+    if (!$stmt) {
+        return false; // failed to prepare
+    }
+    // Bind the parameter
+    mysqli_stmt_bind_param($stmt, 'i', $userId);
+    // Execute
+    mysqli_stmt_execute($stmt);
+    // Store result to get number of rows
+    mysqli_stmt_store_result($stmt);
+    $hasCollections = mysqli_stmt_num_rows($stmt) > 0;
+    return $hasCollections;
+}
+
 
 /* user info from DB */
 function getUserInfo($username)
@@ -86,23 +104,33 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     echo json_encode($stationDetails);
 }
 if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
+    $CollectionDetails = [];
+    if (!isset($_SESSION["username"])) {
+        echo json_encode($CollectionDetails);
+        exit;
+    }
     $MyInfo = getUserInfo($_SESSION["username"]);
+    if (!$MyInfo || !isset($MyInfo['UserID'])) {
+        echo json_encode($CollectionDetails);
+        exit;
+    }
     $MyID = $MyInfo['UserID'];
-    $CollectionInfo = $connection->prepare("select * from Collection where Creator_ID = ?");
+    $CollectionInfo = $connection->prepare(
+        "SELECT Collection_id, Name FROM Collection WHERE Creator_ID = ?"
+    );
     $CollectionInfo->bind_param('i', $MyID);
     $CollectionInfo->execute();
     $result = $CollectionInfo->get_result();
-    $CollectionDetails = [];
     while ($row = $result->fetch_assoc()) {
-        $Collection_id = $row['Collection_id'];
-        $Collection_name = $row['Name'];
         $CollectionDetails[] = [
-            "Collection_id" => $Collection_id,
-            "Collection_name" => $Collection_name,
+            "Collection_id"   => $row['Collection_id'],
+            "Collection_name" => $row['Name'],
         ];
     }
     echo json_encode($CollectionDetails);
+    exit;
 }
+
 
 
 if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'])) {
@@ -249,8 +277,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
     echo json_encode($measurementsArray);
     exit;
 }
-/* save changes of user credentials */
-//if (isset(""));
+    /* save changes of user credentials */;
 
 function NavigationBarE()
 {
@@ -264,6 +291,10 @@ function NavigationBarE()
                 <li><a href="index.php#About">About</a></li>
                 <li><a href="index.php#Service">Service</a></li>
                 <li><a href="index.php#Dashboard">Dashboard</a></li>
+                <?php $MyInfo = getUserInfo($_SESSION['username']);
+                if ($MyInfo && userHasCollections($MyInfo['UserID'])) {
+                    echo '<li><a href="./Collection.php">My Collection</a></li>';
+                } ?>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
         </div>

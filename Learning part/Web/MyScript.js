@@ -11,6 +11,7 @@ function start() {
 
   PageScrollDetector();
   DisplayStationData();
+  loadCollectionLoad();
 
   $("#goToLogin").on("click", function () {
     window.location.href = "./sign_in_up.php";
@@ -271,7 +272,6 @@ function loadMeasurements(stationId, start, end) {
     },
     "json",
   );
-  $("#createCollectionBtn").css("float", "right");
 }
 
 function DisplayStationData() {
@@ -322,7 +322,7 @@ function DisplayStationData() {
   selectBarStations.append(optionDefaultStations);
 
   // ===== Select Dropdown for Collection =====
-  const selectBarCollection = $("<select>").attr("id", "selectStation2");
+  const selectBarCollection = $("<select>").attr("id", "selectBarCollection");
   const optionDefaultCollecton = $("<option>")
     .attr("value", "0")
     .text("-- Collections --");
@@ -380,6 +380,19 @@ function DisplayStationData() {
     "../MyLibrary.php",
     { displayCollections: true },
     function (Collections) {
+      selectBarCollection.empty(); // reset dropdown
+
+      if (!Collections || Collections.length === 0) {
+        selectBarCollection.append(
+          $("<option>").val("").text("No collections available"),
+        );
+        return;
+      } else {
+        selectBarCollection.append(
+          $("<option>").val("0").text("-- Collections --"),
+        );
+      }
+
       Collections.forEach((Collection) => {
         selectBarCollection.append(
           $("<option>")
@@ -392,6 +405,7 @@ function DisplayStationData() {
   ).fail(function (jqXHR, textStatus, errorThrown) {
     console.error("Failed to load Collections:", textStatus, errorThrown);
   });
+
   // ===== Display Button Click Event =====
   $(document)
     .off("click", "#displayDateBtn")
@@ -437,6 +451,10 @@ function DisplayStationData() {
       console.log("Create collection with data:", measurements);
       let collectionName = prompt("Collection name: ");
       let collectionDescription = prompt("A description: ");
+      if (collectionName == "") {
+        alert("Error, A collection must have a name");
+        return;
+      }
       console.log(collectionName);
       // if you want to send a array it must be properly formatted
       ($.post(
@@ -445,12 +463,14 @@ function DisplayStationData() {
           measurementValues: JSON.stringify(measurements),
           CollecionN: collectionName,
           CollecionD: collectionDescription,
+          ActiveNav: true,
         },
         function (serverAnswer) {
           console.log(serverAnswer);
         },
       ),
         "json");
+      location.reload();
     });
 }
 // unassign my station
@@ -463,4 +483,156 @@ function removeMyStation(targetStationId) {
       window.location.href = "./StationRegistration.php";
     },
   );
+}
+
+/* Collection.php */
+function loadCollectionLoad() {
+  // Collections switcher functionality
+  $(document).ready(function () {
+    // Cache elements for better performance
+    const $myTab = $(".Collections_container");
+    const $sharedTab = $(".Collections_shared_container");
+    const $sectionInfo = $("#sectionInfo");
+
+    // Tab click handlers - using your pattern
+    $myTab.on("click", function () {
+      switchSection("my");
+    });
+
+    $sharedTab.on("click", function () {
+      switchSection("shared");
+    });
+
+ 
+
+    $("#viewCollectionsBtn").on("click", function () {
+      if ($myTab.hasClass("active")) {
+        // View personal collections
+        alert("Viewing personal collections...");
+        // You would call DisplayCollections() or similar function
+      } else {
+        // View shared collections
+        alert("Viewing shared collections...");
+      }
+    });
+
+    $("#exportBtn").on("click", function () {
+      alert("Export feature would be implemented here");
+      // You would call your export function
+    });
+
+    // Function to switch sections - similar to your pattern
+    function switchSection(section) {
+      // Remove active class from all tabs
+      $myTab.removeClass("active");
+      $sharedTab.removeClass("active");
+
+      if (section === "my") {
+        $myTab.addClass("active");
+        $sectionInfo.html(`
+                        <h2>My Collections</h2>
+                        <p>Here you can view and manage all your personal collections. Add new items, edit existing ones, or explore your past collections.</p>
+                        
+                        <ul class="collections-list">
+                            <li>Create and organize collections</li>
+                            <li>Add measurements from stations</li>
+                            <li>Edit collection details</li>
+                            <li>Export collection data</li>
+                        </ul>
+                        
+                        <div class="collection-actions">
+                            <button class="collection-btn btn-save" id="createCollectionBtn">
+                                <i class="fas fa-plus"></i> Create Collection
+                            </button>
+                            <button class="collection-btn btn-approve" id="viewCollectionsBtn">
+                                <i class="fas fa-eye"></i> View All
+                            </button>
+                            <button class="collection-btn btn-cancel" id="exportBtn">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    `);
+      } else {
+        $sharedTab.addClass("active");
+        $sectionInfo.html(`
+                        <h2>Shared Collections</h2>
+                        <p>This section shows collections shared with you by other users. You can view, comment, or collaborate with others.</p>
+                        
+                        <ul class="collections-list">
+                            <li>View collections shared with you</li>
+                            <li>Collaborate with other users</li>
+                            <li>See who shared each collection</li>
+                            <li>Track changes and updates</li>
+                        </ul>
+                        
+                        <div class="collection-actions">
+                            <button class="collection-btn btn-save" id="createCollectionBtn">
+                                <i class="fas fa-plus"></i> Create Shared
+                            </button>
+                            <button class="collection-btn btn-approve" id="viewCollectionsBtn">
+                                <i class="fas fa-users"></i> View Shared
+                            </button>
+                            <button class="collection-btn btn-cancel" id="exportBtn">
+                                <i class="fas fa-share-alt"></i> Share More
+                            </button>
+                        </div>
+                    `);
+      }
+
+      // Re-attach event handlers to newly created buttons
+      reattachEventHandlers();
+    }
+
+    // Function to reattach event handlers after content changes
+    function reattachEventHandlers() {
+      $("#createCollectionBtn")
+        .off("click")
+        .on("click", function () {
+          if ($myTab.hasClass("active")) {
+            alert("Creating new personal collection...");
+          } else {
+            alert("Creating new shared collection...");
+          }
+        });
+
+      $("#viewCollectionsBtn")
+        .off("click")
+        .on("click", function () {
+          if ($myTab.hasClass("active")) {
+            alert("Viewing personal collections...");
+          } else {
+            alert("Viewing shared collections...");
+          }
+        });
+
+      $("#exportBtn")
+        .off("click")
+        .on("click", function () {
+          alert("Export feature would be implemented here");
+        });
+    }
+
+    // Optional: Keyboard navigation (similar to your patterns)
+    $(document).on("keydown", function (event) {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        const currentSection = $myTab.hasClass("active") ? "my" : "shared";
+        if (event.key === "ArrowLeft") {
+          switchSection("my");
+        } else if (event.key === "ArrowRight") {
+          switchSection("shared");
+        }
+      }
+    });
+  });
+
+  // If you want to integrate with your existing start() function
+  function initializeCollections() {
+    // This would be called from your start() function
+    console.log("Collections page initialized");
+
+    // You could load collections data here
+    // $.post("../MyLibrary.php", { displayCollections: true }, function(data) {
+    //     // Process and display collections
+    // }, "json");
+  }
 }
