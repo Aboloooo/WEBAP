@@ -527,28 +527,37 @@ function loadCollectionLoad() {
 
       if (section === "my") {
         $myTab.addClass("active");
+        /* check if there is collection owned by current user */
+        $.post(
+          "..//MyLibrary.php",
+          { DisplayCollection: true },
+          function (Collection) {
+            console.log(Collection);
+            window.location.href = "./Collection.php";
+          },
+        );
         $sectionInfo.html(`
-                        <h2>My Collections</h2>
-                        <p>Here you can view and manage all your personal collections. Add new items, edit existing ones, or explore your past collections.</p>
-                        
-                        <ul class="collections-list">
-                            <li>Create and organize collections</li>
-                            <li>Add measurements from stations</li>
-                            <li>Edit collection details</li>
-                            <li>Export collection data</li>
-                        </ul>
-                        
-                        <div class="collection-actions">
-                            <button class="collection-btn btn-save" id="createCollectionBtn">
-                                <i class="fas fa-plus"></i> Create Collection
-                            </button>
-                            <button class="collection-btn btn-approve" id="viewCollectionsBtn">
-                                <i class="fas fa-eye"></i> View All
-                            </button>
-                            <button class="collection-btn btn-cancel" id="exportBtn">
-                                <i class="fas fa-download"></i> Export
-                            </button>
-                        </div>
+                          
+                          <p>Here you can view and manage all your personal collections. Add new items, edit existing ones, or explore your past collections.</p>
+
+                          <table id="measurementsTable" class="collectionTable">
+                            <tr>
+                              <th>collection name</th>
+                            </tr>
+                            <tr>
+                              <th>collection desc</th>
+                            </tr>
+                            <tr>
+                              <td>Measurement</td>
+                              <td>Timestamp</td>
+                              <td>Humidity</td>
+                              <td>Air pressure</td>
+                              <td>Light intensity</td>
+                              <td>Air quality</td>
+                              <td>Station id</td>
+                              <td>etc</td>
+                            </tr>
+                          </table>
                     `);
       } else {
         $sharedTab.addClass("active");

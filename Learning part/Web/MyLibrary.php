@@ -87,6 +87,35 @@ if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $
 
     print("Update successful");
 }
+
+if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
+    $MyInfo = getUserInfo($_SESSION["username"]);
+    $MyID = $MyInfo['UserID'];
+    $NoCollectionFound = "No Collection Found!";
+    $collection_array = [];
+    $statement = "SELECT c.Name, c.Description, m.*
+                  FROM Collection c 
+                    JOIN CollectionContains cc ON c.Collection_id = cc.Collection_id
+                    JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
+                    WHERE c.Creator_ID = ?;";
+    $collectionsInfo = $connection->prepare($statement);
+    $collectionsInfo->bind_param('i', $MyID);
+    $collectionsInfo->execute();
+    $result = $collectionsInfo->get_result();
+    if ($result->num_rows > 0) {
+        $collection_array[] = [
+            "Collection_id" => $row['Collection_id'],
+            "Collection_name" => $row['Name'],
+            "Collection_description" => $row['description'],
+        ];
+    } else {
+        $collection_array[] = [
+            "No Collection" => $NoCollectionFound,
+        ];
+    }
+    echo json_encode($collection_array);
+}
+
 if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     $stationInfo = $connection->prepare("SELECT s.Station_id, s.Name FROM Station s JOIN Users u ON s.Owner_id = u.UserID where username = ?");
     $stationInfo->bind_param('s', $_SESSION["username"]);

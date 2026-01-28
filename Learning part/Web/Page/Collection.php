@@ -30,28 +30,7 @@ include_once("../MyLibrary.php");
         <!-- Section information -->
         <div class="section_info" id="sectionInfo">
             <h2>My Collections</h2>
-            <p>Here you can view and manage all your personal collections. Add new items, edit existing ones, or explore your past collections.</p>
-
-            <ul class="collections-list">
-                <li>Create and organize collections</li>
-                <li>Add measurements from stations</li>
-                <li>Edit collection details</li>
-                <li>Export collection data</li>
-            </ul>
-
-            <div class="collection-actions">
-                <button class="collection-btn btn-save" id="createCollectionBtn">
-                    <i class="fas fa-plus"></i> Create Collection
-                </button>
-                <button class="collection-btn btn-approve" id="viewCollectionsBtn">
-                    <i class="fas fa-eye"></i> View All
-                </button>
-                <button class="collection-btn btn-cancel" id="exportBtn">
-                    <i class="fas fa-download"></i> Export
-                </button>
-            </div>
         </div>
-    </div>
 
 </body>
 
