@@ -503,8 +503,6 @@ function loadCollectionLoad() {
       switchSection("shared");
     });
 
- 
-
     $("#viewCollectionsBtn").on("click", function () {
       if ($myTab.hasClass("active")) {
         // View personal collections
@@ -584,55 +582,17 @@ function loadCollectionLoad() {
     }
 
     // Function to reattach event handlers after content changes
-    function reattachEventHandlers() {
-      $("#createCollectionBtn")
-        .off("click")
-        .on("click", function () {
-          if ($myTab.hasClass("active")) {
-            alert("Creating new personal collection...");
-          } else {
-            alert("Creating new shared collection...");
-          }
-        });
+    function reattachEventHandlers() {}
 
-      $("#viewCollectionsBtn")
-        .off("click")
-        .on("click", function () {
-          if ($myTab.hasClass("active")) {
-            alert("Viewing personal collections...");
-          } else {
-            alert("Viewing shared collections...");
-          }
-        });
+    // If you want to integrate with your existing start() function
+    function initializeCollections() {
+      // This would be called from your start() function
+      console.log("Collections page initialized");
 
-      $("#exportBtn")
-        .off("click")
-        .on("click", function () {
-          alert("Export feature would be implemented here");
-        });
+      // You could load collections data here
+      // $.post("../MyLibrary.php", { displayCollections: true }, function(data) {
+      //     // Process and display collections
+      // }, "json");
     }
-
-    // Optional: Keyboard navigation (similar to your patterns)
-    $(document).on("keydown", function (event) {
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-        const currentSection = $myTab.hasClass("active") ? "my" : "shared";
-        if (event.key === "ArrowLeft") {
-          switchSection("my");
-        } else if (event.key === "ArrowRight") {
-          switchSection("shared");
-        }
-      }
-    });
   });
-
-  // If you want to integrate with your existing start() function
-  function initializeCollections() {
-    // This would be called from your start() function
-    console.log("Collections page initialized");
-
-    // You could load collections data here
-    // $.post("../MyLibrary.php", { displayCollections: true }, function(data) {
-    //     // Process and display collections
-    // }, "json");
-  }
 }
