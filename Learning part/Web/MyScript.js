@@ -538,10 +538,62 @@ function loadCollectionLoad() {
         $.post(
           "..//MyLibrary.php",
           { DisplayCollection: true },
-          function (Collection) {
-            console.log(Collection);
-            /*   window.location.href = "./Collection.php"; */
+          function (collections) {
+            // clear previous content
+            $sectionInfo.empty();
+
+            // if no collections
+            if (collections.message) {
+              $sectionInfo.html(`<p>${collections.message}</p>`);
+              return;
+            }
+
+            // loop through collections
+            collections.forEach((collection) => {
+              // collection header
+              let tableHtml = `
+        <div class="collection-block">
+          <h2>${collection.Name}</h2>
+          <p>${collection.Description}</p>
+
+          <table class="collectionTable">
+            <thead>
+              <tr>
+                <th>Measurement ID</th>
+                <th>Timestamp</th>
+                <th>Humidity</th>
+                <th>Air pressure</th>
+                <th>Light intensity</th>
+                <th>Air quality</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+              // rows
+              collection.Measurements.forEach((m) => {
+                tableHtml += `
+          <tr>
+            <td>${m.Measurement_id}</td>
+            <td>${m.Timestamp}</td>
+            <td>${m.Humidity}</td>
+            <td>${m.Air_pressure}</td>
+            <td>${m.Light_intensity}</td>
+            <td>${m.Air_quality}</td>
+          </tr>
+        `;
+              });
+
+              tableHtml += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+              $sectionInfo.append(tableHtml);
+            });
           },
+          "json",
         );
       } else {
         $sharedTab.addClass("active");

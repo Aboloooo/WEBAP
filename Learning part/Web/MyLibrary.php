@@ -127,8 +127,11 @@ if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
 
         $collections[$cid]['Measurements'][] = [
             "Measurement_id" => $row['Measurement_id'],
-            "Value" => $row['Value'],
-            "Date" => $row['Date']
+            "Timestamp" => $row['Timestamp'],
+            "Humidity" => $row['Humidity'],
+            "Air_pressure" => $row['Air_pressure'],
+            "Light_intensity" => $row['Light_intensity'],
+            "Air_quality" => $row['Air_quality']
         ];
     }
 
@@ -138,7 +141,6 @@ if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
         echo json_encode(array_values($collections));
     }
 }
-
 
 if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     $stationInfo = $connection->prepare("SELECT s.Station_id, s.Name FROM Station s JOIN Users u ON s.Owner_id = u.UserID where username = ?");
@@ -156,6 +158,7 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     }
     echo json_encode($stationDetails);
 }
+
 if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
     $CollectionDetails = [];
     if (!isset($_SESSION["username"])) {
