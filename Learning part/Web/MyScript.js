@@ -145,9 +145,14 @@ function removeFriend(target_user) {
     },
   );
 }
-function createFriendCard(friend) {
-  let card = $("<div>").addClass("friendCard");
+// ====== Create Friend Card Function ======
+function createFriendCard(friend, allowMultiSelect = false) {
+  let card = $("<div>").addClass("friendCard").data("id", friend.id);
+
   let defaultProfileImg = "../img/User.png";
+
+  // Selection square for multi-select
+  let selectBox = $("<div>").addClass("selectBox");
 
   let avatar = $("<img>")
     .addClass("friendAvatar")
@@ -156,22 +161,40 @@ function createFriendCard(friend) {
 
   let info = $("<div>").addClass("friendInfo");
   let username = $("<span>").addClass("friendUsername").text(friend.username);
-
   let email = $("<span>").addClass("friendEmail").text(friend.email);
 
   info.append(username, email);
-
+  const pagePath = decodeURIComponent(window.location.pathname);
+  const isCollectionPage = pagePath.endsWith("/Collection.php");
+  // Remove friend button
   let removeBtn = $("<button>")
     .addClass("removeFriendBtn")
     .html("&times;")
+    .toggle(!isCollectionPage)
     .on("click", function (e) {
-      e.stopPropagation(); // prevent closing modal
+      e.stopPropagation(); // Prevent selecting card
       removeFriend(friend.id);
       card.remove();
+      updateShareButton(); // update selection count if necessary
     });
 
-  card.append(avatar, info, removeBtn);
+  // Multi-select behavior
+  if (allowMultiSelect) {
+    card.addClass("selectable");
+    card.on("click", function () {
+      $(this).toggleClass("selected");
+      updateShareButton();
+    });
+  }
+
+  card.append(selectBox, avatar, info, removeBtn);
   return card;
+}
+
+// ====== Update Share Button State ======
+function updateShareButton() {
+  const selectedCount = $(".friendCard.selected").length;
+  $(".confirmShareWithFriendsBtn").prop("disabled", selectedCount === 0);
 }
 
 function MessageAll() {
@@ -191,7 +214,18 @@ function MessageAll() {
   - for each new message there must be a notification in message all option 
   */
 }
+function updateShareButton() {
+  const selectedCount = $(".friendCard.selected").length;
+  $(".confirmShareWithFriendsBtn").prop("disabled", selectedCount === 0);
+}
+
 function DisplayFriends() {
+  const pagePath = decodeURIComponent(window.location.pathname);
+  const isCollectionPage = pagePath.endsWith("/Collection.php");
+
+  const allowMultiSelect =
+    pagePath.includes("library") || pagePath.includes("post");
+
   let blurDiv = $("<div>").addClass("blur-background");
   let sectionContent = $("<section>").addClass("content");
 
@@ -200,34 +234,37 @@ function DisplayFriends() {
     .addClass("exitChatBox")
     .on("click", CloseChatBox);
 
-  sectionContent.append(exitBtn);
-  // Example friend data (replace with AJAX)
-  /* let friends = [
-    {
-      id: 1,
-      username: "john_doe",
-      email: "john@example.com",
-      image: null,
-    },
-    {
-      id: 2,
-      username: "jane_smith",
-      email: "jane@example.com",
-      image: null,
-    },
-  ]; */
-  console.log("btn friends clicked");
+  let friendsList = $("<div>").addClass("friendsList");
 
+  let confirmBtn = $("<button>")
+    .text("share")
+    .addClass("confirmShareWithFriendsBtn")
+    .prop("disabled", true)
+    .toggle(isCollectionPage)
+    .on("click", function () {
+      let selectedIds = [];
+      friendsList.find(".friendCard.selected").each(function () {
+        selectedIds.push($(this).data("id"));
+      });
+
+      console.log("Selected friends:", selectedIds);
+      // You can send this array to the backend
+      // $.post("../MyLibrary.php", { shareWith: selectedIds }, ...);
+    });
+
+  sectionContent.append(exitBtn, confirmBtn, friendsList);
+
+  // Fetch friends from backend
   $.post(
     "../MyLibrary.php",
     { showFriends: "true" },
     function (friends) {
-      console.log(friends); // should log an array
       friends.forEach((friend) => {
-        sectionContent.append(createFriendCard(friend));
+        friendsList.append(createFriendCard(friend, isCollectionPage));
       });
+      updateShareButton(); // enable/disable Share button based on initial selection
     },
-    "json", // <-- important
+    "json",
   );
 
   blurDiv.on("click", CloseChatBox);
@@ -488,12 +525,31 @@ function removeMyStation(targetStationId) {
     },
   );
 }
-/* share this collection (vlaue of btn is the collection id)*/
+// share this collection (vlaue of btn is the collection id)
 $(document).on("click", ".shareCollectionBtn", function () {
-  const btnValue = $(this).val();
-  alert(btnValue);
+  DisplayFriends();
 });
 
+$(document).on("click", ".deleteCollectionBtn", function (e) {
+  e.preventDefault();
+  let remove = false;
+  if (
+    window.confirm("This collection will be removed permanently. Continue?")
+  ) {
+    remove = true;
+  }
+  if (remove) {
+    const btnValue = $(this).val();
+    $.post(
+      "../MyLibrary.php",
+      { targetCollection: btnValue },
+      function (removeResponse) {
+        console.log(removeResponse);
+        location.reload();
+      },
+    );
+  }
+});
 /* Collection.php */
 function loadCollectionLoad() {
   // Collections switcher functionality
@@ -520,29 +576,7 @@ function loadCollectionLoad() {
 
       if (section === "my") {
         $myTab.addClass("active");
-        /* check if there is collection owned by current user */
-        $sectionInfo.html(`
-                          <p>Here you can view and manage all your personal collections. Add new items, edit existing ones, or explore your past collections.</p>
 
-                          <table id="measurementsTable" class="collectionTable">
-                            <tr>
-                              <th>collection name</th>
-                            </tr>
-                            <tr>
-                              <th>collection desc</th>
-                            </tr>
-                            <tr>
-                              <td>Measurement</td>
-                              <td>Timestamp</td>
-                              <td>Humidity</td>
-                              <td>Air pressure</td>
-                              <td>Light intensity</td>
-                              <td>Air quality</td>
-                              <td>Station id</td>
-                              <td>etc</td>
-                            </tr>
-                          </table>
-                    `);
         $.post(
           "..//MyLibrary.php",
           { DisplayCollection: true },
@@ -576,10 +610,9 @@ function loadCollectionLoad() {
               </tr>
             </thead>
             <tbody>
-            <button class = 'shareCollectionBtn' value=${collection.Collection_id}>Share</button>
-            <button class = 'deleteCollectionBtn' value=${collection.Collection_id}>Remove</button>
+            <button class='shareCollectionBtn' value=${collection.Collection_id}>Share</button>
+            <button class='deleteCollectionBtn' value=${collection.Collection_id}>Remove</button>
       `;
-
               // rows
               collection.Measurements.forEach((m) => {
                 tableHtml += `

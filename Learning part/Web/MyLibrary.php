@@ -64,6 +64,19 @@ function getUserInfo($username)
     } */
 }
 
+/* Remove or delete my collection */
+if (isset($_POST['targetCollection'])) {
+    $removeCollectionContains = $connection->prepare("DELETE FROM CollectionContains WHERE Collection_id = ?");
+    $removeCollectionContains->bind_param('i', $_POST['targetCollection']);
+    if ($removeCollectionContains->execute()) {
+        $removeCollection = $connection->prepare("DELETE FROM Collection WHERE Collection_id = ?");
+        $removeCollection->bind_param('i', $_POST['targetCollection']);
+        if ($removeCollection->execute()) {
+            echo "Collection removed successfully!";
+        }
+    }
+}
+
 /* logout */
 if (isset($_POST["logoutBtn"])) {
     session_unset();

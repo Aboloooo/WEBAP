@@ -1089,6 +1089,11 @@ button:disabled {
     background 0.2s ease,
     box-shadow 0.2s ease;
 }
+.friendCard.selected {
+  border-color: var(--primary-color);
+  background: var(--bg-light);
+  box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.3);
+}
 
 .friendCard:hover {
   background: #fff;
@@ -1118,6 +1123,20 @@ button:disabled {
 .friendEmail {
   font-size: 13px;
   color: #666;
+}
+.confirmShareWithFriendsBtn {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary-gradient);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+.confirmShareWithFriendsBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .removeFriendBtn {
