@@ -451,10 +451,11 @@ function DisplayStationData() {
       console.log("Create collection with data:", measurements);
       let collectionName = prompt("Collection name: ");
       let collectionDescription = prompt("A description: ");
-      if (collectionName == "") {
-        alert("Error, A collection must have a name");
+      if (!collectionName || !collectionName.trim()) {
+        alert("Error, a collection must have a name");
         return;
       }
+
       console.log(collectionName);
       // if you want to send a array it must be properly formatted
       ($.post(
@@ -467,10 +468,10 @@ function DisplayStationData() {
         },
         function (serverAnswer) {
           console.log(serverAnswer);
+          location.reload();
         },
       ),
         "json");
-      location.reload();
     });
 }
 // unassign my station
@@ -493,7 +494,7 @@ function loadCollectionLoad() {
     const $myTab = $(".Collections_container");
     const $sharedTab = $(".Collections_shared_container");
     const $sectionInfo = $("#sectionInfo");
-
+    switchSection("my"); // default section to display
     // Tab click handlers - using your pattern
     $myTab.on("click", function () {
       switchSection("my");
@@ -501,22 +502,6 @@ function loadCollectionLoad() {
 
     $sharedTab.on("click", function () {
       switchSection("shared");
-    });
-
-    $("#viewCollectionsBtn").on("click", function () {
-      if ($myTab.hasClass("active")) {
-        // View personal collections
-        alert("Viewing personal collections...");
-        // You would call DisplayCollections() or similar function
-      } else {
-        // View shared collections
-        alert("Viewing shared collections...");
-      }
-    });
-
-    $("#exportBtn").on("click", function () {
-      alert("Export feature would be implemented here");
-      // You would call your export function
     });
 
     // Function to switch sections - similar to your pattern
@@ -528,16 +513,7 @@ function loadCollectionLoad() {
       if (section === "my") {
         $myTab.addClass("active");
         /* check if there is collection owned by current user */
-        $.post(
-          "..//MyLibrary.php",
-          { DisplayCollection: true },
-          function (Collection) {
-            console.log(Collection);
-            window.location.href = "./Collection.php";
-          },
-        );
         $sectionInfo.html(`
-                          
                           <p>Here you can view and manage all your personal collections. Add new items, edit existing ones, or explore your past collections.</p>
 
                           <table id="measurementsTable" class="collectionTable">
@@ -559,6 +535,14 @@ function loadCollectionLoad() {
                             </tr>
                           </table>
                     `);
+        $.post(
+          "..//MyLibrary.php",
+          { DisplayCollection: true },
+          function (Collection) {
+            console.log(Collection);
+            /*   window.location.href = "./Collection.php"; */
+          },
+        );
       } else {
         $sharedTab.addClass("active");
         $sectionInfo.html(`
