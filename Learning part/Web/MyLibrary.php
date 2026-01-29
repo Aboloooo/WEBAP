@@ -213,20 +213,12 @@ if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'
             "INSERT INTO CollectionContains (Collection_id, Measurement_id) VALUES (?, ?)"
         );
 
-        $updateMeasurement = $connection->prepare(
-            "UPDATE Measurement SET Collection_id = ? WHERE Measurement_id = ?"
-        );
-
         foreach ($inputs as $stationId) {
             $Measurement_id = $stationId[0];
 
             // insert relation
             $insertCC->bind_param('ii', $collectionId, $Measurement_id);
             $insertCC->execute();
-
-            // update measurement
-            $updateMeasurement->bind_param('ii', $collectionId, $Measurement_id);
-            $updateMeasurement->execute();
 
             echo "Collection {$_POST['CollecionN']} now contains measurement ID: {$Measurement_id}\n";
         }
@@ -351,7 +343,6 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
             "Light_intensity"  => $row['Light_intensity'],
             "Air_quality"      => $row['Air_quality'],
             "Station_id"       => $row['Station_id'],
-            "Collection_id"    => $row['Collection_id'], // ✅ fixed key
         ];
     }
 

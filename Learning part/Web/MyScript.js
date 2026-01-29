@@ -252,6 +252,8 @@ function loadMeasurements(stationId, start, end) {
       filterDateEnd: end,
     },
     function (measurements) {
+      console.log(measurements);
+
       $("#measurementsTable tbody").remove();
       let tbody = $("<tbody>").addClass("");
 
@@ -367,9 +369,10 @@ function DisplayStationData() {
       });
 
       const defaultStationChose = stations.length ? stations[0].stationId : "0";
-      const defaultDate = $("#meeting-time").val();
+      const defaultDateStart = $("#meeting-time-start").val();
+      const defaultDateEnd = $("#meeting-time-end").val();
 
-      loadMeasurements(defaultStationChose, defaultDate);
+      loadMeasurements(defaultStationChose, defaultDateStart, defaultDateEnd);
     },
     "json",
   ).fail(function (jqXHR, textStatus, errorThrown) {
@@ -485,6 +488,11 @@ function removeMyStation(targetStationId) {
     },
   );
 }
+/* share this collection (vlaue of btn is the collection id)*/
+$(document).on("click", ".shareCollectionBtn", function () {
+  const btnValue = $(this).val();
+  alert(btnValue);
+});
 
 /* Collection.php */
 function loadCollectionLoad() {
@@ -552,11 +560,11 @@ function loadCollectionLoad() {
             collections.forEach((collection) => {
               // collection header
               let tableHtml = `
-        <div class="collection-block">
+        <div class="collection-block displayTable">
           <h2>${collection.Name}</h2>
           <p>${collection.Description}</p>
 
-          <table class="collectionTable">
+          <table id="measurementsTable">
             <thead>
               <tr>
                 <th>Measurement ID</th>
@@ -568,6 +576,8 @@ function loadCollectionLoad() {
               </tr>
             </thead>
             <tbody>
+            <button class = 'shareCollectionBtn' value=${collection.Collection_id}>Share</button>
+            <button class = 'deleteCollectionBtn' value=${collection.Collection_id}>Remove</button>
       `;
 
               // rows
