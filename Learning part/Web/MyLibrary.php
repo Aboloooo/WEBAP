@@ -89,32 +89,56 @@ if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $
 }
 
 if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
+
     $MyInfo = getUserInfo($_SESSION["username"]);
     $MyID = $MyInfo['UserID'];
-    $NoCollectionFound = "No Collection Found!";
-    $collection_array = [];
-    $statement = "SELECT c.Name, c.Description, m.*
-                  FROM Collection c 
-                    JOIN CollectionContains cc ON c.Collection_id = cc.Collection_id
-                    JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
-                    WHERE c.Creator_ID = ?;";
-    $collectionsInfo = $connection->prepare($statement);
-    $collectionsInfo->bind_param('i', $MyID);
-    $collectionsInfo->execute();
-    $result = $collectionsInfo->get_result();
-    if ($result->num_rows > 0) {
-        $collection_array[] = [
-            "Collection_id" => $row['Collection_id'],
-            "Collection_name" => $row['Name'],
-            "Collection_description" => $row['description'],
-        ];
-    } else {
-        $collection_array[] = [
-            "No Collection" => $NoCollectionFound,
+
+    $statement = "
+        SELECT 
+            c.Collection_id,
+            c.Name,
+            c.Description,
+            m.*
+        FROM Collection c
+        JOIN CollectionContains cc ON c.Collection_id = cc.Collection_id
+        JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
+        WHERE c.Creator_ID = ?
+        ORDER BY c.Collection_id
+    ";
+
+    $stmt = $connection->prepare($statement);
+    $stmt->bind_param('i', $MyID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $collections = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $cid = $row['Collection_id'];
+
+        if (!isset($collections[$cid])) {
+            $collections[$cid] = [
+                "Collection_id" => $cid,
+                "Name" => $row['Name'],
+                "Description" => $row['Description'],
+                "Measurements" => []
+            ];
+        }
+
+        $collections[$cid]['Measurements'][] = [
+            "Measurement_id" => $row['Measurement_id'],
+            "Value" => $row['Value'],
+            "Date" => $row['Date']
         ];
     }
-    echo json_encode($collection_array);
+
+    if (empty($collections)) {
+        echo json_encode(["message" => "No Collection Found!"]);
+    } else {
+        echo json_encode(array_values($collections));
+    }
 }
+
 
 if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     $stationInfo = $connection->prepare("SELECT s.Station_id, s.Name FROM Station s JOIN Users u ON s.Owner_id = u.UserID where username = ?");
