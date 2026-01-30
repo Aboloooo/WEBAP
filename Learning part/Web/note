@@ -1,7 +1,3 @@
-Measurements
-
-- add measurements to a collection(add id of collection to measurement)
-
 Friends
 
 - WebChat
@@ -11,11 +7,4 @@ User
 
 - add a login btn
 
-Display selected collections in Dashboard 
-
-
-when creating collection the measurement must be updated too. to show to which collection belongs
-
-share and delete the collecion
-
-update to null measures which belongs to a collection in collectionContains and remove collection 
+Display shared Collections

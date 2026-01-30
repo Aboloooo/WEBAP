@@ -200,6 +200,77 @@ if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
     exit;
 }
 
+/* share Collection with Friends */
+if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
+    $user = getUserInfo($_SESSION['username']);
+    $sharedBy = $user['UserID'];
+
+    $targetToShare = $_POST['targetCollectionToShare'];
+    $FriendsToShareWith = $_POST['shareWith'];
+
+    /* find ID of each username */
+    $shareThisCollection = $connection->prepare("insert into CollectionShare value(?,?,?)");
+    foreach ($FriendsToShareWith as $shareWith) {
+        /* $shareWith is user id, I need the username itself */
+        $shareThisCollection->bind_param('iii', $targetToShare, $sharedBy, $shareWith);
+        $shareThisCollection->execute();
+    }
+    echo "Collection shared successfully";
+}
+
+/* Return all the Collection related to ME */
+if (isset($_POST['FetchSharedCollection']) && $_POST['FetchSharedCollection']) {
+    $user = getUserInfo($_SESSION['username']);
+    $currentUserID = $user['UserID'];
+    /* seperate collections shared with me and shared by me */
+    $sharedByMe = [];
+    $sharedWithMe = [];
+    $returnCollections = $connection->prepare("SELECT * FROM CollectionShare where Shared_by = ? OR Shared_with = ?");
+    $returnCollections->bind_param('ii', $currentUserID, $currentUserID);
+    $returnCollections->execute();
+    $result = $returnCollections->get_result();
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $Collection_id = $row['Collection_id'];
+            $shared_by_user_id = $row['Shared_by'];
+            $shared_with_user_id = $row['Shared_with'];
+            /* if i shared the collection */
+            if ($shared_by_user_id == $currentUserID) {
+                $sharedByMe[] = [
+                    "Collection_id" => $Collection_id,
+                    "Shared_by" => $shared_by_user_id,
+                    "Shared_with" => $shared_with_user_id,
+                ];
+            }
+            /* if someone else shared the collection */
+            if ($shared_with_user_id == $currentUserID) {
+                $sharedWithMe[] = [
+                    "Collection_id" => $Collection_id,
+                    "Shared_by" => $shared_by_user_id,
+                    "Shared_with" => $shared_with_user_id,
+                ];
+            }
+        }
+        $response = [
+            'success' => true,
+            'sharedByMe' => $sharedByMe,
+            'sharedWithMe' => $sharedWithMe,
+            'message' => [
+                'sharedByMe' => empty($sharedByMe) ? "No Collection Shared By You!" : count($sharedByMe) . " collection(s) shared by you",
+                'sharedWithMe' => empty($sharedWithMe) ? "No Collection Shared With You!" : count($sharedWithMe) . " collection(s) shared with you"
+            ]
+        ];
+        echo json_encode($response);
+    } else {
+        /* no rows found */
+        echo json_encode([
+            'success' => true,
+            'sharedByMe' => [],
+            'sharedWithMe' => [],
+            'message' => 'No shared collections found'
+        ]);
+    }
+}
 
 
 if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'])) {

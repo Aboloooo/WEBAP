@@ -28,9 +28,7 @@ include_once("../MyLibrary.php");
         </div>
 
         <!-- Section information -->
-        <div class="section_info" id="sectionInfo">
-            <h2>My Collections</h2>
-        </div>
+        <div class="section_info" id="sectionInfo"></div>
 
 </body>
 

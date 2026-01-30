@@ -249,7 +249,15 @@ function DisplayFriends() {
 
       console.log("Selected friends:", selectedIds);
       // You can send this array to the backend
-      // $.post("../MyLibrary.php", { shareWith: selectedIds }, ...);
+      let targetCollection = $(".shareCollectionBtn").val();
+      $.post(
+        "../MyLibrary.php",
+        { shareWith: selectedIds, targetCollectionToShare: targetCollection },
+        function (sharedResponse) {
+          alert(sharedResponse);
+          window.location.href = "./Collection.php";
+        },
+      );
     });
 
   sectionContent.append(exitBtn, confirmBtn, friendsList);
@@ -640,6 +648,14 @@ function loadCollectionLoad() {
         );
       } else {
         $sharedTab.addClass("active");
+        $.post(
+          "..//MyLibrary.php",
+          { FetchSharedCollection: true },
+          function (SharedCollections) {
+            /* return all the collections related to ME */
+            console.log(SharedCollections);
+          },
+        );
         $sectionInfo.html(`
                         <h2>Shared Collections</h2>
                         <p>This section shows collections shared with you by other users. You can view, comment, or collaborate with others.</p>
