@@ -13,3 +13,11 @@ Add a header for your list of Friends
 and show a output if there is no friend
 
 Chagne color of heading in FriendShip page
+
+
+Admin can
+    Create users
+    view all users
+    create station
+    view all stations
+    view all measurements

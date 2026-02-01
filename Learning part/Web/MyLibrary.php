@@ -207,106 +207,146 @@ if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
     $targetToShare = (int) $_POST['targetCollectionToShare'];
     $FriendsToShareWith = $_POST['shareWith'];
 
-    // Make sure it's an array
     if (!is_array($FriendsToShareWith)) {
         $FriendsToShareWith = [$FriendsToShareWith];
     }
 
-    $shareThisCollection = $connection->prepare("
+    $stmt = $connection->prepare("
         INSERT INTO CollectionShare (Collection_id, Shared_by, Shared_with)
         VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE Collection_id = Collection_id
     ");
 
-    $successCount = 0;
-    foreach ($FriendsToShareWith as $shareWith) {
-        $shareThisCollection->bind_param('iii', $targetToShare, $sharedBy, $shareWith);
-        if ($shareThisCollection->execute()) {
-            $successCount++;
+    $success = 0;
+    foreach ($FriendsToShareWith as $friendId) {
+        $stmt->bind_param('iii', $targetToShare, $sharedBy, $friendId);
+        if ($stmt->execute()) {
+            $success++;
         }
     }
 
-    echo "Shared collection with " . $successCount . " friend(s)";
+    echo "Shared with " . $success . " friend(s)";
     exit;
 }
 
+/* Stop sharing this collection */
+if (isset($_POST['CancelSharedCollection'])) {
+    $collectionId = (int)$_POST['CancelSharedCollection'];
+    $user = getUserInfo($_SESSION['username']);
+    $userId = $user['UserID'];
+
+    $stmt = $connection->prepare("
+        DELETE FROM CollectionShare 
+        WHERE Collection_id = ? AND Shared_by = ?
+    ");
+    $stmt->bind_param('ii', $collectionId, $userId);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Share canceled']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to cancel share']);
+    }
+    exit;
+}
+/* Return all the Collection related to ME */
 /* Return all the Collection related to ME */
 if (isset($_POST['FetchSharedCollection']) && $_POST['FetchSharedCollection']) {
     $user = getUserInfo($_SESSION['username']);
     $currentUserID = $user['UserID'];
 
-    $sharedByMe = [];
-    $sharedWithMe = [];
-
-    $stmt = $connection->prepare("
-        SELECT * 
-        FROM CollectionShare 
-        WHERE Shared_by = ? OR Shared_with = ?
-    ");
-    $stmt->bind_param('ii', $currentUserID, $currentUserID);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        if ($row['Shared_by'] == $currentUserID) $sharedByMe[] = $row;
-        if ($row['Shared_with'] == $currentUserID) $sharedWithMe[] = $row;
-    }
-
-    function getCollectionsWithMeasurementsForCollection($collectionID, $connection)
-    {
-        $sql = "
-        SELECT 
-            c.Collection_id, c.Name, c.Description, m.*
-        FROM Collection c
-        JOIN CollectionContains cc ON c.Collection_id = cc.Collection_id
-        JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
-        WHERE c.Collection_id = ?
-        ";
-        $stmt = $connection->prepare($sql);
-        $stmt->bind_param('i', $collectionID);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $collection = [];
-        while ($row = $result->fetch_assoc()) {
-            $cid = $row['Collection_id'];
-            if (!isset($collection[$cid])) {
-                $collection[$cid] = [
-                    "Collection_id" => $cid,
-                    "Name" => $row['Name'],
-                    "Description" => $row['Description'],
-                    "Measurements" => []
-                ];
-            }
-            $collection[$cid]['Measurements'][] = [
-                "Measurement_id" => $row['Measurement_id'],
-                "Timestamp" => $row['Timestamp'],
-                "Humidity" => $row['Humidity'],
-                "Air_pressure" => $row['Air_pressure'],
-                "Light_intensity" => $row['Light_intensity'],
-                "Air_quality" => $row['Air_quality']
-            ];
-        }
-        return $collection[$cid];
-    }
-
-    $sharedByMeCollections = [];
-    foreach ($sharedByMe as $share) {
-        $sharedByMeCollections[$share['Collection_id']] = getCollectionsWithMeasurementsForCollection($share['Collection_id'], $connection);
-    }
-
-    $sharedWithMeCollections = [];
-    foreach ($sharedWithMe as $share) {
-        $sharedWithMeCollections[$share['Collection_id']] = getCollectionsWithMeasurementsForCollection($share['Collection_id'], $connection);
-    }
-
-    echo json_encode([
+    $response = [
         'success' => true,
-        'sharedByMeCollections' => $sharedByMeCollections,
-        'sharedWithMeCollections' => $sharedWithMeCollections
-    ]);
+        'sharedByMeCollections' => [],
+        'sharedWithMeCollections' => []
+    ];
+
+    // Get collections shared BY me
+    $stmt1 = $connection->prepare("
+        SELECT cs.Collection_id, c.Name, c.Description 
+        FROM CollectionShare cs
+        JOIN Collection c ON cs.Collection_id = c.Collection_id
+        WHERE cs.Shared_by = ?
+    ");
+    $stmt1->bind_param('i', $currentUserID);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
+
+    while ($row = $result1->fetch_assoc()) {
+        $collectionData = getCollectionsWithMeasurementsForCollection($row['Collection_id'], $connection);
+        $response['sharedByMeCollections'][$row['Collection_id']] = $collectionData;
+    }
+
+    // Get collections shared WITH me
+    $stmt2 = $connection->prepare("
+        SELECT cs.Collection_id, c.Name, c.Description 
+        FROM CollectionShare cs
+        JOIN Collection c ON cs.Collection_id = c.Collection_id
+        WHERE cs.Shared_with = ?
+    ");
+    $stmt2->bind_param('i', $currentUserID);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+
+    while ($row = $result2->fetch_assoc()) {
+        $collectionData = getCollectionsWithMeasurementsForCollection($row['Collection_id'], $connection);
+        $response['sharedWithMeCollections'][$row['Collection_id']] = $collectionData;
+    }
+
+    echo json_encode($response);
+    exit;
 }
 
+// === ADD THIS MISSING FUNCTION ===
+function getCollectionsWithMeasurementsForCollection($collectionID, $connection)
+{
+    // First get collection info
+    $stmt1 = $connection->prepare("
+        SELECT c.Collection_id, c.Name, c.Description
+        FROM Collection c
+        WHERE c.Collection_id = ?
+    ");
+    $stmt1->bind_param('i', $collectionID);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
+
+    if ($result1->num_rows === 0) {
+        return null;
+    }
+
+    $collectionRow = $result1->fetch_assoc();
+
+    $collection = [
+        "Collection_id" => $collectionRow['Collection_id'],
+        "Name" => $collectionRow['Name'],
+        "Description" => $collectionRow['Description'],
+        "Measurements" => []
+    ];
+
+    // Get measurements for this collection
+    $stmt2 = $connection->prepare("
+        SELECT m.*
+        FROM CollectionContains cc
+        JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
+        WHERE cc.Collection_id = ?
+    ");
+    $stmt2->bind_param('i', $collectionID);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+
+    while ($row = $result2->fetch_assoc()) {
+        $collection['Measurements'][] = [
+            "Measurement_id" => $row['Measurement_id'],
+            "Timestamp" => $row['Timestamp'],
+            "Humidity" => $row['Humidity'],
+            "Air_pressure" => $row['Air_pressure'],
+            "Light_intensity" => $row['Light_intensity'],
+            "Air_quality" => $row['Air_quality']
+        ];
+    }
+
+    return $collection;
+}
+// === END OF ADDED FUNCTION ===
 
 
 if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'])) {

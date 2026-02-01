@@ -312,13 +312,13 @@ function DisplayStationData() {
   const DateAndTimeStart = $("<input>").attr({
     type: "datetime-local",
     id: "meeting-time-start",
-    value: "2026-01-01T00:00"
+    value: "2026-01-01T00:00",
   });
-  
+
   const DateAndTimeEnd = $("<input>").attr({
     type: "datetime-local",
     id: "meeting-time-end",
-    value: "2026-12-31T23:59"
+    value: "2026-12-31T23:59",
   });
 
   // Buttons
@@ -350,29 +350,37 @@ function DisplayStationData() {
     DateAndTimeStart,
     DateAndTimeEnd,
     selectBarCollection,
-    btnContainer
+    btnContainer,
   );
 
   // Create table with proper structure
   const tableContainer = $("<div>").addClass("displayTable");
   const table = $("<table>").attr("id", "measurementsTable");
-  
+
   // Create table head
   const thead = $("<thead>");
   const headerRow = $("<tr>");
-  const headers = ["Measurement id", "Timestamp", "Humidity", "Air pressure", "Light intensity", "Air quality", "Station id"];
-  
-  headers.forEach(header => {
+  const headers = [
+    "Measurement id",
+    "Timestamp",
+    "Humidity",
+    "Air pressure",
+    "Light intensity",
+    "Air quality",
+    "Station id",
+  ];
+
+  headers.forEach((header) => {
     headerRow.append($("<th>").text(header));
   });
-  
+
   thead.append(headerRow);
   table.append(thead);
-  
+
   // Create table body
   const tbody = $("<tbody>");
   table.append(tbody);
-  
+
   tableContainer.append(table);
   displayContainer.append(tableContainer);
 
@@ -381,19 +389,23 @@ function DisplayStationData() {
     "../MyLibrary.php",
     { displayStaion: true },
     function (stations) {
-      stations.forEach(station => {
+      stations.forEach((station) => {
         selectBarStations.append(
-          $("<option>").val(station.stationId).text(station.stationName)
+          $("<option>").val(station.stationId).text(station.stationName),
         );
       });
 
       if (stations.length > 0) {
         const defaultDateStart = $("#meeting-time-start").val();
         const defaultDateEnd = $("#meeting-time-end").val();
-        loadMeasurements(stations[0].stationId, defaultDateStart, defaultDateEnd);
+        loadMeasurements(
+          stations[0].stationId,
+          defaultDateStart,
+          defaultDateEnd,
+        );
       }
     },
-    "json"
+    "json",
   );
 
   // Load collections
@@ -402,17 +414,19 @@ function DisplayStationData() {
     { displayCollections: true },
     function (Collections) {
       selectBarCollection.empty();
-      selectBarCollection.append($("<option>").val("0").text("-- Collections --"));
+      selectBarCollection.append(
+        $("<option>").val("0").text("-- Collections --"),
+      );
 
       if (Collections && Collections.length > 0) {
-        Collections.forEach(col => {
+        Collections.forEach((col) => {
           selectBarCollection.append(
-            $("<option>").val(col.Collection_id).text(col.Collection_name)
+            $("<option>").val(col.Collection_id).text(col.Collection_name),
           );
         });
       }
     },
-    "json"
+    "json",
   );
 
   // Display button click
@@ -435,9 +449,12 @@ function DisplayStationData() {
   $(document).on("click", "#createCollectionBtn", function () {
     const measurements = [];
     $("#measurementsTable tbody tr").each(function () {
-      const rowData = $(this).find("td").map(function() {
-        return $(this).text();
-      }).get();
+      const rowData = $(this)
+        .find("td")
+        .map(function () {
+          return $(this).text();
+        })
+        .get();
       measurements.push(rowData);
     });
 
@@ -459,12 +476,12 @@ function DisplayStationData() {
       {
         measurementValues: JSON.stringify(measurements),
         CollecionN: collectionName,
-        CollecionD: collectionDescription
+        CollecionD: collectionDescription,
       },
       function (response) {
         alert(response);
         location.reload();
-      }
+      },
     );
   });
 }
@@ -475,13 +492,13 @@ function loadMeasurements(stationId, start, end) {
     {
       selectedOption: stationId,
       filterDateStart: start,
-      filterDateEnd: end
+      filterDateEnd: end,
     },
     function (measurements) {
       const tbody = $("#measurementsTable tbody");
       tbody.empty();
 
-      measurements.forEach(row => {
+      measurements.forEach((row) => {
         const tr = $("<tr>");
         tr.append($("<td>").text(row.Measurement_id));
         tr.append($("<td>").text(row.Timestamp));
@@ -495,7 +512,7 @@ function loadMeasurements(stationId, start, end) {
 
       $("#createCollectionBtn").prop("disabled", measurements.length === 0);
     },
-    "json"
+    "json",
   );
 }
 // unassign my station
@@ -539,6 +556,8 @@ $(document).on("click", ".deleteCollectionBtn", function (e) {
     );
   }
 });
+
+/* Collection.php */
 /* Collection.php */
 function loadCollectionLoad() {
   $(document).ready(function () {
@@ -552,6 +571,61 @@ function loadCollectionLoad() {
     // Tab click handlers
     $myTab.on("click", () => switchSection("my"));
     $sharedTab.on("click", () => switchSection("shared"));
+
+    // === MOVE THIS FUNCTION OUTSIDE switchSection ===
+    function buildCollectionHTML(collection, cid, isSharedByMe) {
+      let html = `
+    <div class="collection-block displayTable">
+      <h3>${collection.Name}</h3>
+      <p>${collection.Description}</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Measurement ID</th>
+            <th>Timestamp</th>
+            <th>Humidity</th>
+            <th>Air Pressure</th>
+            <th>Light Intensity</th>
+            <th>Air Quality</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+      collection.Measurements.forEach((m) => {
+        html += `
+      <tr>
+        <td>${m.Measurement_id}</td>
+        <td>${m.Timestamp}</td>
+        <td>${m.Humidity}</td>
+        <td>${m.Air_pressure}</td>
+        <td>${m.Light_intensity}</td>
+        <td>${m.Air_quality}</td>
+      </tr>
+    `;
+      });
+
+      html += `
+        </tbody>
+      </table>
+
+      <!-- Buttons outside the table -->
+      <div class="collection-buttons">
+  `;
+
+      if (isSharedByMe) {
+        html += `<button class='cancel-share-btn' value='${cid}'>Cancel Share</button>`;
+      }
+
+      html += `
+      </div> <!-- collection-buttons -->
+    </div> <!-- collection-block -->
+  `;
+
+      return html;
+    }
+    // === END OF MOVED FUNCTION ===
 
     function switchSection(section) {
       $myTab.removeClass("active");
@@ -606,8 +680,8 @@ function loadCollectionLoad() {
               tableHtml += `
                   </tbody>
                 </table>
-                <button class='shareCollectionBtn' value='${collection.Collection_id}'>Share</button>
-                <button class='deleteCollectionBtn' value='${collection.Collection_id}'>Remove</button>
+                <button class='share-btn' value='${collection.Collection_id}'>Share</button>
+                <button class='remove-btn' value='${collection.Collection_id}'>Remove</button>
               </div>
             `;
 
@@ -621,108 +695,122 @@ function loadCollectionLoad() {
       } else {
         $sharedTab.addClass("active");
 
+        console.log("DEBUG: Fetching shared collections...");
+
         $.post(
           "../MyLibrary.php",
           { FetchSharedCollection: true },
           function (response) {
-            const SharedCollections =
-              typeof response === "string" ? JSON.parse(response) : response;
-            let html = "";
+            console.log("DEBUG: Raw response from server:", response);
 
-            // --- Shared With Me ---
-            const sharedWithMe = SharedCollections.sharedWithMeCollections;
-            if (Object.keys(sharedWithMe).length > 0) {
-              html += "<h2>Shared With Me</h2>";
-              html += "<p>Collections shared with you by other users.</p>";
+            try {
+              const SharedCollections =
+                typeof response === "string" ? JSON.parse(response) : response;
+              console.log("DEBUG: Parsed response:", SharedCollections);
 
-              for (const cid in sharedWithMe) {
-                const collection = sharedWithMe[cid];
-                html += buildCollectionHTML(collection, cid, false);
+              if (!SharedCollections.success) {
+                console.error(
+                  "DEBUG: Server returned error:",
+                  SharedCollections.message,
+                );
+                $sectionInfo.html(
+                  "<p>Error loading shared collections: " +
+                    SharedCollections.message +
+                    "</p>",
+                );
+                return;
               }
-            }
 
-            // --- Separator ---
-            if (
-              Object.keys(sharedWithMe).length > 0 &&
-              Object.keys(SharedCollections.sharedByMeCollections).length > 0
-            ) {
-              html += '<hr style="margin:40px 0; border:1px solid #ccc;">';
-            }
+              let html = "";
 
-            // --- Shared By Me ---
-            const sharedByMe = SharedCollections.sharedByMeCollections;
-            if (Object.keys(sharedByMe).length > 0) {
-              html += "<h2>Shared By Me</h2>";
-              html += "<p>Collections you have shared with other users.</p>";
+              // Check what we received
+              console.log(
+                "DEBUG: sharedWithMe keys:",
+                Object.keys(SharedCollections.sharedWithMeCollections),
+              );
+              console.log(
+                "DEBUG: sharedByMe keys:",
+                Object.keys(SharedCollections.sharedByMeCollections),
+              );
 
-              for (const cid in sharedByMe) {
-                const collection = sharedByMe[cid];
-                html += buildCollectionHTML(collection, cid, true); // include cancel button
+              // --- Shared With Me ---
+              const sharedWithMe = SharedCollections.sharedWithMeCollections;
+              if (Object.keys(sharedWithMe).length > 0) {
+                html += "<h2>Shared With Me</h2>";
+                html += "<p>Collections shared with you by other users.</p>";
+
+                console.log(
+                  "DEBUG: Found " +
+                    Object.keys(sharedWithMe).length +
+                    " collections shared WITH me",
+                );
+
+                for (const cid in sharedWithMe) {
+                  const collection = sharedWithMe[cid];
+                  console.log(
+                    "DEBUG: Processing collection shared WITH me:",
+                    cid,
+                    collection.Name,
+                  );
+                  html += buildCollectionHTML(collection, cid, false);
+                }
+              } else {
+                html += "<h2>Shared With Me</h2>";
+                html += "<p>No collections have been shared with you yet.</p>";
               }
-            }
 
-            $sectionInfo.html(html);
-            reattachEventHandlers();
+              // --- Separator ---
+              if (
+                Object.keys(sharedWithMe).length > 0 &&
+                Object.keys(SharedCollections.sharedByMeCollections).length > 0
+              ) {
+                html += '<hr style="margin:40px 0; border:1px solid #ccc;">';
+              }
+
+              // --- Shared By Me ---
+              const sharedByMe = SharedCollections.sharedByMeCollections;
+              if (Object.keys(sharedByMe).length > 0) {
+                html += "<h2>Shared By Me</h2>";
+                html += "<p>Collections you have shared with other users.</p>";
+
+                console.log(
+                  "DEBUG: Found " +
+                    Object.keys(sharedByMe).length +
+                    " collections shared BY me",
+                );
+
+                for (const cid in sharedByMe) {
+                  const collection = sharedByMe[cid];
+                  console.log(
+                    "DEBUG: Processing collection shared BY me:",
+                    cid,
+                    collection.Name,
+                  );
+                  html += buildCollectionHTML(collection, cid, true);
+                }
+              } else {
+                html += "<h2>Shared By Me</h2>";
+                html += "<p>You haven't shared any collections yet.</p>";
+              }
+
+              $sectionInfo.html(html);
+              reattachEventHandlers();
+            } catch (error) {
+              console.error("DEBUG: JSON parse error:", error);
+              console.error("DEBUG: Response was:", response);
+              $sectionInfo.html(
+                "<p>Error parsing server response. Check console for details.</p>",
+              );
+            }
           },
           "json",
-        );
+        ).fail(function (jqXHR, textStatus, errorThrown) {
+          console.error("DEBUG: AJAX request failed:", textStatus, errorThrown);
+          $sectionInfo.html(
+            "<p>Failed to load shared collections. Check console.</p>",
+          );
+        });
       }
-    }
-
-    // --- Helper to build collection HTML ---
-    function buildCollectionHTML(collection, cid, isSharedByMe) {
-      let html = `
-    <div class="collection-block displayTable">
-      <h3>${collection.Name}</h3>
-      <p>${collection.Description}</p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Measurement ID</th>
-            <th>Timestamp</th>
-            <th>Humidity</th>
-            <th>Air Pressure</th>
-            <th>Light Intensity</th>
-            <th>Air Quality</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-      collection.Measurements.forEach((m) => {
-        html += `
-      <tr>
-        <td>${m.Measurement_id}</td>
-        <td>${m.Timestamp}</td>
-        <td>${m.Humidity}</td>
-        <td>${m.Air_pressure}</td>
-        <td>${m.Light_intensity}</td>
-        <td>${m.Air_quality}</td>
-      </tr>
-    `;
-      });
-
-      html += `
-        </tbody>
-      </table>
-
-      <!-- Buttons outside the table -->
-      <div class="collection-buttons">
-        <button class='share-btn' data-id='${cid}'>Share</button>
-        <button class='remove-btn' data-id='${cid}'>Remove</button>
-  `;
-
-      if (isSharedByMe) {
-        html += `<button class='cancel-share-btn' data-id='${cid}'>Cancel Share</button>`;
-      }
-
-      html += `
-      </div> <!-- collection-buttons -->
-    </div> <!-- collection-block -->
-  `;
-
-      return html;
     }
 
     // --- Attach button event handlers ---
@@ -757,11 +845,13 @@ function loadCollectionLoad() {
       $(".cancel-share-btn")
         .off("click")
         .on("click", function () {
-          const collectionID = $(this).data("id");
+          const collectionID = $(this).val(); // Use .val() since button has value attribute
           if (!collectionID || collectionID === "0") {
             alert("Invalid collection selected");
             return;
           }
+
+          console.log("Canceling share for collection:", collectionID);
 
           $.post(
             "../MyLibrary.php",
