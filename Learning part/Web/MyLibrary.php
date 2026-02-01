@@ -857,7 +857,4 @@ if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
     exit;
 }
 
-
-
-
 ?>
