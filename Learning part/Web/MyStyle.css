@@ -947,6 +947,10 @@ button:disabled {
   margin: 10px;
   padding: 10px;
 }
+.displayTable h3 {
+  color: var(--text-dark);
+  border-bottom: 2px solid var(--border-medium);
+}
 
 #measurementsTable {
   border: 3px solid black;
@@ -957,6 +961,30 @@ button:disabled {
   text-align: center;
   max-height: 400px;
   margin: 10px;
+}
+.share-btn,
+.remove-btn,
+.cancel-share-btn {
+  padding: 8px 15px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.share-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.remove-btn {
+  background: #f44336;
+  color: white;
+}
+
+.cancel-share-btn {
+  background: #ff9800;
+  color: white;
 }
 
 /* Table header */

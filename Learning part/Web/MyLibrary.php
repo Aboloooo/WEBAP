@@ -204,18 +204,30 @@ if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
 if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
     $user = getUserInfo($_SESSION['username']);
     $sharedBy = $user['UserID'];
-
-    $targetToShare = $_POST['targetCollectionToShare'];
+    $targetToShare = (int) $_POST['targetCollectionToShare'];
     $FriendsToShareWith = $_POST['shareWith'];
 
-    /* find ID of each username */
-    $shareThisCollection = $connection->prepare("insert into CollectionShare value(?,?,?)");
-    foreach ($FriendsToShareWith as $shareWith) {
-        /* $shareWith is user id, I need the username itself */
-        $shareThisCollection->bind_param('iii', $targetToShare, $sharedBy, $shareWith);
-        $shareThisCollection->execute();
+    // Make sure it's an array
+    if (!is_array($FriendsToShareWith)) {
+        $FriendsToShareWith = [$FriendsToShareWith];
     }
-    echo "Collection shared successfully";
+
+    $shareThisCollection = $connection->prepare("
+        INSERT INTO CollectionShare (Collection_id, Shared_by, Shared_with)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE Collection_id = Collection_id
+    ");
+
+    $successCount = 0;
+    foreach ($FriendsToShareWith as $shareWith) {
+        $shareThisCollection->bind_param('iii', $targetToShare, $sharedBy, $shareWith);
+        if ($shareThisCollection->execute()) {
+            $successCount++;
+        }
+    }
+
+    echo "Shared collection with " . $successCount . " friend(s)";
+    exit;
 }
 
 /* Return all the Collection related to ME */

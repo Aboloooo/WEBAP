@@ -53,7 +53,7 @@ function Logout() {
     logoutBtn: true,
   };
   $.post("../MyLibrary.php", data, function () {
-    history.go(0);
+    location.reload(); // Changed from history.go(0)
   });
 }
 
@@ -191,12 +191,6 @@ function createFriendCard(friend, allowMultiSelect = false) {
   return card;
 }
 
-// ====== Update Share Button State ======
-function updateShareButton() {
-  const selectedCount = $(".friendCard.selected").length;
-  $(".confirmShareWithFriendsBtn").prop("disabled", selectedCount === 0);
-}
-
 function MessageAll() {
   let blurDiv = $("<div>").attr("class", "blur-background");
   let sectionContent = $("<section>").attr("class", "content");
@@ -219,12 +213,17 @@ function updateShareButton() {
   $(".confirmShareWithFriendsBtn").prop("disabled", selectedCount === 0);
 }
 
-function DisplayFriends() {
-  const pagePath = decodeURIComponent(window.location.pathname);
-  const isCollectionPage = pagePath.endsWith("/Collection.php");
+function DisplayFriends(targetCollection) {
+  // Make sure targetCollection is defined
+  if (!targetCollection) {
+    console.error("No target collection specified");
+    return;
+  }
 
-  const allowMultiSelect =
-    pagePath.includes("library") || pagePath.includes("post");
+  console.log("Sharing collection ID:", targetCollection);
+
+  // Remove previous overlay if exists
+  $(".blur-background, .content").remove();
 
   let blurDiv = $("<div>").addClass("blur-background");
   let sectionContent = $("<section>").addClass("content");
@@ -237,49 +236,66 @@ function DisplayFriends() {
   let friendsList = $("<div>").addClass("friendsList");
 
   let confirmBtn = $("<button>")
-    .text("share")
+    .text("Share")
     .addClass("confirmShareWithFriendsBtn")
     .prop("disabled", true)
-    .toggle(isCollectionPage)
     .on("click", function () {
       let selectedIds = [];
       friendsList.find(".friendCard.selected").each(function () {
         selectedIds.push($(this).data("id"));
       });
 
-      console.log("Selected friends:", selectedIds);
-      // You can send this array to the backend
-      let targetCollection = $(".shareCollectionBtn").val();
+      if (selectedIds.length === 0) {
+        alert("Please select at least one friend");
+        return;
+      }
+
+      // Use the correct collection ID here
       $.post(
         "../MyLibrary.php",
-        { shareWith: selectedIds, targetCollectionToShare: targetCollection },
-        function (sharedResponse) {
-          alert(sharedResponse);
-          window.location.href = "./Collection.php";
+        {
+          shareWith: selectedIds,
+          targetCollectionToShare: targetCollection,
+        },
+        function (res) {
+          alert(res);
+          CloseChatBox();
         },
       );
     });
 
-  sectionContent.append(exitBtn, confirmBtn, friendsList);
+  let title = $("<h3>").text("Share with Friends");
+
+  sectionContent.append(exitBtn, title, confirmBtn, friendsList);
+  $("body").append(blurDiv, sectionContent);
 
   // Fetch friends from backend
   $.post(
     "../MyLibrary.php",
     { showFriends: "true" },
     function (friends) {
+      if (!friends || friends.length === 0) {
+        friendsList.html("<p>No friends found. Add friends first.</p>");
+        return;
+      }
+
+      friendsList.empty();
       friends.forEach((friend) => {
-        friendsList.append(createFriendCard(friend, isCollectionPage));
+        friendsList.append(createFriendCard(friend, true));
       });
-      updateShareButton(); // enable/disable Share button based on initial selection
+      updateShareButton();
     },
     "json",
-  );
+  ).fail(function () {
+    friendsList.html("<p>Error loading friends.</p>");
+  });
 
   blurDiv.on("click", CloseChatBox);
-
-  $("body").append(blurDiv, sectionContent);
 }
-
+$(document).on("click", ".shareCollectionBtn, .share-btn", function () {
+  const collectionID = $(this).data("id") || $(this).val();
+  DisplayFriends(collectionID); // pass it to your existing function
+});
 function CloseChatBox() {
   /* close the chatbox */
   /* $(".blur-background").hide();
@@ -288,22 +304,185 @@ function CloseChatBox() {
   $(".content").remove();
 }
 
+function DisplayStationData() {
+  const displayContainer = $(".tempretureDisplay");
+  displayContainer.empty();
+
+  // Create inputs
+  const DateAndTimeStart = $("<input>").attr({
+    type: "datetime-local",
+    id: "meeting-time-start",
+    value: "2026-01-01T00:00"
+  });
+  
+  const DateAndTimeEnd = $("<input>").attr({
+    type: "datetime-local",
+    id: "meeting-time-end",
+    value: "2026-12-31T23:59"
+  });
+
+  // Buttons
+  const dispalyMeasuBtn = $("<button>")
+    .attr("id", "displayDateBtn")
+    .addClass("btn btn-save")
+    .text("Display Measurements");
+
+  const collectionCreateBtn = $("<button>")
+    .attr("id", "createCollectionBtn")
+    .addClass("btn btn-approve")
+    .prop("disabled", true)
+    .text("Create Collection");
+
+  const btnContainer = $("<div>")
+    .attr("id", "btnContainer")
+    .append(dispalyMeasuBtn, collectionCreateBtn);
+
+  // Dropdowns
+  const selectBarStations = $("<select>").attr("id", "selectStation");
+  selectBarStations.append($("<option>").val("0").text("-- Stations --"));
+
+  const selectBarCollection = $("<select>").attr("id", "selectBarCollection");
+  selectBarCollection.append($("<option>").val("0").text("-- Collections --"));
+
+  // Add everything to container
+  displayContainer.append(
+    selectBarStations,
+    DateAndTimeStart,
+    DateAndTimeEnd,
+    selectBarCollection,
+    btnContainer
+  );
+
+  // Create table with proper structure
+  const tableContainer = $("<div>").addClass("displayTable");
+  const table = $("<table>").attr("id", "measurementsTable");
+  
+  // Create table head
+  const thead = $("<thead>");
+  const headerRow = $("<tr>");
+  const headers = ["Measurement id", "Timestamp", "Humidity", "Air pressure", "Light intensity", "Air quality", "Station id"];
+  
+  headers.forEach(header => {
+    headerRow.append($("<th>").text(header));
+  });
+  
+  thead.append(headerRow);
+  table.append(thead);
+  
+  // Create table body
+  const tbody = $("<tbody>");
+  table.append(tbody);
+  
+  tableContainer.append(table);
+  displayContainer.append(tableContainer);
+
+  // Load stations
+  $.post(
+    "../MyLibrary.php",
+    { displayStaion: true },
+    function (stations) {
+      stations.forEach(station => {
+        selectBarStations.append(
+          $("<option>").val(station.stationId).text(station.stationName)
+        );
+      });
+
+      if (stations.length > 0) {
+        const defaultDateStart = $("#meeting-time-start").val();
+        const defaultDateEnd = $("#meeting-time-end").val();
+        loadMeasurements(stations[0].stationId, defaultDateStart, defaultDateEnd);
+      }
+    },
+    "json"
+  );
+
+  // Load collections
+  $.post(
+    "../MyLibrary.php",
+    { displayCollections: true },
+    function (Collections) {
+      selectBarCollection.empty();
+      selectBarCollection.append($("<option>").val("0").text("-- Collections --"));
+
+      if (Collections && Collections.length > 0) {
+        Collections.forEach(col => {
+          selectBarCollection.append(
+            $("<option>").val(col.Collection_id).text(col.Collection_name)
+          );
+        });
+      }
+    },
+    "json"
+  );
+
+  // Display button click
+  $(document).on("click", "#displayDateBtn", function () {
+    const stationId = $("#selectStation").val();
+    const dateTimeStart = formatThisDate($("#meeting-time-start").val());
+    const dateTimeEnd = formatThisDate($("#meeting-time-end").val());
+
+    const start = new Date(dateTimeStart);
+    const end = new Date(dateTimeEnd);
+    if (start > end) {
+      alert("End time cannot be earlier than start time");
+      return;
+    }
+
+    loadMeasurements(stationId, dateTimeStart, dateTimeEnd);
+  });
+
+  // Create collection button click
+  $(document).on("click", "#createCollectionBtn", function () {
+    const measurements = [];
+    $("#measurementsTable tbody tr").each(function () {
+      const rowData = $(this).find("td").map(function() {
+        return $(this).text();
+      }).get();
+      measurements.push(rowData);
+    });
+
+    if (measurements.length === 0) {
+      alert("No measurements to save!");
+      return;
+    }
+
+    const collectionName = prompt("Collection name:");
+    if (!collectionName || !collectionName.trim()) {
+      alert("Error, a collection must have a name");
+      return;
+    }
+
+    const collectionDescription = prompt("A description:");
+
+    $.post(
+      "../MyLibrary.php",
+      {
+        measurementValues: JSON.stringify(measurements),
+        CollecionN: collectionName,
+        CollecionD: collectionDescription
+      },
+      function (response) {
+        alert(response);
+        location.reload();
+      }
+    );
+  });
+}
+
 function loadMeasurements(stationId, start, end) {
   $.post(
     "../MyLibrary.php",
     {
       selectedOption: stationId,
       filterDateStart: start,
-      filterDateEnd: end,
+      filterDateEnd: end
     },
     function (measurements) {
-      console.log(measurements);
+      const tbody = $("#measurementsTable tbody");
+      tbody.empty();
 
-      $("#measurementsTable tbody").remove();
-      let tbody = $("<tbody>").addClass("");
-
-      measurements.forEach((row) => {
-        let tr = $("<tr>");
+      measurements.forEach(row => {
+        const tr = $("<tr>");
         tr.append($("<td>").text(row.Measurement_id));
         tr.append($("<td>").text(row.Timestamp));
         tr.append($("<td>").text(row.Humidity));
@@ -314,218 +493,15 @@ function loadMeasurements(stationId, start, end) {
         tbody.append(tr);
       });
 
-      $("#measurementsTable").append(tbody);
       $("#createCollectionBtn").prop("disabled", measurements.length === 0);
     },
-    "json",
+    "json"
   );
-}
-
-function DisplayStationData() {
-  const displayContainer = $(".tempretureDisplay");
-  displayContainer.empty(); // Clear previous content
-
-  // ===== Date & Time Input =====
-  const DateAndTimeStart = $("<input>")
-    .attr("type", "datetime-local")
-    .attr("name", "meeting-time")
-    .attr("id", "meeting-time-start")
-    .attr("value", "2026-01-01T00:00")
-    .attr("min", "2026-01-01T00:00")
-    .attr("max", "2026-12-31T00:00");
-  const DateAndTimeEnd = $("<input>")
-    .attr("type", "datetime-local")
-    .attr("name", "meeting-time")
-    .attr("id", "meeting-time-end")
-    .attr("value", "2026-12-31T23:59")
-    .attr("min", "2026-01-01T00:00")
-    .attr("max", "2026-12-31T23:59");
-
-  // ===== Filter Button =====
-  const dispalyMeasuBtn = $("<button>")
-    .attr("id", "displayDateBtn")
-    .attr("type", "button")
-    .addClass("btn btn-save")
-    .text("Display Measurements");
-
-  // ===== Create Collection Button =====
-  const collectionCreateBtn = $("<button>")
-    .attr("id", "createCollectionBtn")
-    .attr("type", "button")
-    .addClass("btn btn-approve collectionBtn")
-    .prop("disabled", true) // Disabled by default
-    .text("Create Collection");
-
-  // ===== Controller Container =====
-  const btnContainer = $("<div>")
-    .attr("id", "btnContainer")
-    .append(dispalyMeasuBtn, collectionCreateBtn);
-
-  // ===== Select Dropdown for Stations =====
-  const selectBarStations = $("<select>").attr("id", "selectStation");
-  const optionDefaultStations = $("<option>")
-    .attr("value", "0")
-    .text("-- Stations --");
-  selectBarStations.append(optionDefaultStations);
-
-  // ===== Select Dropdown for Collection =====
-  const selectBarCollection = $("<select>").attr("id", "selectBarCollection");
-  const optionDefaultCollecton = $("<option>")
-    .attr("value", "0")
-    .text("-- Collections --");
-  selectBarCollection.append(optionDefaultCollecton);
-
-  // Append controls to display container
-  displayContainer.append(
-    selectBarStations,
-    DateAndTimeStart,
-    DateAndTimeEnd,
-    selectBarCollection,
-    btnContainer,
-  );
-
-  // ===== Table Container =====
-  const tableContainer = $("<div>").addClass("displayTable");
-  const tableMeasurement = $("<table>").attr("id", "measurementsTable");
-  const tableHeader = $("<tr>");
-  const tableRows = [
-    "Measurement id",
-    "Timestamp",
-    "Humidity",
-    "Air pressure",
-    "Light intensity",
-    "Air quality",
-    "Station id",
-  ];
-  tableRows.forEach((header) => tableHeader.append($("<th>").text(header)));
-  tableMeasurement.append(tableHeader);
-  tableContainer.append(tableMeasurement);
-  displayContainer.append(tableContainer);
-
-  // ===== Fetch Stations from Backend =====
-  $.post(
-    "../MyLibrary.php",
-    { displayStaion: true },
-    function (stations) {
-      stations.forEach((station) => {
-        selectBarStations.append(
-          $("<option>").val(station.stationId).text(station.stationName),
-        );
-      });
-
-      const defaultStationChose = stations.length ? stations[0].stationId : "0";
-      const defaultDateStart = $("#meeting-time-start").val();
-      const defaultDateEnd = $("#meeting-time-end").val();
-
-      loadMeasurements(defaultStationChose, defaultDateStart, defaultDateEnd);
-    },
-    "json",
-  ).fail(function (jqXHR, textStatus, errorThrown) {
-    console.error("Failed to load stations:", textStatus, errorThrown);
-  });
-  // ===== Fetch Collections from Backend =====
-  $.post(
-    "../MyLibrary.php",
-    { displayCollections: true },
-    function (Collections) {
-      selectBarCollection.empty(); // reset dropdown
-
-      if (!Collections || Collections.length === 0) {
-        selectBarCollection.append(
-          $("<option>").val("").text("No collections available"),
-        );
-        return;
-      } else {
-        selectBarCollection.append(
-          $("<option>").val("0").text("-- Collections --"),
-        );
-      }
-
-      Collections.forEach((Collection) => {
-        selectBarCollection.append(
-          $("<option>")
-            .val(Collection.Collection_id)
-            .text(Collection.Collection_name),
-        );
-      });
-    },
-    "json",
-  ).fail(function (jqXHR, textStatus, errorThrown) {
-    console.error("Failed to load Collections:", textStatus, errorThrown);
-  });
-
-  // ===== Display Button Click Event =====
-  $(document)
-    .off("click", "#displayDateBtn")
-    .on("click", "#displayDateBtn", function (e) {
-      e.preventDefault();
-
-      const stationId = $("#selectStation").val();
-      const dateTimeStart = formatThisDate($("#meeting-time-start").val());
-      const dateTimeEnd = formatThisDate($("#meeting-time-end").val());
-
-      const start = new Date(dateTimeStart);
-      const end = new Date(dateTimeEnd);
-      if (start > end) {
-        alert("End time cannot be earlier than start time");
-        return;
-      }
-
-      loadMeasurements(stationId, dateTimeStart, dateTimeEnd);
-    });
-
-  // ===== Create Collection Button Click Event =====
-  $(document)
-    .off("click", "#createCollectionBtn")
-    .on("click", "#createCollectionBtn", function () {
-      // Collect displayed measurements
-      const measurements = [];
-      $("#measurementsTable tbody tr").each(function () {
-        const rowData = $(this)
-          .find("td")
-          .map(function () {
-            return $(this).text();
-          })
-          .get();
-        measurements.push(rowData);
-      });
-
-      if (measurements.length === 0) {
-        alert("No measurements to save!");
-        return;
-      }
-
-      // TODO: send measurements to backend for creating a collection
-      console.log("Create collection with data:", measurements);
-      let collectionName = prompt("Collection name: ");
-      let collectionDescription = prompt("A description: ");
-      if (!collectionName || !collectionName.trim()) {
-        alert("Error, a collection must have a name");
-        return;
-      }
-
-      console.log(collectionName);
-      // if you want to send a array it must be properly formatted
-      ($.post(
-        "../MyLibrary.php",
-        {
-          measurementValues: JSON.stringify(measurements),
-          CollecionN: collectionName,
-          CollecionD: collectionDescription,
-          ActiveNav: true,
-        },
-        function (serverAnswer) {
-          console.log(serverAnswer);
-          location.reload();
-        },
-      ),
-        "json");
-    });
 }
 // unassign my station
 function removeMyStation(targetStationId) {
   $.post(
-    "..//MyLibrary.php",
+    "../MyLibrary.php", // Fixed: removed double slash
     { targetID: targetStationId },
     function (removeRespond) {
       console.log(removeRespond);
@@ -534,8 +510,13 @@ function removeMyStation(targetStationId) {
   );
 }
 // share this collection (vlaue of btn is the collection id)
-$(document).on("click", ".shareCollectionBtn", function () {
-  DisplayFriends();
+$(document).on("click", ".shareCollectionBtn, .share-btn", function () {
+  const collectionID = $(this).data("id") || $(this).val();
+  if (!collectionID) {
+    console.error("No collection ID found");
+    return;
+  }
+  DisplayFriends(collectionID); // Make sure this passes the ID
 });
 
 $(document).on("click", ".deleteCollectionBtn", function (e) {
@@ -560,108 +541,95 @@ $(document).on("click", ".deleteCollectionBtn", function (e) {
 });
 /* Collection.php */
 function loadCollectionLoad() {
-  // Collections switcher functionality
   $(document).ready(function () {
-    // Cache elements for better performance
     const $myTab = $(".Collections_container");
     const $sharedTab = $(".Collections_shared_container");
     const $sectionInfo = $("#sectionInfo");
-    switchSection("my"); // default section to display
-    // Tab click handlers - using your pattern
-    $myTab.on("click", function () {
-      switchSection("my");
-    });
 
-    $sharedTab.on("click", function () {
-      switchSection("shared");
-    });
+    // Default tab
+    switchSection("my");
 
-    // Function to switch sections - similar to your pattern
+    // Tab click handlers
+    $myTab.on("click", () => switchSection("my"));
+    $sharedTab.on("click", () => switchSection("shared"));
+
     function switchSection(section) {
-      // Remove active class from all tabs
       $myTab.removeClass("active");
       $sharedTab.removeClass("active");
+      $sectionInfo.empty();
 
       if (section === "my") {
         $myTab.addClass("active");
 
         $.post(
-          "..//MyLibrary.php",
+          "../MyLibrary.php",
           { DisplayCollection: true },
           function (collections) {
-            // clear previous content
-            $sectionInfo.empty();
-
-            // if no collections
             if (collections.message) {
               $sectionInfo.html(`<p>${collections.message}</p>`);
               return;
             }
 
-            // loop through collections
             collections.forEach((collection) => {
-              // collection header
               let tableHtml = `
-        <div class="collection-block displayTable">
-          <h2>${collection.Name}</h2>
-          <p>${collection.Description}</p>
+              <div class="collection-block displayTable">
+                <h2>${collection.Name}</h2>
+                <p>${collection.Description}</p>
 
-          <table id="measurementsTable">
-            <thead>
-              <tr>
-                <th>Measurement ID</th>
-                <th>Timestamp</th>
-                <th>Humidity</th>
-                <th>Air pressure</th>
-                <th>Light intensity</th>
-                <th>Air quality</th>
-              </tr>
-            </thead>
-            <tbody>
-            <button class='shareCollectionBtn' value=${collection.Collection_id}>Share</button>
-            <button class='deleteCollectionBtn' value=${collection.Collection_id}>Remove</button>
-      `;
-              // rows
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Measurement ID</th>
+                      <th>Timestamp</th>
+                      <th>Humidity</th>
+                      <th>Air pressure</th>
+                      <th>Light intensity</th>
+                      <th>Air quality</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
+
               collection.Measurements.forEach((m) => {
                 tableHtml += `
-          <tr>
-            <td>${m.Measurement_id}</td>
-            <td>${m.Timestamp}</td>
-            <td>${m.Humidity}</td>
-            <td>${m.Air_pressure}</td>
-            <td>${m.Light_intensity}</td>
-            <td>${m.Air_quality}</td>
-          </tr>
-        `;
+                <tr>
+                  <td>${m.Measurement_id}</td>
+                  <td>${m.Timestamp}</td>
+                  <td>${m.Humidity}</td>
+                  <td>${m.Air_pressure}</td>
+                  <td>${m.Light_intensity}</td>
+                  <td>${m.Air_quality}</td>
+                </tr>
+              `;
               });
 
               tableHtml += `
-            </tbody>
-          </table>
-        </div>
-      `;
+                  </tbody>
+                </table>
+                <button class='shareCollectionBtn' value='${collection.Collection_id}'>Share</button>
+                <button class='deleteCollectionBtn' value='${collection.Collection_id}'>Remove</button>
+              </div>
+            `;
 
               $sectionInfo.append(tableHtml);
             });
+
+            reattachEventHandlers();
           },
           "json",
         );
       } else {
         $sharedTab.addClass("active");
+
         $.post(
           "../MyLibrary.php",
           { FetchSharedCollection: true },
           function (response) {
             const SharedCollections =
               typeof response === "string" ? JSON.parse(response) : response;
-
-            console.log(SharedCollections);
-
             let html = "";
 
-            // --------------------------
-            // Section 1: Collections shared with me
-            // --------------------------
+            // --- Shared With Me ---
             const sharedWithMe = SharedCollections.sharedWithMeCollections;
             if (Object.keys(sharedWithMe).length > 0) {
               html += "<h2>Shared With Me</h2>";
@@ -669,56 +637,19 @@ function loadCollectionLoad() {
 
               for (const cid in sharedWithMe) {
                 const collection = sharedWithMe[cid];
-                html += `
-          <div class="collection-block displayTable">
-              <h3>${collection.Name}</h3>
-              <p>${collection.Description}</p>
-              <table>
-                  <thead>
-                      <tr>
-                          <th>Measurement ID</th>
-                          <th>Timestamp</th>
-                          <th>Humidity</th>
-                          <th>Air Pressure</th>
-                          <th>Light Intensity</th>
-                          <th>Air Quality</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-        `;
-                collection.Measurements.forEach((measurement) => {
-                  html += `
-              <tr>
-                  <td>${measurement.Measurement_id}</td>
-                  <td>${measurement.Timestamp}</td>
-                  <td>${measurement.Humidity}</td>
-                  <td>${measurement.Air_pressure}</td>
-                  <td>${measurement.Light_intensity}</td>
-                  <td>${measurement.Air_quality}</td>
-              </tr>
-          `;
-                });
-
-                html += `
-                  </tbody>
-              </table>
-              <button class='share-btn' data-id='${cid}'>Share</button>
-              <button class='remove-btn' data-id='${cid}'>Remove</button>
-          </div>
-        `;
-              }
-
-              // Add separator **only if there are collections shared by me**
-              if (
-                Object.keys(SharedCollections.sharedByMeCollections).length > 0
-              ) {
-                html += '<hr style="margin:40px 0; border:1px solid #ccc;">';
+                html += buildCollectionHTML(collection, cid, false);
               }
             }
 
-            // --------------------------
-            // Section 2: Collections shared by me
-            // --------------------------
+            // --- Separator ---
+            if (
+              Object.keys(sharedWithMe).length > 0 &&
+              Object.keys(SharedCollections.sharedByMeCollections).length > 0
+            ) {
+              html += '<hr style="margin:40px 0; border:1px solid #ccc;">';
+            }
+
+            // --- Shared By Me ---
             const sharedByMe = SharedCollections.sharedByMeCollections;
             if (Object.keys(sharedByMe).length > 0) {
               html += "<h2>Shared By Me</h2>";
@@ -726,67 +657,126 @@ function loadCollectionLoad() {
 
               for (const cid in sharedByMe) {
                 const collection = sharedByMe[cid];
-                html += `
-          <div class="collection-block displayTable">
-              <h3>${collection.Name}</h3>
-              <p>${collection.Description}</p>
-              <table>
-                  <thead>
-                      <tr>
-                          <th>Measurement ID</th>
-                          <th>Timestamp</th>
-                          <th>Humidity</th>
-                          <th>Air Pressure</th>
-                          <th>Light Intensity</th>
-                          <th>Air Quality</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-        `;
-                collection.Measurements.forEach((measurement) => {
-                  html += `
-              <tr>
-                  <td>${measurement.Measurement_id}</td>
-                  <td>${measurement.Timestamp}</td>
-                  <td>${measurement.Humidity}</td>
-                  <td>${measurement.Air_pressure}</td>
-                  <td>${measurement.Light_intensity}</td>
-                  <td>${measurement.Air_quality}</td>
-              </tr>
-          `;
-                });
-
-                html += `
-                  </tbody>
-              </table>
-              <button class='share-btn' data-id='${cid}'>Share</button>
-              <button class='remove-btn' data-id='${cid}'>Remove</button>
-          </div>
-        `;
+                html += buildCollectionHTML(collection, cid, true); // include cancel button
               }
             }
 
-            $("#yourSectionDiv").html(html);
+            $sectionInfo.html(html);
+            reattachEventHandlers();
           },
+          "json",
         );
       }
-
-      // Re-attach event handlers to newly created buttons
-      reattachEventHandlers();
     }
 
-    // Function to reattach event handlers after content changes
-    function reattachEventHandlers() {}
+    // --- Helper to build collection HTML ---
+    function buildCollectionHTML(collection, cid, isSharedByMe) {
+      let html = `
+    <div class="collection-block displayTable">
+      <h3>${collection.Name}</h3>
+      <p>${collection.Description}</p>
 
-    // If you want to integrate with your existing start() function
-    function initializeCollections() {
-      // This would be called from your start() function
-      console.log("Collections page initialized");
+      <table>
+        <thead>
+          <tr>
+            <th>Measurement ID</th>
+            <th>Timestamp</th>
+            <th>Humidity</th>
+            <th>Air Pressure</th>
+            <th>Light Intensity</th>
+            <th>Air Quality</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
 
-      // You could load collections data here
-      // $.post("../MyLibrary.php", { displayCollections: true }, function(data) {
-      //     // Process and display collections
-      // }, "json");
+      collection.Measurements.forEach((m) => {
+        html += `
+      <tr>
+        <td>${m.Measurement_id}</td>
+        <td>${m.Timestamp}</td>
+        <td>${m.Humidity}</td>
+        <td>${m.Air_pressure}</td>
+        <td>${m.Light_intensity}</td>
+        <td>${m.Air_quality}</td>
+      </tr>
+    `;
+      });
+
+      html += `
+        </tbody>
+      </table>
+
+      <!-- Buttons outside the table -->
+      <div class="collection-buttons">
+        <button class='share-btn' data-id='${cid}'>Share</button>
+        <button class='remove-btn' data-id='${cid}'>Remove</button>
+  `;
+
+      if (isSharedByMe) {
+        html += `<button class='cancel-share-btn' data-id='${cid}'>Cancel Share</button>`;
+      }
+
+      html += `
+      </div> <!-- collection-buttons -->
+    </div> <!-- collection-block -->
+  `;
+
+      return html;
+    }
+
+    // --- Attach button event handlers ---
+    function reattachEventHandlers() {
+      // Share button
+      $(".share-btn, .shareCollectionBtn")
+        .off("click")
+        .on("click", function () {
+          const collectionID = $(this).data("id") || $(this).val();
+          if (!collectionID || collectionID === "0") {
+            alert("Invalid collection selected");
+            return;
+          }
+          console.log("Share collection:", collectionID);
+          DisplayFriends(collectionID); // corrected behavior
+        });
+
+      // Remove button
+      $(".remove-btn, .deleteCollectionBtn")
+        .off("click")
+        .on("click", function () {
+          const collectionID = $(this).data("id") || $(this).val();
+          if (!collectionID || collectionID === "0") {
+            alert("Invalid collection selected");
+            return;
+          }
+          console.log("Remove collection:", collectionID);
+          // Add remove collection logic if needed
+        });
+
+      // Cancel Share button
+      $(".cancel-share-btn")
+        .off("click")
+        .on("click", function () {
+          const collectionID = $(this).data("id");
+          if (!collectionID || collectionID === "0") {
+            alert("Invalid collection selected");
+            return;
+          }
+
+          $.post(
+            "../MyLibrary.php",
+            { CancelSharedCollection: collectionID },
+            function (res) {
+              const response = typeof res === "string" ? JSON.parse(res) : res;
+              if (response.success) {
+                alert("Share canceled successfully!");
+                switchSection("shared"); // refresh shared collections
+              } else {
+                alert("Failed to cancel share: " + response.message);
+              }
+            },
+          );
+        });
     }
   });
 }
