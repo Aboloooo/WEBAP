@@ -523,10 +523,16 @@ function NavigationBarE()
                 <li><a href="index.php#About">About</a></li>
                 <li><a href="index.php#Service">Service</a></li>
                 <li><a href="index.php#Dashboard">Dashboard</a></li>
-                <?php $MyInfo = getUserInfo($_SESSION['username']);
+                <?php
+                $MyInfo = getUserInfo($_SESSION['username']);
                 if ($MyInfo && userHasCollections($MyInfo['UserID'])) {
                     echo '<li><a href="./Collection.php">My Collection</a></li>';
-                } ?>
+                }
+                // Add Admin Panel link if user is admin
+                if ($_SESSION["Admin"]) {
+                    echo '<li><a href="./admin.php">Admin Panel</a></li>';
+                }
+                ?>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
         </div>
@@ -539,6 +545,7 @@ function NavigationBarE()
                         print($_SESSION["username"]);
                     ?>
                     <br>
+                    <?php if ($_SESSION["Admin"]) echo "<small>(Admin)</small>"; ?>
                 <?php
                     } else {
                         print("username");
@@ -548,4 +555,309 @@ function NavigationBarE()
     </div>
 <?php
 }
+
+
+/* ==================== ADMIN FUNCTIONS ==================== */
+
+/* Check if user is admin */
+function isAdmin($username)
+{
+    global $connection;
+    $stmt = $connection->prepare("SELECT AccessLevelID FROM Users WHERE Username = ?");
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        return $row['AccessLevelID'] == 1; // Assuming 1 is Admin role
+    }
+    return false;
+}
+
+/* Update session Admin status - Add this after session_start section */
+if ($_SESSION["userLogin"]) {
+    $_SESSION["Admin"] = isAdmin($_SESSION["username"]);
+}
+
+/* ==================== ADMIN POST HANDLERS ==================== */
+
+/* Create new user (Admin only) */
+if (isset($_POST['create_user']) && isset($_POST['new_username'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $username = $_POST['new_username'];
+    $password = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
+    $fullname = $_POST['new_fullname'];
+    $email = $_POST['new_email'];
+    $role = $_POST['new_role'];
+
+    $stmt = $connection->prepare("INSERT INTO Users (Username, Password, Fullname, Email, AccessLevelID) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssi", $username, $password, $fullname, $email, $role);
+
+    if ($stmt->execute()) {
+        echo "User created successfully";
+    } else {
+        echo "Error creating user";
+    }
+    exit;
+}
+
+/* Get all users for admin (Admin only) */
+if (isset($_POST['get_all_users']) && $_POST['get_all_users']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("SELECT UserID, Username, Fullname, Email, AccessLevelID FROM Users ORDER BY UserID");
+
+    $html = '<table style="width:100%; border-collapse: collapse;">
+                <tr style="background: #f4f4f4;">
+                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Username</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Full Name</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Email</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Role</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Actions</th>
+                </tr>';
+
+    if ($result->num_rows == 0) {
+        $html .= '<tr><td colspan="6" style="text-align:center; padding:20px;">No users found</td></tr>';
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            $role = $row['AccessLevelID'] == 1 ? 'Admin' : ($row['AccessLevelID'] == 2 ? 'Dev' : 'User');
+            $html .= '<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['UserID'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Username'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Fullname'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Email'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $role . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">
+<button class="delete-btn" value="user_' . $row['UserID'] . '" style="background:#f44336; color:white; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; width:100%;">Delete</button>                      </tr>';
+        }
+    }
+
+    $html .= '</table>';
+    echo $html;
+    exit;
+}
+
+/* Create new station (Admin only) */
+if (isset($_POST['create_station']) && isset($_POST['station_serial'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $name = $_POST['station_name'];
+    $serial = $_POST['station_serial'];
+    $description = $_POST['station_description'];
+
+    $stmt = $connection->prepare("INSERT INTO Station (Name, Serial_number, Description) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $name, $serial, $description);
+
+    if ($stmt->execute()) {
+        echo "Station created successfully";
+    } else {
+        echo "Error creating station";
+    }
+    exit;
+}
+
+/* Get all stations for admin (Admin only) */
+if (isset($_POST['get_all_stations']) && $_POST['get_all_stations']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("
+        SELECT s.*, u.Username as Owner 
+        FROM Station s 
+        LEFT JOIN Users u ON s.Owner_id = u.UserID 
+        ORDER BY s.Station_id
+    ");
+
+    $html = '<table style="width:100%; border-collapse: collapse;">
+                <tr style="background: #f4f4f4;">
+                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Name</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Serial</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Status</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Owner</th>
+                </tr>';
+
+    if ($result->num_rows == 0) {
+        $html .= '<tr><td colspan="5" style="text-align:center; padding:20px;">No stations found</td></tr>';
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            $html .= '<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Station_id'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Name'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Serial_number'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Status'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . ($row['Owner'] ?: 'None') . '</td>
+                      </tr>';
+        }
+    }
+
+    $html .= '</table>';
+    echo $html;
+    exit;
+}
+
+/* Get all measurements for admin (Admin only) */
+if (isset($_POST['get_all_measurements']) && $_POST['get_all_measurements']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("
+        SELECT m.*, s.Name as StationName 
+        FROM Measurement m 
+        JOIN Station s ON m.Station_id = s.Station_id 
+        ORDER BY m.Timestamp DESC 
+        LIMIT 50
+    ");
+
+    $html = '<table style="width:100%; border-collapse: collapse;">
+                <tr style="background: #f4f4f4;">
+                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Timestamp</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Station</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Humidity</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Air Pressure</th>
+                </tr>';
+
+    if ($result->num_rows == 0) {
+        $html .= '<tr><td colspan="5" style="text-align:center; padding:20px;">No measurements found</td></tr>';
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            $html .= '<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Measurement_id'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Timestamp'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['StationName'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Humidity'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Air_pressure'] . '</td>
+                      </tr>';
+        }
+    }
+
+    $html .= '</table>';
+    echo $html;
+    exit;
+}
+
+/* Assign measurements to collection (Admin only) */
+if (isset($_POST['assign_measurements']) && isset($_POST['collection_id'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $collection_id = $_POST['collection_id'];
+    $measurement_ids = $_POST['measurement_ids'];
+
+    if (!is_array($measurement_ids)) {
+        $measurement_ids = [$measurement_ids];
+    }
+
+    $success = 0;
+    $errors = 0;
+
+    foreach ($measurement_ids as $measurement_id) {
+        // Check if already assigned
+        $check = $connection->prepare("SELECT * FROM CollectionContains WHERE Collection_id = ? AND Measurement_id = ?");
+        $check->bind_param("ii", $collection_id, $measurement_id);
+        $check->execute();
+
+        if ($check->get_result()->num_rows == 0) {
+            $stmt = $connection->prepare("INSERT INTO CollectionContains (Collection_id, Measurement_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $collection_id, $measurement_id);
+
+            if ($stmt->execute()) {
+                $success++;
+            } else {
+                $errors++;
+            }
+        }
+    }
+
+    echo "Assigned $success measurements. $errors failed.";
+    exit;
+}
+
+/* Get collections dropdown (Admin only) */
+if (isset($_POST['get_collections_dropdown']) && $_POST['get_collections_dropdown']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("SELECT Collection_id, Name FROM Collection ORDER BY Name");
+
+    $html = '<option value="">Select Collection</option>';
+    while ($row = $result->fetch_assoc()) {
+        $html .= '<option value="' . $row['Collection_id'] . '">' . $row['Name'] . '</option>';
+    }
+
+    echo $html;
+    exit;
+}
+
+/* Get measurements dropdown (Admin only) */
+if (isset($_POST['get_measurements_dropdown']) && $_POST['get_measurements_dropdown']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("SELECT Measurement_id, Timestamp, Station_id FROM Measurement ORDER BY Timestamp DESC LIMIT 100");
+
+    $html = '<option value="">Select Measurements</option>';
+    while ($row = $result->fetch_assoc()) {
+        $html .= '<option value="' . $row['Measurement_id'] . '">' .
+            $row['Measurement_id'] . ' - ' .
+            substr($row['Timestamp'], 0, 16) . ' (Station ' . $row['Station_id'] . ')' .
+            '</option>';
+    }
+
+    echo $html;
+    exit;
+}
+
+/* Delete user (Admin only) */
+if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $user_id = $_POST['user_id'];
+
+    // Don't allow deleting self
+    $current_user = getUserInfo($_SESSION['username']);
+    if ($current_user['UserID'] == $user_id) {
+        echo "Cannot delete yourself";
+        exit;
+    }
+
+    $stmt = $connection->prepare("DELETE FROM Users WHERE UserID = ?");
+    $stmt->bind_param("i", $user_id);
+
+    if ($stmt->execute()) {
+        echo "User deleted successfully";
+    } else {
+        echo "Error deleting user";
+    }
+    exit;
+}
+
+
+
+
 ?>

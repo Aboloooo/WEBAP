@@ -16,8 +16,10 @@ Chagne color of heading in FriendShip page
 
 
 Admin can
-    Create users
+    admin right can be given also to other users
+    Create and delete users
     view all users
     create station
     view all stations
     view all measurements
+    assinging measurements to collections

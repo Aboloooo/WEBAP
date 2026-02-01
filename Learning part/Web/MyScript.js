@@ -870,3 +870,53 @@ function loadCollectionLoad() {
     }
   });
 }
+/* ==================== ADMIN DELETE BUTTONS ==================== */
+
+// Handle all delete buttons
+$(document).on("click", ".delete-btn", function () {
+  var value = $(this).val(); // Gets "user_123" or "station_456"
+
+  if (value.startsWith("user_")) {
+    // Delete user
+    var userId = value.replace("user_", "");
+    if (confirm("Delete this user?")) {
+      $.post(
+        "../MyLibrary.php",
+        {
+          delete_user: true,
+          user_id: userId,
+        },
+        function (response) {
+          alert(response);
+          // Reload users
+          $.post("../MyLibrary.php", { get_all_users: true }, function (data) {
+            $("#usersList").html(data);
+          });
+        },
+      );
+    }
+  } else if (value.startsWith("station_")) {
+    // Delete station
+    var stationId = value.replace("station_", "");
+    if (confirm("Delete this station?")) {
+      $.post(
+        "../MyLibrary.php",
+        {
+          delete_station: true,
+          station_id: stationId,
+        },
+        function (response) {
+          alert(response);
+          // Reload stations
+          $.post(
+            "../MyLibrary.php",
+            { get_all_stations: true },
+            function (data) {
+              $("#stationsList").html(data);
+            },
+          );
+        },
+      );
+    }
+  }
+});
