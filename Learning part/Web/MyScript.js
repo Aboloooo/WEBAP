@@ -649,36 +649,126 @@ function loadCollectionLoad() {
       } else {
         $sharedTab.addClass("active");
         $.post(
-          "..//MyLibrary.php",
+          "../MyLibrary.php",
           { FetchSharedCollection: true },
-          function (SharedCollections) {
-            /* return all the collections related to ME */
+          function (response) {
+            const SharedCollections =
+              typeof response === "string" ? JSON.parse(response) : response;
+
             console.log(SharedCollections);
+
+            let html = "";
+
+            // --------------------------
+            // Section 1: Collections shared with me
+            // --------------------------
+            const sharedWithMe = SharedCollections.sharedWithMeCollections;
+            if (Object.keys(sharedWithMe).length > 0) {
+              html += "<h2>Shared With Me</h2>";
+              html += "<p>Collections shared with you by other users.</p>";
+
+              for (const cid in sharedWithMe) {
+                const collection = sharedWithMe[cid];
+                html += `
+          <div class="collection-block displayTable">
+              <h3>${collection.Name}</h3>
+              <p>${collection.Description}</p>
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Measurement ID</th>
+                          <th>Timestamp</th>
+                          <th>Humidity</th>
+                          <th>Air Pressure</th>
+                          <th>Light Intensity</th>
+                          <th>Air Quality</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+        `;
+                collection.Measurements.forEach((measurement) => {
+                  html += `
+              <tr>
+                  <td>${measurement.Measurement_id}</td>
+                  <td>${measurement.Timestamp}</td>
+                  <td>${measurement.Humidity}</td>
+                  <td>${measurement.Air_pressure}</td>
+                  <td>${measurement.Light_intensity}</td>
+                  <td>${measurement.Air_quality}</td>
+              </tr>
+          `;
+                });
+
+                html += `
+                  </tbody>
+              </table>
+              <button class='share-btn' data-id='${cid}'>Share</button>
+              <button class='remove-btn' data-id='${cid}'>Remove</button>
+          </div>
+        `;
+              }
+
+              // Add separator **only if there are collections shared by me**
+              if (
+                Object.keys(SharedCollections.sharedByMeCollections).length > 0
+              ) {
+                html += '<hr style="margin:40px 0; border:1px solid #ccc;">';
+              }
+            }
+
+            // --------------------------
+            // Section 2: Collections shared by me
+            // --------------------------
+            const sharedByMe = SharedCollections.sharedByMeCollections;
+            if (Object.keys(sharedByMe).length > 0) {
+              html += "<h2>Shared By Me</h2>";
+              html += "<p>Collections you have shared with other users.</p>";
+
+              for (const cid in sharedByMe) {
+                const collection = sharedByMe[cid];
+                html += `
+          <div class="collection-block displayTable">
+              <h3>${collection.Name}</h3>
+              <p>${collection.Description}</p>
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Measurement ID</th>
+                          <th>Timestamp</th>
+                          <th>Humidity</th>
+                          <th>Air Pressure</th>
+                          <th>Light Intensity</th>
+                          <th>Air Quality</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+        `;
+                collection.Measurements.forEach((measurement) => {
+                  html += `
+              <tr>
+                  <td>${measurement.Measurement_id}</td>
+                  <td>${measurement.Timestamp}</td>
+                  <td>${measurement.Humidity}</td>
+                  <td>${measurement.Air_pressure}</td>
+                  <td>${measurement.Light_intensity}</td>
+                  <td>${measurement.Air_quality}</td>
+              </tr>
+          `;
+                });
+
+                html += `
+                  </tbody>
+              </table>
+              <button class='share-btn' data-id='${cid}'>Share</button>
+              <button class='remove-btn' data-id='${cid}'>Remove</button>
+          </div>
+        `;
+              }
+            }
+
+            $("#yourSectionDiv").html(html);
           },
         );
-        $sectionInfo.html(`
-                        <h2>Shared Collections</h2>
-                        <p>This section shows collections shared with you by other users. You can view, comment, or collaborate with others.</p>
-                        
-                        <ul class="collections-list">
-                            <li>View collections shared with you</li>
-                            <li>Collaborate with other users</li>
-                            <li>See who shared each collection</li>
-                            <li>Track changes and updates</li>
-                        </ul>
-                        
-                        <div class="collection-actions">
-                            <button class="collection-btn btn-save" id="createCollectionBtn">
-                                <i class="fas fa-plus"></i> Create Shared
-                            </button>
-                            <button class="collection-btn btn-approve" id="viewCollectionsBtn">
-                                <i class="fas fa-users"></i> View Shared
-                            </button>
-                            <button class="collection-btn btn-cancel" id="exportBtn">
-                                <i class="fas fa-share-alt"></i> Share More
-                            </button>
-                        </div>
-                    `);
       }
 
       // Re-attach event handlers to newly created buttons
