@@ -243,6 +243,9 @@ include_once("../MyLibrary.php");
                         <div id="secondSide">
                             <img src="../img/User.png" alt="not found">
                             <span><?= $username ?></span>
+                            <?php if ($_SESSION["Admin"]): ?>
+                                <span style="color: #4CAF50; font-weight: bold;">(Admin User)</span>
+                            <?php endif; ?>
                             <span>Share your username to establish a friendship</span>
                         </div>
 

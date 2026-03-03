@@ -64,9 +64,7 @@ CREATE TABLE Measurement(
     Light_intensity VARCHAR(255),
     Air_quality VARCHAR(255),
     Station_id INT,
-    Collection_id INT,
-    FOREIGN KEY (Station_id) REFERENCES Station(Station_id),
-    FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id)
+    FOREIGN KEY (Station_id) REFERENCES Station(Station_id)
 );
 INSERT INTO Measurement (Timestamp, Humidity, Air_pressure, Light_intensity, Air_quality, Station_id) 
 VALUES 

@@ -943,17 +943,48 @@ button:disabled {
 .displayTable {
   max-height: 400px;
   overflow-y: auto;
-  border: 3px solid black;
+  border: 3px solid rgb(0, 0, 0);
+  margin: 10px;
+  padding: 10px;
 }
+.displayTable h3 {
+  color: var(--text-dark);
+  border-bottom: 2px solid var(--border-medium);
+}
+
 #measurementsTable {
   border: 3px solid black;
-  width: 100%;
+  width: 98%;
   border-collapse: collapse;
   font-family: Arial, sans-serif;
   font-size: 14px;
   text-align: center;
   max-height: 400px;
   margin: 10px;
+}
+.share-btn,
+.remove-btn,
+.cancel-share-btn {
+  padding: 8px 15px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.share-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.remove-btn {
+  background: #f44336;
+  color: white;
+}
+
+.cancel-share-btn {
+  background: #ff9800;
+  color: white;
 }
 
 /* Table header */
@@ -1093,6 +1124,11 @@ button:disabled {
     background 0.2s ease,
     box-shadow 0.2s ease;
 }
+.friendCard.selected {
+  border-color: var(--primary-color);
+  background: var(--bg-light);
+  box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.3);
+}
 
 .friendCard:hover {
   background: #fff;
@@ -1122,6 +1158,20 @@ button:disabled {
 .friendEmail {
   font-size: 13px;
   color: #666;
+}
+.confirmShareWithFriendsBtn {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary-gradient);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+.confirmShareWithFriendsBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .removeFriendBtn {
@@ -1237,7 +1287,7 @@ button:disabled {
   min-height: 400px;
   background-color: var(--bg-white);
   border-radius: var(--border-radius);
-  padding: 30px;
+  padding: 20px;
   box-shadow: 0 5px 20px var(--shadow-light);
   border: 1px solid var(--border-light);
 }
@@ -1288,6 +1338,116 @@ button:disabled {
   gap: 8px;
 }
 
+/* admin page  */
+.admin-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.admin-container h1 {
+  color: var(--text-dark);
+}
+
+.admin-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.admin-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-card h3 {
+  margin-top: 0;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.admin-form textarea {
+  height: 80px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.admin-form button {
+  background: #4caf50;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-form button:hover {
+  background: #45a049;
+}
+
+.admin-data-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Make tables responsive */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+th {
+  background-color: #f4f4f4;
+  position: sticky;
+  top: 0;
+}
+
+/* Responsive adjustments */
+@media (min-width: 992px) {
+  .admin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .sections_container {

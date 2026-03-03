@@ -1,7 +1,3 @@
-Measurements
-
-- add measurements to a collection(add id of collection to measurement)
-
 Friends
 
 - WebChat
@@ -11,7 +7,19 @@ User
 
 - add a login btn
 
-Display selected collections in Dashboard 
+Display shared Collections
+
+Add a header for your list of Friends
+and show a output if there is no friend
+
+Chagne color of heading in FriendShip page
 
 
-when creating collection the measurement must be updated too. to show to which collection belongs
+Admin can
+    admin right can be given also to other users
+    Create and delete users
+    view all users
+    create station
+    view all stations
+    view all measurements
+    assinging measurements to collections

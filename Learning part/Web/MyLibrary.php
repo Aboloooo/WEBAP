@@ -64,6 +64,19 @@ function getUserInfo($username)
     } */
 }
 
+/* Remove or delete my collection */
+if (isset($_POST['targetCollection'])) {
+    $removeCollectionContains = $connection->prepare("DELETE FROM CollectionContains WHERE Collection_id = ?");
+    $removeCollectionContains->bind_param('i', $_POST['targetCollection']);
+    if ($removeCollectionContains->execute()) {
+        $removeCollection = $connection->prepare("DELETE FROM Collection WHERE Collection_id = ?");
+        $removeCollection->bind_param('i', $_POST['targetCollection']);
+        if ($removeCollection->execute()) {
+            echo "Collection removed successfully!";
+        }
+    }
+}
+
 /* logout */
 if (isset($_POST["logoutBtn"])) {
     session_unset();
@@ -127,8 +140,11 @@ if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
 
         $collections[$cid]['Measurements'][] = [
             "Measurement_id" => $row['Measurement_id'],
-            "Value" => $row['Value'],
-            "Date" => $row['Date']
+            "Timestamp" => $row['Timestamp'],
+            "Humidity" => $row['Humidity'],
+            "Air_pressure" => $row['Air_pressure'],
+            "Light_intensity" => $row['Light_intensity'],
+            "Air_quality" => $row['Air_quality']
         ];
     }
 
@@ -138,7 +154,6 @@ if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
         echo json_encode(array_values($collections));
     }
 }
-
 
 if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     $stationInfo = $connection->prepare("SELECT s.Station_id, s.Name FROM Station s JOIN Users u ON s.Owner_id = u.UserID where username = ?");
@@ -156,6 +171,7 @@ if (isset($_POST['displayStaion']) && $_POST['displayStaion']) {
     }
     echo json_encode($stationDetails);
 }
+
 if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
     $CollectionDetails = [];
     if (!isset($_SESSION["username"])) {
@@ -184,6 +200,153 @@ if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
     exit;
 }
 
+/* share Collection with Friends */
+if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
+    $user = getUserInfo($_SESSION['username']);
+    $sharedBy = $user['UserID'];
+    $targetToShare = (int) $_POST['targetCollectionToShare'];
+    $FriendsToShareWith = $_POST['shareWith'];
+
+    if (!is_array($FriendsToShareWith)) {
+        $FriendsToShareWith = [$FriendsToShareWith];
+    }
+
+    $stmt = $connection->prepare("
+        INSERT INTO CollectionShare (Collection_id, Shared_by, Shared_with)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE Collection_id = Collection_id
+    ");
+
+    $success = 0;
+    foreach ($FriendsToShareWith as $friendId) {
+        $stmt->bind_param('iii', $targetToShare, $sharedBy, $friendId);
+        if ($stmt->execute()) {
+            $success++;
+        }
+    }
+
+    echo "Shared with " . $success . " friend(s)";
+    exit;
+}
+
+/* Stop sharing this collection */
+if (isset($_POST['CancelSharedCollection'])) {
+    $collectionId = (int)$_POST['CancelSharedCollection'];
+    $user = getUserInfo($_SESSION['username']);
+    $userId = $user['UserID'];
+
+    $stmt = $connection->prepare("
+        DELETE FROM CollectionShare 
+        WHERE Collection_id = ? AND Shared_by = ?
+    ");
+    $stmt->bind_param('ii', $collectionId, $userId);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Share canceled']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to cancel share']);
+    }
+    exit;
+}
+/* Return all the Collection related to ME */
+/* Return all the Collection related to ME */
+if (isset($_POST['FetchSharedCollection']) && $_POST['FetchSharedCollection']) {
+    $user = getUserInfo($_SESSION['username']);
+    $currentUserID = $user['UserID'];
+
+    $response = [
+        'success' => true,
+        'sharedByMeCollections' => [],
+        'sharedWithMeCollections' => []
+    ];
+
+    // Get collections shared BY me
+    $stmt1 = $connection->prepare("
+        SELECT cs.Collection_id, c.Name, c.Description 
+        FROM CollectionShare cs
+        JOIN Collection c ON cs.Collection_id = c.Collection_id
+        WHERE cs.Shared_by = ?
+    ");
+    $stmt1->bind_param('i', $currentUserID);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
+
+    while ($row = $result1->fetch_assoc()) {
+        $collectionData = getCollectionsWithMeasurementsForCollection($row['Collection_id'], $connection);
+        $response['sharedByMeCollections'][$row['Collection_id']] = $collectionData;
+    }
+
+    // Get collections shared WITH me
+    $stmt2 = $connection->prepare("
+        SELECT cs.Collection_id, c.Name, c.Description 
+        FROM CollectionShare cs
+        JOIN Collection c ON cs.Collection_id = c.Collection_id
+        WHERE cs.Shared_with = ?
+    ");
+    $stmt2->bind_param('i', $currentUserID);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+
+    while ($row = $result2->fetch_assoc()) {
+        $collectionData = getCollectionsWithMeasurementsForCollection($row['Collection_id'], $connection);
+        $response['sharedWithMeCollections'][$row['Collection_id']] = $collectionData;
+    }
+
+    echo json_encode($response);
+    exit;
+}
+
+// === ADD THIS MISSING FUNCTION ===
+function getCollectionsWithMeasurementsForCollection($collectionID, $connection)
+{
+    // First get collection info
+    $stmt1 = $connection->prepare("
+        SELECT c.Collection_id, c.Name, c.Description
+        FROM Collection c
+        WHERE c.Collection_id = ?
+    ");
+    $stmt1->bind_param('i', $collectionID);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
+
+    if ($result1->num_rows === 0) {
+        return null;
+    }
+
+    $collectionRow = $result1->fetch_assoc();
+
+    $collection = [
+        "Collection_id" => $collectionRow['Collection_id'],
+        "Name" => $collectionRow['Name'],
+        "Description" => $collectionRow['Description'],
+        "Measurements" => []
+    ];
+
+    // Get measurements for this collection
+    $stmt2 = $connection->prepare("
+        SELECT m.*
+        FROM CollectionContains cc
+        JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
+        WHERE cc.Collection_id = ?
+    ");
+    $stmt2->bind_param('i', $collectionID);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+
+    while ($row = $result2->fetch_assoc()) {
+        $collection['Measurements'][] = [
+            "Measurement_id" => $row['Measurement_id'],
+            "Timestamp" => $row['Timestamp'],
+            "Humidity" => $row['Humidity'],
+            "Air_pressure" => $row['Air_pressure'],
+            "Light_intensity" => $row['Light_intensity'],
+            "Air_quality" => $row['Air_quality']
+        ];
+    }
+
+    return $collection;
+}
+// === END OF ADDED FUNCTION ===
 
 
 if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'])) {
@@ -210,20 +373,12 @@ if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'
             "INSERT INTO CollectionContains (Collection_id, Measurement_id) VALUES (?, ?)"
         );
 
-        $updateMeasurement = $connection->prepare(
-            "UPDATE Measurement SET Collection_id = ? WHERE Measurement_id = ?"
-        );
-
         foreach ($inputs as $stationId) {
             $Measurement_id = $stationId[0];
 
             // insert relation
             $insertCC->bind_param('ii', $collectionId, $Measurement_id);
             $insertCC->execute();
-
-            // update measurement
-            $updateMeasurement->bind_param('ii', $collectionId, $Measurement_id);
-            $updateMeasurement->execute();
 
             echo "Collection {$_POST['CollecionN']} now contains measurement ID: {$Measurement_id}\n";
         }
@@ -348,7 +503,6 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
             "Light_intensity"  => $row['Light_intensity'],
             "Air_quality"      => $row['Air_quality'],
             "Station_id"       => $row['Station_id'],
-            "Collection_id"    => $row['Collection_id'], // ✅ fixed key
         ];
     }
 
@@ -369,10 +523,16 @@ function NavigationBarE()
                 <li><a href="index.php#About">About</a></li>
                 <li><a href="index.php#Service">Service</a></li>
                 <li><a href="index.php#Dashboard">Dashboard</a></li>
-                <?php $MyInfo = getUserInfo($_SESSION['username']);
+                <?php
+                $MyInfo = getUserInfo($_SESSION['username']);
                 if ($MyInfo && userHasCollections($MyInfo['UserID'])) {
                     echo '<li><a href="./Collection.php">My Collection</a></li>';
-                } ?>
+                }
+                // Add Admin Panel link if user is admin
+                if ($_SESSION["Admin"]) {
+                    echo '<li><a href="./admin.php">Admin Panel</a></li>';
+                }
+                ?>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
         </div>
@@ -385,6 +545,7 @@ function NavigationBarE()
                         print($_SESSION["username"]);
                     ?>
                     <br>
+                    <?php if ($_SESSION["Admin"]) echo "<small>(Admin)</small>"; ?>
                 <?php
                     } else {
                         print("username");
@@ -394,4 +555,306 @@ function NavigationBarE()
     </div>
 <?php
 }
+
+
+/* ==================== ADMIN FUNCTIONS ==================== */
+
+/* Check if user is admin */
+function isAdmin($username)
+{
+    global $connection;
+    $stmt = $connection->prepare("SELECT AccessLevelID FROM Users WHERE Username = ?");
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        return $row['AccessLevelID'] == 1; // Assuming 1 is Admin role
+    }
+    return false;
+}
+
+/* Update session Admin status - Add this after session_start section */
+if ($_SESSION["userLogin"]) {
+    $_SESSION["Admin"] = isAdmin($_SESSION["username"]);
+}
+
+/* ==================== ADMIN POST HANDLERS ==================== */
+
+/* Create new user (Admin only) */
+if (isset($_POST['create_user']) && isset($_POST['new_username'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $username = $_POST['new_username'];
+    $password = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
+    $fullname = $_POST['new_fullname'];
+    $email = $_POST['new_email'];
+    $role = $_POST['new_role'];
+
+    $stmt = $connection->prepare("INSERT INTO Users (Username, Password, Fullname, Email, AccessLevelID) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssi", $username, $password, $fullname, $email, $role);
+
+    if ($stmt->execute()) {
+        echo "User created successfully";
+    } else {
+        echo "Error creating user";
+    }
+    exit;
+}
+
+/* Get all users for admin (Admin only) */
+if (isset($_POST['get_all_users']) && $_POST['get_all_users']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("SELECT UserID, Username, Fullname, Email, AccessLevelID FROM Users ORDER BY UserID");
+
+    $html = '<table style="width:100%; border-collapse: collapse;">
+                <tr style="background: #f4f4f4;">
+                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Username</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Full Name</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Email</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Role</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Actions</th>
+                </tr>';
+
+    if ($result->num_rows == 0) {
+        $html .= '<tr><td colspan="6" style="text-align:center; padding:20px;">No users found</td></tr>';
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            $role = $row['AccessLevelID'] == 1 ? 'Admin' : ($row['AccessLevelID'] == 2 ? 'Dev' : 'User');
+            $html .= '<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['UserID'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Username'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Fullname'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Email'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $role . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">
+<button class="delete-btn" value="user_' . $row['UserID'] . '" style="background:#f44336; color:white; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; width:100%;">Delete</button>                      </tr>';
+        }
+    }
+
+    $html .= '</table>';
+    echo $html;
+    exit;
+}
+
+/* Create new station (Admin only) */
+if (isset($_POST['create_station']) && isset($_POST['station_serial'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $name = $_POST['station_name'];
+    $serial = $_POST['station_serial'];
+    $description = $_POST['station_description'];
+
+    $stmt = $connection->prepare("INSERT INTO Station (Name, Serial_number, Description) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $name, $serial, $description);
+
+    if ($stmt->execute()) {
+        echo "Station created successfully";
+    } else {
+        echo "Error creating station";
+    }
+    exit;
+}
+
+/* Get all stations for admin (Admin only) */
+if (isset($_POST['get_all_stations']) && $_POST['get_all_stations']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("
+        SELECT s.*, u.Username as Owner 
+        FROM Station s 
+        LEFT JOIN Users u ON s.Owner_id = u.UserID 
+        ORDER BY s.Station_id
+    ");
+
+    $html = '<table style="width:100%; border-collapse: collapse;">
+                <tr style="background: #f4f4f4;">
+                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Name</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Serial</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Status</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Owner</th>
+                </tr>';
+
+    if ($result->num_rows == 0) {
+        $html .= '<tr><td colspan="5" style="text-align:center; padding:20px;">No stations found</td></tr>';
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            $html .= '<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Station_id'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Name'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Serial_number'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Status'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . ($row['Owner'] ?: 'None') . '</td>
+                      </tr>';
+        }
+    }
+
+    $html .= '</table>';
+    echo $html;
+    exit;
+}
+
+/* Get all measurements for admin (Admin only) */
+if (isset($_POST['get_all_measurements']) && $_POST['get_all_measurements']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("
+        SELECT m.*, s.Name as StationName 
+        FROM Measurement m 
+        JOIN Station s ON m.Station_id = s.Station_id 
+        ORDER BY m.Timestamp DESC 
+        LIMIT 50
+    ");
+
+    $html = '<table style="width:100%; border-collapse: collapse;">
+                <tr style="background: #f4f4f4;">
+                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Timestamp</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Station</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Humidity</th>
+                    <th style="border:1px solid #ddd; padding:8px;">Air Pressure</th>
+                </tr>';
+
+    if ($result->num_rows == 0) {
+        $html .= '<tr><td colspan="5" style="text-align:center; padding:20px;">No measurements found</td></tr>';
+    } else {
+        while ($row = $result->fetch_assoc()) {
+            $html .= '<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Measurement_id'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Timestamp'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['StationName'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Humidity'] . '</td>
+                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Air_pressure'] . '</td>
+                      </tr>';
+        }
+    }
+
+    $html .= '</table>';
+    echo $html;
+    exit;
+}
+
+/* Assign measurements to collection (Admin only) */
+if (isset($_POST['assign_measurements']) && isset($_POST['collection_id'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $collection_id = $_POST['collection_id'];
+    $measurement_ids = $_POST['measurement_ids'];
+
+    if (!is_array($measurement_ids)) {
+        $measurement_ids = [$measurement_ids];
+    }
+
+    $success = 0;
+    $errors = 0;
+
+    foreach ($measurement_ids as $measurement_id) {
+        // Check if already assigned
+        $check = $connection->prepare("SELECT * FROM CollectionContains WHERE Collection_id = ? AND Measurement_id = ?");
+        $check->bind_param("ii", $collection_id, $measurement_id);
+        $check->execute();
+
+        if ($check->get_result()->num_rows == 0) {
+            $stmt = $connection->prepare("INSERT INTO CollectionContains (Collection_id, Measurement_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $collection_id, $measurement_id);
+
+            if ($stmt->execute()) {
+                $success++;
+            } else {
+                $errors++;
+            }
+        }
+    }
+
+    echo "Assigned $success measurements. $errors failed.";
+    exit;
+}
+
+/* Get collections dropdown (Admin only) */
+if (isset($_POST['get_collections_dropdown']) && $_POST['get_collections_dropdown']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("SELECT Collection_id, Name FROM Collection ORDER BY Name");
+
+    $html = '<option value="">Select Collection</option>';
+    while ($row = $result->fetch_assoc()) {
+        $html .= '<option value="' . $row['Collection_id'] . '">' . $row['Name'] . '</option>';
+    }
+
+    echo $html;
+    exit;
+}
+
+/* Get measurements dropdown (Admin only) */
+if (isset($_POST['get_measurements_dropdown']) && $_POST['get_measurements_dropdown']) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $result = $connection->query("SELECT Measurement_id, Timestamp, Station_id FROM Measurement ORDER BY Timestamp DESC LIMIT 100");
+
+    $html = '<option value="">Select Measurements</option>';
+    while ($row = $result->fetch_assoc()) {
+        $html .= '<option value="' . $row['Measurement_id'] . '">' .
+            $row['Measurement_id'] . ' - ' .
+            substr($row['Timestamp'], 0, 16) . ' (Station ' . $row['Station_id'] . ')' .
+            '</option>';
+    }
+
+    echo $html;
+    exit;
+}
+
+/* Delete user (Admin only) */
+if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+
+    $user_id = $_POST['user_id'];
+
+    // Don't allow deleting self
+    $current_user = getUserInfo($_SESSION['username']);
+    if ($current_user['UserID'] == $user_id) {
+        echo "Cannot delete yourself";
+        exit;
+    }
+
+    $stmt = $connection->prepare("DELETE FROM Users WHERE UserID = ?");
+    $stmt->bind_param("i", $user_id);
+
+    if ($stmt->execute()) {
+        echo "User deleted successfully";
+    } else {
+        echo "Error deleting user";
+    }
+    exit;
+}
+
 ?>
