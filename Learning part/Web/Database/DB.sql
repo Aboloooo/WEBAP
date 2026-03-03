@@ -32,11 +32,11 @@ CREATE TABLE Station(
     Owner_id INT,
     FOREIGN KEY (Owner_id) REFERENCES Users(UserID)
 );
-insert into Station(Serial_number, Name, Description) values ("WST-202601-001" ,"s1 Station" ,"This station can be changed after registration");
-insert into Station(Serial_number, Name, Description) values ("WST-202601-002" ,"s2 Station" ,"This station can be changed after registration");
-insert into Station(Serial_number, Name, Description) values ("WST-202601-003" ,"s3 Station" ,"This station can be changed after registration");
-insert into Station(Serial_number, Name, Description) values ("WST-202601-004" ,"s4 Station" ,"This station can be changed after registration");
-insert into Station(Serial_number, Name, Description) values ("WST-202601-005" ,"s5 Station" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-001" ,"Station 1" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-002" ,"Station 2" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-003" ,"Station 3" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-004" ,"Station 4" ,"This station can be changed after registration");
+insert into Station(Serial_number, Name, Description) values ("WST-202601-005" ,"Station 5" ,"This station can be changed after registration");
 
 -- Collection table
 CREATE TABLE Collection(

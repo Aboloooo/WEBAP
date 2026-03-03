@@ -999,12 +999,19 @@ button:disabled {
 
 /* === Friendship page === */
 .friendFinderContainer {
-  width: auto;
-  height: auto;
-  display: inline-block;
+  display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center; /* Centers vertically */
+  margin-top: 10%;
 }
 .friendFinderContainer form {
-  background-color: #1976d2;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--bg-overlay);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
 }
@@ -1012,7 +1019,6 @@ button:disabled {
   margin-bottom: 20px;
 }
 .layer-content {
-  background-color: var(--bg-white);
   padding: 20px;
   margin-top: 40px;
 }

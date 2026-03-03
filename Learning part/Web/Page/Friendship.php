@@ -90,31 +90,33 @@ include_once("../MyLibrary.php");
     $totalFriends = $result->fetch_row()[0];
 
     ?>
-    <div>
-        <div class="layer-content">
-            <h3>Friend Statistics</h3>
-            <div class="cards-grid">
-                <div class="card" onclick="DisplayFriends()">
-                    <span>Totol Friends:</span>
-                    <span><?= $totalFriends ?></span>
+    <section>
+        <div>
+            <div class="layer-content">
+                <h3>Friend Statistics</h3>
+                <div class="cards-grid">
+                    <div class="card" onclick="DisplayFriends()">
+                        <span>Totol Friends:</span>
+                        <span><?= $totalFriends ?></span>
+                    </div>
+                    <div class="card" onclick="MessageAll()">
+                        <span>Message all</span>
+                    </div>
+                    <div class="card">
+                        <span>Pending Friendship request:</span>
+                        <span>0</span>
+                    </div>
                 </div>
-                <div class="card" onclick="MessageAll()">
-                    <span>Message all</span>
+                <div class="friendFinderContainer">
+                    <form method="post">
+                        <h2>Find</h2>
+                        <input type="text" name="username" placeholder="Enter username here">
+                        <button type="submit" name="submitBtn">Add</button>
+                    </form>
                 </div>
-                <div class="card">
-                    <span>Pending Friendship request:</span>
-                    <span>0</span>
-                </div>
-            </div>
-            <div class="friendFinderContainer">
-                <form method="post">
-                    <h2>Find</h2>
-                    <input type="text" name="username" placeholder="Enter username here">
-                    <button type="submit" name="submitBtn">Add</button>
-                </form>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- <div class="blur-background">blur background</div> -->
 

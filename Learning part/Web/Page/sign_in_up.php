@@ -149,7 +149,6 @@ include_once("../MyLibrary.php");
             $loginCheck->execute();
             $result = $loginCheck->get_result();
             if ($row = $result->fetch_assoc()) {
-                $Public_UserID = $row['Public_UserID'];
                 $fullName = $row['Fullname'];
                 $username = $row['Username'];
                 $email = $row['Email'];
@@ -221,7 +220,10 @@ include_once("../MyLibrary.php");
                                     <span class="value" id="stationsValue">
                                         <!-- <span class="station_badge">Station A</span> -->
                                         <?php
-                                        $myStations = $connection->prepare("SELECT Name FROM Station s JOIN StationOwnership o ON s.Station_id = o.station_id");
+                                        $user = getUserInfo($_SESSION['username']);
+                                        $currentUserID = $user['UserID'];
+                                        $myStations = $connection->prepare("SELECT Name FROM Station WHERE Owner_id=?");
+                                        $myStations->bind_param("i", $currentUserID);
                                         $myStations->execute();
                                         $result = $myStations->get_result();
                                         while ($stationRow = $result->fetch_assoc()) {
