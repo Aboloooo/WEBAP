@@ -558,6 +558,44 @@ section {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--shadow-heavy);
 }
+.messageContainer {
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+  border-radius: var(--border-radius);
+  background-color: var(--bg-light);
+}
+.messageList {
+  height: 90%;
+  overflow-y: auto;
+  padding: 1rem;
+}
+.inputContainer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  margin: 2.5rem 0;
+}
+.inputContainer input {
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: var(--border-radius-small);
+}
+.inputContainer button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--border-radius-small);
+  background-color: var(--primary-light);
+  color: var(--text-white);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  float: right;
+}
+
+.inputContainer button:hover {
+  background-color: var(--primary-hover);
+}
 
 .form-message {
   padding: 0.5rem;

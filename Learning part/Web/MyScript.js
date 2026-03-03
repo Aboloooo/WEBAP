@@ -204,9 +204,23 @@ function MessageAll() {
 
   $("body").append(blurDiv).append(sectionContent);
   /* 
-  - check if user is login 
-  - for each new message there must be a notification in message all option 
+  - add message list
   */
+  let container = $("<div>").addClass("messageContainer");
+  let messageList = $("<div>").addClass("messageList");
+  let input_container = $("<div>").addClass("inputContainer");
+  let input = $("<input>")
+    .attr("type", "text")
+    .attr("placeholder", "Type your message...");
+  let sendBtn = $("<button>")
+    .text("Send")
+    .on("click", function () {
+      let message = input.val();
+      messageList.append($("<div>").text(message));
+    });
+  input_container.append(input, sendBtn);
+  container.append(messageList, input_container);
+  sectionContent.append(container);
 }
 function updateShareButton() {
   const selectedCount = $(".friendCard.selected").length;
