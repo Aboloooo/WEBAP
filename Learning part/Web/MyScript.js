@@ -219,7 +219,6 @@ function MessageAll() {
     .on("click", function () {
       let message = input.val();
       let profileImg = "../img/User.png";
-
       // Create message content holder with username
       let message_content_holder = $("<div>").addClass(
         "message_content_holder",
@@ -228,25 +227,29 @@ function MessageAll() {
         $("<div>").addClass("username_holder").text("You"),
       );
       message_content_holder.append($("<div>").text(message));
-      
+
       // Add timestamp
       let now = new Date();
-      let timeString = now.getHours().toString().padStart(2, "0") + ":" + 
-                       now.getMinutes().toString().padStart(2, "0");
+      let timeString =
+        now.getHours().toString().padStart(2, "0") +
+        ":" +
+        now.getMinutes().toString().padStart(2, "0");
       message_content_holder.append(
-        $("<div>").addClass("message_timestamp").text(timeString)
+        $("<div>").addClass("message_timestamp").text(timeString),
       );
 
-      let message_container = $("<div>").addClass("sent_message_container sent");
+      let message_container = $("<div>").addClass(
+        "sent_message_container sent",
+      );
       message_container
         .prepend($("<img>").attr("src", profileImg).addClass("profileImg"))
         .append(message_content_holder);
 
       messageList.append(message_container);
-      
+
       // Auto-scroll to the latest message
       messageList.scrollTop(messageList[0].scrollHeight);
-      
+
       input.val(""); // Clear input after sending
     });
   input_container.append(input, sendBtn);
