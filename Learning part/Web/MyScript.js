@@ -207,6 +207,8 @@ function MessageAll() {
   - add message list
   */
   let container = $("<div>").addClass("messageContainer");
+  let heading = $("<h2>").text("Message All").addClass("messageAllHeading");
+  container.append(heading);
   let messageList = $("<div>").addClass("messageList");
   let input_container = $("<div>").addClass("inputContainer");
   let input = $("<input>")
@@ -216,7 +218,19 @@ function MessageAll() {
     .text("Send")
     .on("click", function () {
       let message = input.val();
-      messageList.append($("<div>").text(message));
+      let profileImg = "../img/User.png";
+      let message_content_holder = $("<div>").addClass(
+        "message_content_holder",
+      ); // holder of message
+      let message_container = $("<div>")
+        .text(message)
+        .addClass("sent_message_container");
+      message_container
+        .prepend($("<img>").attr("src", profileImg).addClass("profileImg"))
+        .append(message_content_holder);
+
+      messageList.append(message_container);
+      input.val(""); // Clear input after sending
     });
   input_container.append(input, sendBtn);
   container.append(messageList, input_container);
