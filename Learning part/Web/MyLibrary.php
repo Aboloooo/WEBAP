@@ -857,4 +857,39 @@ if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
     exit;
 }
 
-?>
+if (isset($_POST['sendMessage']) && $_POST['sendMessage'] && isset($_POST['timestamp'])) {
+    $message = $_POST['message'];
+    $MyInfo = getUserInfo($_SESSION["username"]);
+    $user_id = $MyInfo['UserID'];
+    $timestamp = $_POST['timestamp'];
+    $default_message_view = 'unseen';
+
+    $stmt = $connection->prepare("INSERT INTO Message (Message_content, Sender_ID, isViewed, Message_time) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("sisi", $message, $user_id, $default_message_view, $timestamp);
+
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true]);
+    } else {
+        echo json_encode(["success" => false]);
+    }
+    exit;
+}
+if (isset($_POST['getNewMessages']) && $_POST['getNewMessages']) {
+    $MyInfo = getUserInfo($_SESSION["username"]);
+    $user_id = $MyInfo['UserID'];
+
+    $stmt = $connection->prepare("SELECT * FROM Message WHERE Receiver_ID = ? AND isViewed = ?");
+    $stmt->bind_param("is", $user_id, $default_message_view);
+
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $messages = [];
+        while ($row = $result->fetch_assoc()) {
+            $messages[] = $row;
+        }
+        echo json_encode(["success" => true, "messages" => $messages]);
+    } else {
+        echo json_encode(["success" => false]);
+    }
+    exit;
+}

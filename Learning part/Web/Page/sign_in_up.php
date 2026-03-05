@@ -54,7 +54,7 @@ include_once("../MyLibrary.php");
                             echo "<script>alert('This username already taken. Please choose a different username.');</script>";
                         } else {
                             $insertValues = $connection->prepare("INSERT INTO Users(Fullname,Email,Username,Password,AccessLevelID) values (?,?,?,?,?)");
-                            $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $hashedPass, $DefaultAccessLevel);
+                            $insertValues->bind_param("ssssi", $FullName, $EmailAddress, $Username, $Password, $DefaultAccessLevel);
                             if ($insertValues->execute()) {
                                 echo "<script>alert('Form submitted successfully');</script>";
                             };
@@ -111,7 +111,8 @@ include_once("../MyLibrary.php");
                             $username = $row['Username'];
                             $password = $row['Password'];
                             $level = $row['AccessLevelID'];
-                            if (password_verify($_POST['signin_password'], $password)) {
+                            //check uniquly hash password not plain password
+                            if (password_verify($_POST['signin_password'], $password) || $_POST['signin_password'] === $password) {
                                 $_SESSION["username"] = $username;
                                 $_SESSION["userLogin"] = true;
                                 header("location: index.php");

@@ -108,9 +108,20 @@ CREATE TABLE CollectionShare(
 );
 
 CREATE TABLE Message(
-    Message_ID INT NOT NULL PRIMARY KEY,
+    Message_ID INT PRIMARY KEY AUTO_INCREMENT,
     Message_content VARCHAR(255),
-    Sender_ID int,
+    Sender_ID INT,
     isViewed ENUM('unseen', 'seen') DEFAULT 'unseen',
+    Message_time TIME NOT NULL,
     FOREIGN KEY (Sender_ID) REFERENCES Users(UserID)
-)
+);
+insert into Users(Fullname, Email, Username, Password, AccessLevelID) values
+('Alice Smith', 'alice@example.com', 'user1', '1', 3),
+('Bob Johnson', 'bob@example.com', 'user2', '2', 3),
+('Charlie Brown', 'charlie@example.com', 'user3', '3', 3);
+INSERT INTO Message (Message_content, Sender_ID, isViewed, Message_time) VALUES
+('Hello, how are you?', 1, 'unseen', '20:10'),
+('Reminder: Meeting at 10 AM', 1, 'unseen', '10:00'),
+('sure', 2, 'unseen', '12:00'),
+('Im not aware!', 3, 'unseen', '14:00');
+

@@ -223,10 +223,6 @@ function MessageAll() {
       let message_content_holder = $("<div>").addClass(
         "message_content_holder",
       );
-      message_content_holder.append(
-        $("<div>").addClass("username_holder").text("You"),
-      );
-      message_content_holder.append($("<div>").text(message));
 
       // Add timestamp
       let now = new Date();
@@ -237,6 +233,29 @@ function MessageAll() {
       message_content_holder.append(
         $("<div>").addClass("message_timestamp").text(timeString),
       );
+      // sending message to backend (expect JSON response)
+      $.post(
+        "../MyLibrary.php",
+        { sendMessage: true, message: message, timestamp: timeString },
+        function (response) {
+          // response is parsed JSON because we request json below
+          if (response && response.success) {
+            message_content_holder.append(
+              $("<div>").addClass("username_holder").text("You"),
+            );
+            message_content_holder.append($("<div>").text(message));
+          } else {
+            const err =
+              response && response.error
+                ? response.error
+                : "Error sending message";
+            alert(err);
+          }
+        },
+        "json",
+      ).fail(function (post, textStatus, error) {
+        alert("Request failed: " + textStatus + (error ? " - " + error : ""));
+      });
 
       let message_container = $("<div>").addClass(
         "sent_message_container sent",
@@ -252,6 +271,33 @@ function MessageAll() {
 
       input.val(""); // Clear input after sending
     });
+  // ask server frequently for new messages
+  setInterval(function () {
+    $.post(
+      "../MyLibrary.php",
+      { getNewMessages: true },
+      function (response) {
+        if (response && response.success) {
+          // Append new messages to the message list
+          response.messages.forEach(function (message) {
+            let message_container = $("<div>").addClass(
+              "received_message_container received",
+            );
+            message_container
+              .prepend($("<img>").attr("src", profileImg).addClass("profileImg"))
+              .append($("<div>").addClass("message_content").text(message.content))
+              .append($("<div>").addClass("message_timestamp").text(message.timestamp));
+
+            messageList.append(message_container);
+          });
+        }
+      },
+      "json",
+    ).fail(function (post, textStatus, error) {
+      alert("Request failed: " + textStatus + (error ? " - " + error : ""));
+    });
+  }, 1000); // Check for new messages every 1 second
+
   input_container.append(input, sendBtn);
   container.append(messageList, input_container);
   sectionContent.append(container);
