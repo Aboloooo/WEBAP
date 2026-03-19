@@ -5,34 +5,34 @@ error_log("POST data: " . print_r($_POST, true));
 file_put_contents('debug.log', print_r($_POST, true), FILE_APPEND);
 
 // Check both POST and raw input
-$post_data = $_POST;
+$_POST = $_POST;
 
 // If POST is empty, try to parse raw input
-if (empty($post_data)) {
+if (empty($_POST)) {
     $raw_input = file_get_contents('php://input');
-    parse_str($raw_input, $post_data);
+    parse_str($raw_input, $_POST);
 }
 
 if (
     isset(
-        $post_data['station_serial'],
-        $post_data['timestamp'],
-        $post_data['temperature'],
-        $post_data['humidity'],
-        $post_data['pressure'],
-        $post_data['light'],
-        $post_data['gas']
+        $_POST['station_serial'],
+        $_POST['timestamp'],
+        $_POST['temperature'],
+        $_POST['humidity'],
+        $_POST['pressure'],
+        $_POST['light'],
+        $_POST['gas']
     )
 ) {
     echo "<br>Sensor Data Received:<br>";
 
-    $station_serial = htmlspecialchars($post_data['station_serial']);
-    $timestamp      = htmlspecialchars($post_data['timestamp']);
-    $temperature    = htmlspecialchars($post_data['temperature']);
-    $humidity       = htmlspecialchars($post_data['humidity']);
-    $pressure       = htmlspecialchars($post_data['pressure']);
-    $light          = htmlspecialchars($post_data['light']);
-    $gas            = htmlspecialchars($post_data['gas']);
+    $station_serial = htmlspecialchars($_POST['station_serial']);
+    $timestamp      = htmlspecialchars($_POST['timestamp']);
+    $temperature    = htmlspecialchars($_POST['temperature']);
+    $humidity       = htmlspecialchars($_POST['humidity']);
+    $pressure       = htmlspecialchars($_POST['pressure']);
+    $light          = htmlspecialchars($_POST['light']);
+    $gas            = htmlspecialchars($_POST['gas']);
 
     echo "Station Serial: $station_serial <br>";
     echo "Timestamp: $timestamp <br>";
@@ -44,6 +44,6 @@ if (
 } else {
     echo "Missing data!";
     echo "<br>Received POST data: <pre>";
-    print_r($post_data);
+    print_r($_POST);
     echo "</pre>";
 }
