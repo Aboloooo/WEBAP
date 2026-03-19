@@ -24517,3 +24517,43 @@ Array
     [light] => 0.0
     [gas] => 2055
 )
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 05:55:01.712567
+    [temperature] => 27.20399466908659
+    [humidity] => 0.0
+    [pressure] => 994.821444863353
+    [light] => 0.8333333333333334
+    [gas] => 2053
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 05:55:03.763039
+    [temperature] => 27.20717471517039
+    [humidity] => 0.0
+    [pressure] => 994.8351732742676
+    [light] => 0.8333333333333334
+    [gas] => 2047
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 05:55:05.807513
+    [temperature] => 27.210354761367874
+    [humidity] => 0.0
+    [pressure] => 994.8338527954553
+    [light] => 0.8333333333333334
+    [gas] => 2046
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 05:55:07.857664
+    [temperature] => 27.210990770621017
+    [humidity] => 0.0
+    [pressure] => 994.836598493863
+    [light] => 0.0
+    [gas] => 2042
+)
