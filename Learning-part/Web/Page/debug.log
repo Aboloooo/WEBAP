@@ -25537,3 +25537,23 @@ Array
     [light] => 0.0
     [gas] => 2023
 )
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 05:58:30.721293
+    [temperature] => 27.125129562579083
+    [humidity] => 0.0
+    [pressure] => 994.7836221535164
+    [light] => 0.8333333333333334
+    [gas] => 2019
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 05:58:32.768149
+    [temperature] => 27.12290353236167
+    [humidity] => 0.0
+    [pressure] => 994.7781926317678
+    [light] => 0.8333333333333334
+    [gas] => 2017
+)
