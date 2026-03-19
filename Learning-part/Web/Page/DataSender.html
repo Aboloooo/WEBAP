@@ -6,6 +6,10 @@
     <title>Document</title>
   </head>
   <body>
+    station_serial=102 timestamp=2026-03-19+04%3A46%3A38.097094
+    temperature=25.67758567287185 humidity=0.0 pressure=995.5557247424103
+    light=0.0 gas=1981
+
     <form action="DataHandler.php" method="POST">
       <label for="station_serial">Station Serial:</label>
       <input
@@ -21,7 +25,7 @@
       <label for="humidity">Humidity:</label>
       <input type="text" id="humidity" name="humidity" required /><br />
       <label for="air_pressure">Air Pressure:</label>
-      <input type="text" id="air_pressure" name="air_pressure" required /><br />
+      <input type="text" id="air_pressure" name="pressure" required /><br />
       <label for="light">Light:</label>
       <input type="text" id="light" name="light" required /><br />
       <label for="gas">Gas:</label>

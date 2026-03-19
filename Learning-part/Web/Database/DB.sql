@@ -56,7 +56,7 @@ CREATE TABLE CollectionContains (
 );
 
 -- Measurement table - Now this references CollectionContains indirectly through Collection_id
-CREATE TABLE Measurement(
+/* CREATE TABLE Measurement(
     Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
     Timestamp DATETIME NOT NULL,
     Humidity VARCHAR(255),
@@ -65,8 +65,19 @@ CREATE TABLE Measurement(
     Air_quality VARCHAR(255),
     Station_id INT,
     FOREIGN KEY (Station_id) REFERENCES Station(Station_id)
-);
-INSERT INTO Measurement (Timestamp, Humidity, Air_pressure, Light_intensity, Air_quality, Station_id) 
+); */
+CREATE TABLE Measurement(
+    Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
+    Timestamp DATETIME NOT NULL,
+    Temperature DECIMAL(10,2),
+    Humidity DECIMAL(10,2),
+    Pressure DECIMAL(10,2),
+    Light_intensity DECIMAL(10,2),
+    Gas_resistance INT,
+    Station_serial INT,
+    FOREIGN KEY (Station_serial) REFERENCES Station(Station_serial)
+); 
+INSERT INTO Measurement (Timestamp, Temperature, Humidity, Pressure, Light_intensity, Gas_resistance, Station_serial) 
 VALUES 
 ('2026-01-18 08:00:00', '45%', '1013 hPa', '350 lux', 'Good', 1),
 ('2026-01-18 10:00:00', '42%', '1012 hPa', '850 lux', 'Good', 1),
