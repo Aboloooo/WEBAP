@@ -1,17 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
-<body>
+  </head>
+  <body>
     <form action="DataHandler.php" method="POST">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
-        <input type="text" id="lastName" name="lastName" required>
-        <input type="text" id="favoriteNumber" name="favoriteNumber" required>
-        <input type="submit" name="submit" value="Submit">
+      <label for="station_serial">Station Serial:</label>
+      <input
+        type="text"
+        id="station_serial"
+        name="station_serial"
+        required
+      /><br />
+      <label for="timestamp">Timestamp:</label>
+      <input type="text" id="timestamp" name="timestamp" required /><br />
+      <label for="temperature">Temperature:</label>
+      <input type="text" id="temperature" name="temperature" required /><br />
+      <label for="humidity">Humidity:</label>
+      <input type="text" id="humidity" name="humidity" required /><br />
+      <label for="air_pressure">Air Pressure:</label>
+      <input type="text" id="air_pressure" name="air_pressure" required /><br />
+      <label for="light">Light:</label>
+      <input type="text" id="light" name="light" required /><br />
+      <label for="gas">Gas:</label>
+      <input type="text" id="gas" name="gas" required /><br />
+
+      <input type="submit" name="submit" value="Submit" />
     </form>
-</body>
+  </body>
 </html>
