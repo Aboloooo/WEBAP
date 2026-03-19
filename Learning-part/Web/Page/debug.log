@@ -138,3 +138,63 @@ Array
     [light] => 0.8333333333333334
     [gas] => 2006
 )
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:09.811188
+    [temperature] => 27.147071863417295
+    [humidity] => 0.0
+    [pressure] => 994.753784519031
+    [light] => 0.8333333333333334
+    [gas] => 2011
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:11.850654
+    [temperature] => 27.14516383704258
+    [humidity] => 0.0
+    [pressure] => 994.7438761011016
+    [light] => 0.8333333333333334
+    [gas] => 2012
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:13.892043
+    [temperature] => 27.14166578879524
+    [humidity] => 0.0
+    [pressure] => 994.7413154096051
+    [light] => 0.8333333333333334
+    [gas] => 2013
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:15.932284
+    [temperature] => 27.139757762536487
+    [humidity] => 0.0
+    [pressure] => 994.7581577772158
+    [light] => 0.8333333333333334
+    [gas] => 2014
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:17.973990
+    [temperature] => 27.137531731953004
+    [humidity] => 0.0
+    [pressure] => 994.7460407054965
+    [light] => 0.8333333333333334
+    [gas] => 2014
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:20.015035
+    [temperature] => 27.13625971450174
+    [humidity] => 0.0
+    [pressure] => 994.7505812192331
+    [light] => 0.8333333333333334
+    [gas] => 2016
+)
