@@ -69,29 +69,28 @@ CREATE TABLE CollectionContains (
 CREATE TABLE Measurement(
     Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
     Timestamp DATETIME NOT NULL,
-    Temperature VARCHAR(50),
-    Humidity VARCHAR(50),
-    Air_pressure VARCHAR(50),
-    Light_intensity VARCHAR(50),
-    Air_quality VARCHAR(50),
+    Temperature DECIMAL(10,4),
+    Humidity DECIMAL(10,4),
+    Air_pressure DECIMAL(10,4),
+    Light_intensity DECIMAL(10,4),
+    Air_quality INT,
     Station_id INT,
     FOREIGN KEY (Station_id) REFERENCES Station(Station_id)
-); 
+);
 INSERT INTO Measurement (Timestamp, Temperature, Humidity, Air_pressure, Light_intensity, Air_quality, Station_id) 
 VALUES 
-('2026-01-18 08:00:00', '22°C', '45%', '1013 hPa', '350 lux', 'Good', 1),
-('2026-01-18 10:00:00', '24°C', '42%', '1012 hPa', '850 lux', 'Good', 1),
-('2026-01-18 12:00:00', '26°C', '38%', '1011 hPa', '1200 lux', 'Moderate', 1),
-('2026-01-18 14:00:00', '25°C', '40%', '1010 hPa', '1100 lux', 'Moderate', 2),
-('2026-01-18 16:00:00', '23°C', '48%', '1009 hPa', '600 lux', 'Good', 2),
-('2026-01-18 18:00:00', '21°C', '55%', '1009 hPa', '50 lux', 'Excellent', 3),
-('2026-01-18 20:00:00', '19°C', '60%', '1010 hPa', '0 lux', 'Excellent', 3),
-('2026-01-18 22:00:00', '18°C', '65%', '1011 hPa', '0 lux', 'Excellent', 5),
-('2026-01-18 14:00:00', '25°C', '40%', '1010 hPa', '1100 lux', 'Moderate', 5),
-('2026-01-18 16:00:00', '23°C', '48%', '1009 hPa', '600 lux', 'Good', 4),
-('2026-01-18 18:00:00', '21°C', '55%', '1009 hPa', '50 lux', 'Excellent', 4),
-('2026-01-18 20:00:00', '19°C', '60%', '1010 hPa', '0 lux', 'Excellent', 4),
-('2026-01-18 22:00:00', '18°C', '65%', '1011 hPa', '0 lux', 'Excellent', 5);
+('2026-01-18 08:00:00', 22.0, 45.0, 1013.0, 350.0, 1, 1),
+('2026-01-18 10:00:00', 24.0, 42.0, 1012.0, 850.0, 1, 1),
+('2026-01-18 12:00:00', 26.0, 38.0, 1011.0, 1200.0, 1, 1),
+('2026-01-18 14:00:00', 25.0, 40.0, 1010.0, 1100.0, 2, 2),
+('2026-01-18 16:00:00', 23.0, 48.0, 1009.0, 600.0, 2, 2),
+('2026-01-18 18:00:00', 21.0, 55.0, 1009.0, 50.0, 3, 3),
+('2026-01-18 20:00:00', 19.0, 60.0, 1010.0, 0.0, 3, 3),
+('2026-01-18 22:00:00', 18.0, 65.0, 1011.0, 0.0, 5, 5),
+('2026-01-18 04:00:00', 25.0, 40.0, 1010.0, 1100.0, 1, 1),
+('2026-01-18 06:00:00', 23.0, 48.0, 1009.0, 600.0, 2, 2),
+('2026-01-18 08:00:00', 21.0, 55.0, 1009.0, 50.0, 3, 3),
+('2026-01-18 20:00:00', 19.0, 60.0, 1010.0, 0.0, 4, 4);
 -- Now update the CollectionContains foreign keys to reference the tables
 ALTER TABLE CollectionContains
 ADD FOREIGN KEY (Collection_id) REFERENCES Collection(Collection_id),
