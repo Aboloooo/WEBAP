@@ -1,18 +1,5 @@
 <?php
-
-// Add this at the very top for debugging
-error_log("POST data: " . print_r($_POST, true));
-file_put_contents('debug.log', print_r($_POST, true), FILE_APPEND);
-
-// Check both POST and raw input
-$_POST = $_POST;
-
-// If POST is empty, try to parse raw input
-if (empty($_POST)) {
-    $raw_input = file_get_contents('php://input');
-    parse_str($raw_input, $_POST);
-}
-
+// Check if all required POST parameters exist
 if (
     isset(
         $_POST['station_serial'],
@@ -24,26 +11,61 @@ if (
         $_POST['gas']
     )
 ) {
-    echo "<br>Sensor Data Received:<br>";
-
-    $station_serial = htmlspecialchars($_POST['station_serial']);
-    $timestamp      = htmlspecialchars($_POST['timestamp']);
-    $temperature    = htmlspecialchars($_POST['temperature']);
-    $humidity       = htmlspecialchars($_POST['humidity']);
-    $pressure       = htmlspecialchars($_POST['pressure']);
-    $light          = htmlspecialchars($_POST['light']);
-    $gas            = htmlspecialchars($_POST['gas']);
-
-    echo "Station Serial: $station_serial <br>";
-    echo "Timestamp: $timestamp <br>";
-    echo "Temperature: $temperature <br>";
-    echo "Humidity: $humidity <br>";
-    echo "Pressure: $pressure <br>";
-    echo "Light: $light <br>";
-    echo "Gas: $gas <br>";
+    $station_serial = $_POST['station_serial'];
+    $timestamp      = $_POST['timestamp'];
+    $temperature    = (float)$_POST['temperature'];    
+    $humidity       = (float)$_POST['humidity'];        
+    $pressure       = (float)$_POST['pressure'];        
+    $light          = (float)$_POST['light'];           
+    $air_quality    = (int)$_POST['gas'];               
 } else {
-    echo "Missing data!";
-    echo "<br>Received POST data: <pre>";
-    print_r($_POST);
-    echo "</pre>";
+    die("Error: Missing required POST parameters.");
 }
+
+$host = 'localhost';
+$username = 'root';
+$password = 'mysql_secure_installation'; 
+$database = 'PIF_2026';
+
+$connection = mysqli_connect($host, $username, $password, $database);
+
+if (!$connection) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+mysqli_set_charset($connection, "utf8mb4");
+
+if (strpos($timestamp, '.') !== false) {
+    $timestamp = explode('.', $timestamp)[0]; 
+}
+
+$station_query = "SELECT Station_id FROM Station WHERE Serial_number = ?";
+$stmt = $connection->prepare($station_query);
+$stmt->bind_param("s", $station_serial);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+    $station_id = $row['Station_id'];
+    $stmt->close();
+    
+    $insert_query = "INSERT INTO Measurement (Timestamp, Temperature, Humidity, Air_pressure, Light_intensity, Air_quality, Station_id) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)";
+    
+    $stat = $connection->prepare($insert_query);
+    
+    $stat->bind_param("sddddii", $timestamp, $temperature, $humidity, $pressure, $light, $air_quality, $station_id);
+    
+    if ($stat->execute()) {
+        echo "Data inserted successfully. Measurement ID: " . $stat->insert_id;
+    } else {
+        echo "Error inserting data: " . $stat->error;
+    }
+    $stat->close();
+} else {
+    echo "Error: Station with Serial_number '$station_serial' not found in Station table. Please add it first.";
+    $stmt->close();
+}
+
+$connection->close();
+?>
