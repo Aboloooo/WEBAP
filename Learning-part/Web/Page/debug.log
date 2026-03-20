@@ -198,3 +198,103 @@ Array
     [light] => 0.8333333333333334
     [gas] => 2016
 )
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:22.055283
+    [temperature] => 27.134987697068663
+    [humidity] => 0.0
+    [pressure] => 994.7367307385275
+    [light] => 0.8333333333333334
+    [gas] => 2015
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:24.096594
+    [temperature] => 27.134987697068663
+    [humidity] => 0.0
+    [pressure] => 994.7450902690392
+    [light] => 0.8333333333333334
+    [gas] => 2015
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:26.138357
+    [temperature] => 27.1333976753029
+    [humidity] => 0.0
+    [pressure] => 994.7307030473378
+    [light] => 0.8333333333333334
+    [gas] => 2016
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:28.179956
+    [temperature] => 27.13657771886285
+    [humidity] => 0.0
+    [pressure] => 994.7310550803294
+    [light] => 0.8333333333333334
+    [gas] => 2016
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:30.220122
+    [temperature] => 27.137849736318664
+    [humidity] => 0.0
+    [pressure] => 994.7265145266151
+    [light] => 0.8333333333333334
+    [gas] => 2016
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:32.259388
+    [temperature] => 27.135941710141765
+    [humidity] => 0.0
+    [pressure] => 994.721621993262
+    [light] => 0.8333333333333334
+    [gas] => 2015
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:34.303816
+    [temperature] => 27.135305701425228
+    [humidity] => 0.0
+    [pressure] => 994.7188765483891
+    [light] => 0.8333333333333334
+    [gas] => 2016
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:36.341260
+    [temperature] => 27.135623705782926
+    [humidity] => 0.0
+    [pressure] => 994.7244290370805
+    [light] => 0.8333333333333334
+    [gas] => 2016
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:38.380639
+    [temperature] => 27.13657771886285
+    [humidity] => 0.0
+    [pressure] => 994.7243674422247
+    [light] => 0.8333333333333334
+    [gas] => 2017
+)
+Array
+(
+    [station_serial] => 102
+    [timestamp] => 2026-03-19 06:02:40.420710
+    [temperature] => 27.13848574505339
+    [humidity] => 0.0
+    [pressure] => 994.7309318988661
+    [light] => 0.8333333333333334
+    [gas] => 2018
+)
