@@ -71,47 +71,64 @@ include_once("../MyLibrary.php");
         }
     }
     ?>
-    <section>
-        <h1>Register Your Station</h1>
-        <div class="">
-            <form method="post">
-                <h3>Enter Station Serial Number</h3>
-                <input type="text" name="serialN_input">
-                <button type="submit" name="submitBtn">Register</button>
-            </form>
+    <section id="StationRegistration">
+        <div class="station-reg-header">
+            <h1 class="section-title">Register Your Station</h1>
+            <p class="section-text">Add new environmental monitoring stations to your network by entering their serial numbers.</p>
         </div>
-        <h2>My Stations</h2>
-        <!-- display stations -->
-        <div class="mainStationDisplay">
-            <?php
-            $curentUser = getUserInfo($_SESSION['username']);
-            if ($curentUser) {
-                $curentUser_ID = $curentUser['UserID'];
-            }
-            $displyStations = $connection->prepare("SELECT * FROM Station WHERE Owner_id = ?");
-            $displyStations->bind_param('i', $curentUser_ID);
-            $displyStations->execute();
-            $result = $displyStations->get_result();
-            if ($result->num_rows > 0) {
-                while ($stationRow = $result->fetch_assoc()) {
-                    $ID = $stationRow['Station_id'];
-                    $name = $stationRow['Name'];
-                    $Description = $stationRow['Description'];
-            ?>
-                    <div class="stationCard">
-                        <button onclick="removeMyStation(<?= $ID ?>)">X</BUtton>
-                        <h3><?= $name ?></h3>
-                        <p><?= $Description ?></p>
+
+        <div class="station-reg-form">
+            <div class="form-card">
+                <h3>Enter Station Serial Number</h3>
+                <form method="post" class="registration-form">
+                    <div class="form-group">
+                        <label for="serialN_input">Station Serial Number</label>
+                        <input type="text" id="serialN_input" name="serialN_input" placeholder="Enter serial number..." required>
+                    </div>
+                    <button type="submit" name="submitBtn" class="btn btn-primary">Register Station</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="my-stations-section">
+            <h2>My Stations</h2>
+            <p class="section-subtitle">Manage your registered environmental monitoring stations</p>
+
+            <div class="mainStationDisplay">
+                <?php
+                $curentUser = getUserInfo($_SESSION['username']);
+                if ($curentUser) {
+                    $curentUser_ID = $curentUser['UserID'];
+                }
+                $displyStations = $connection->prepare("SELECT * FROM Station WHERE Owner_id = ?");
+                $displyStations->bind_param('i', $curentUser_ID);
+                $displyStations->execute();
+                $result = $displyStations->get_result();
+                if ($result->num_rows > 0) {
+                    while ($stationRow = $result->fetch_assoc()) {
+                        $ID = $stationRow['Station_id'];
+                        $name = $stationRow['Name'];
+                        $Description = $stationRow['Description'];
+                ?>
+                        <div class="stationCard">
+                            <button onclick="removeMyStation(<?= $ID ?>)" class="remove-station-btn" title="Remove station">×</button>
+                            <div class="station-icon">📡</div>
+                            <h3><?= htmlspecialchars($name) ?></h3>
+                            <p><?= htmlspecialchars($Description) ?></p>
+                        </div>
+                    <?php
+                    }
+                } else {
+                    ?>
+                    <div class="no-stations">
+                        <div class="no-stations-icon">📭</div>
+                        <h3>No Stations Yet</h3>
+                        <p>You haven't registered any stations yet. Use the form above to add your first station.</p>
                     </div>
                 <?php
                 }
-            } else {
-                /* what if there is no station assigned */
                 ?>
-                <p>There is no station assigned to you</p>
-            <?php
-            }
-            ?>
+            </div>
         </div>
     </section>
 

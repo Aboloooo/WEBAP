@@ -284,9 +284,17 @@ function MessageAll() {
               "received_message_container received",
             );
             message_container
-              .prepend($("<img>").attr("src", profileImg).addClass("profileImg"))
-              .append($("<div>").addClass("message_content").text(message.content))
-              .append($("<div>").addClass("message_timestamp").text(message.timestamp));
+              .prepend(
+                $("<img>").attr("src", profileImg).addClass("profileImg"),
+              )
+              .append(
+                $("<div>").addClass("message_content").text(message.content),
+              )
+              .append(
+                $("<div>")
+                  .addClass("message_timestamp")
+                  .text(message.timestamp),
+              );
 
             messageList.append(message_container);
           });
@@ -402,52 +410,91 @@ function DisplayStationData() {
   const displayContainer = $(".tempretureDisplay");
   displayContainer.empty();
 
-  // Create inputs
+  // === DROPDOWNS SECTION ===
+  const dropdownsSection = $("<div>").addClass("dropdowns-container");
+
+  const stationLabel = $("<label>").text("Select Station").css({
+    "font-weight": "600",
+    color: "var(--text-dark)",
+    "margin-bottom": "0.5rem",
+  });
+  const selectBarStations = $("<select>").attr("id", "selectStation");
+  selectBarStations.append($("<option>").val("0").text("-- All Stations --"));
+  const stationGroup = $("<div>")
+    .addClass("form-group")
+    .append(stationLabel, selectBarStations);
+
+  const collectionLabel = $("<label>").text("Select Collection").css({
+    "font-weight": "600",
+    color: "var(--text-dark)",
+    "margin-bottom": "0.5rem",
+  });
+  const selectBarCollection = $("<select>").attr("id", "selectBarCollection");
+  selectBarCollection.append($("<option>").val("0").text("-- Collections --"));
+  const collectionGroup = $("<div>")
+    .addClass("form-group")
+    .append(collectionLabel, selectBarCollection);
+
+  dropdownsSection.append(stationGroup, collectionGroup);
+  displayContainer.append(dropdownsSection);
+
+  // === CONTROLS SECTION (DateTime Inputs) ===
+  const controlsSection = $("<div>").addClass("dashboard-controls");
+
+  const startLabel = $("<label>").text("Start Date & Time").css({
+    "font-weight": "600",
+    color: "var(--text-dark)",
+  });
   const DateAndTimeStart = $("<input>").attr({
     type: "datetime-local",
     id: "meeting-time-start",
     value: "2026-01-01T00:00",
   });
+  const startGroup = $("<div>")
+    .addClass("form-group")
+    .append(startLabel, DateAndTimeStart);
 
+  const endLabel = $("<label>").text("End Date & Time").css({
+    "font-weight": "600",
+    color: "var(--text-dark)",
+  });
   const DateAndTimeEnd = $("<input>").attr({
     type: "datetime-local",
     id: "meeting-time-end",
     value: "2026-12-31T23:59",
   });
+  const endGroup = $("<div>")
+    .addClass("form-group")
+    .append(endLabel, DateAndTimeEnd);
 
-  // Buttons
+  controlsSection.append(startGroup, endGroup);
+  displayContainer.append(controlsSection);
+
+  // === BUTTONS SECTION ===
   const dispalyMeasuBtn = $("<button>")
     .attr("id", "displayDateBtn")
     .addClass("btn btn-save")
-    .text("Display Measurements");
+    .text("📊 Display Measurements");
 
   const collectionCreateBtn = $("<button>")
     .attr("id", "createCollectionBtn")
     .addClass("btn btn-approve")
     .prop("disabled", true)
-    .text("Create Collection");
+    .text("💾 Create Collection");
+
+  const liveModeBtn = $("<button>")
+    .attr("id", "liveModeBtn")
+    .addClass("btn btn-info")
+    .text("🔴 Enable Live Mode")
+    .data("isLive", false);
 
   const btnContainer = $("<div>")
     .attr("id", "btnContainer")
-    .append(dispalyMeasuBtn, collectionCreateBtn);
+    .append(dispalyMeasuBtn, collectionCreateBtn, liveModeBtn);
 
-  // Dropdowns
-  const selectBarStations = $("<select>").attr("id", "selectStation");
-  selectBarStations.append($("<option>").val("0").text("-- Stations --"));
+  displayContainer.append(btnContainer);
 
-  const selectBarCollection = $("<select>").attr("id", "selectBarCollection");
-  selectBarCollection.append($("<option>").val("0").text("-- Collections --"));
-
-  // Add everything to container
-  displayContainer.append(
-    selectBarStations,
-    DateAndTimeStart,
-    DateAndTimeEnd,
-    selectBarCollection,
-    btnContainer,
-  );
-
-  // Create table with proper structure
+  // === MEASUREMENTS TABLE ===
   const tableContainer = $("<div>").addClass("displayTable");
   const table = $("<table>").attr("id", "measurementsTable");
 
@@ -455,13 +502,13 @@ function DisplayStationData() {
   const thead = $("<thead>");
   const headerRow = $("<tr>");
   const headers = [
-    "Measurement id",
+    "Measurement ID",
     "Timestamp",
     "Humidity",
-    "Air pressure",
-    "Light intensity",
-    "Air quality",
-    "Station id",
+    "Air Pressure",
+    "Light Intensity",
+    "Air Quality",
+    "Station ID",
   ];
 
   headers.forEach((header) => {
@@ -478,6 +525,7 @@ function DisplayStationData() {
   tableContainer.append(table);
   displayContainer.append(tableContainer);
 
+  // === LOAD DATA ===
   // Load stations
   $.post(
     "../MyLibrary.php",
@@ -489,14 +537,18 @@ function DisplayStationData() {
         );
       });
 
+      const defaultDateStart = $("#meeting-time-start").val();
+      const defaultDateEnd = $("#meeting-time-end").val();
+
+      // If no station is selected or "All Stations" is chosen, load all measurements for user-owned stations.
+      loadMeasurements(0, defaultDateStart, defaultDateEnd);
+
       if (stations.length > 0) {
-        const defaultDateStart = $("#meeting-time-start").val();
-        const defaultDateEnd = $("#meeting-time-end").val();
-        loadMeasurements(
-          stations[0].stationId,
-          defaultDateStart,
-          defaultDateEnd,
-        );
+        stations.forEach((station) => {
+          selectBarStations.append(
+            $("<option>").val(station.stationId).text(station.stationName),
+          );
+        });
       }
     },
     "json",
@@ -523,6 +575,18 @@ function DisplayStationData() {
     "json",
   );
 
+  // Station selection change handler (auto-update if in live mode)
+  $(document).on("change", "#selectStation", function () {
+    const isLive = $("#liveModeBtn").data("isLive");
+    const newStationId = $(this).val();
+    if (isLive) {
+      // If 0 or no station, poll all own stations
+      startRealtimeMeasurementPolling(newStationId);
+      const logStation = newStationId === "0" ? "all stations" : newStationId;
+      console.log("Live mode switched to station: " + logStation);
+    }
+  });
+
   // Display button click
   $(document).on("click", "#displayDateBtn", function () {
     const stationId = $("#selectStation").val();
@@ -537,6 +601,50 @@ function DisplayStationData() {
     }
 
     loadMeasurements(stationId, dateTimeStart, dateTimeEnd);
+  });
+
+  // Live Mode button click
+  $(document).on("click", "#liveModeBtn", function () {
+    const $btn = $(this);
+    const isLive = $btn.data("isLive");
+    const stationId = $("#selectStation").val();
+
+    if (!isLive) {
+      // Enable live mode
+      const selectedStationLabel =
+        stationId === "0" ? "all stations" : "station " + stationId;
+
+      // Load initial measurements and start polling
+      const defaultDateStart = $("#meeting-time-start").val();
+      const defaultDateEnd = formatThisDate($("#meeting-time-end").val());
+      loadMeasurements(
+        stationId,
+        formatThisDate(defaultDateStart),
+        defaultDateEnd,
+      );
+
+      // Start real-time polling
+      startRealtimeMeasurementPolling(stationId);
+
+      // Update button appearance
+      $btn
+        .data("isLive", true)
+        .text("🟢 Disable Live Mode")
+        .css({ backgroundColor: "#10b981", color: "white" });
+
+      alert("Live mode enabled! New measurements will appear every 1 second.");
+    } else {
+      // Disable live mode
+      stopRealtimeMeasurementPolling();
+
+      // Update button appearance
+      $btn
+        .data("isLive", false)
+        .text("🔴 Enable Live Mode")
+        .css({ backgroundColor: "", color: "" });
+
+      alert("Live mode disabled.");
+    }
   });
 
   // Create collection button click
@@ -609,6 +717,78 @@ function loadMeasurements(stationId, start, end) {
     "json",
   );
 }
+
+// ===== REAL-TIME MEASUREMENT POLLING =====
+let realtimePollingInterval = null;
+let currentStationForPolling = null;
+let lastMeasurementTimestamp = null;
+
+function startRealtimeMeasurementPolling(stationId) {
+  // Stop any existing polling
+  stopRealtimeMeasurementPolling();
+
+  currentStationForPolling = stationId;
+
+  // Set initial timestamp to now
+  lastMeasurementTimestamp = new Date()
+    .toISOString()
+    .slice(0, 19)
+    .replace("T", " ");
+
+  // Poll every 1 second for new measurements
+  realtimePollingInterval = setInterval(function () {
+    $.post(
+      "../MyLibrary.php",
+      {
+        getNewMeasurements: true,
+        stationId: currentStationForPolling,
+        lastTimestamp: lastMeasurementTimestamp,
+      },
+      function (response) {
+        if (
+          response &&
+          response.success &&
+          response.newMeasurements.length > 0
+        ) {
+          const tbody = $("#measurementsTable tbody");
+
+          // Add new measurements to the table
+          response.newMeasurements.forEach((row) => {
+            const tr = $("<tr>");
+            tr.append($("<td>").text(row.Measurement_id));
+            tr.append($("<td>").text(row.Timestamp));
+            tr.append($("<td>").text(row.Humidity));
+            tr.append($("<td>").text(row.Air_pressure));
+            tr.append($("<td>").text(row.Light_intensity));
+            tr.append($("<td>").text(row.Air_quality));
+            tr.append($("<td>").text(row.Station_id));
+            tbody.append(tr);
+          });
+
+          // Update timestamp for next poll
+          lastMeasurementTimestamp = response.lastTimestamp;
+
+          // Enable collection button if we have measurements
+          const totalRows = tbody.find("tr").length;
+          $("#createCollectionBtn").prop("disabled", totalRows === 0);
+
+          // Auto-scroll to bottom
+          $("#measurementsTable")
+            .parent()
+            .scrollTop($("#measurementsTable").height());
+        }
+      },
+      "json",
+    );
+  }, 1000); // Poll every 1 second
+}
+
+function stopRealtimeMeasurementPolling() {
+  if (realtimePollingInterval) {
+    clearInterval(realtimePollingInterval);
+    realtimePollingInterval = null;
+  }
+}
 // unassign my station
 function removeMyStation(targetStationId) {
   $.post(
@@ -630,25 +810,32 @@ $(document).on("click", ".shareCollectionBtn, .share-btn", function () {
   DisplayFriends(collectionID); // Make sure this passes the ID
 });
 
-$(document).on("click", ".deleteCollectionBtn", function (e) {
+// Contact form submission
+$(document).on("submit", "#contactForm", function (e) {
   e.preventDefault();
-  let remove = false;
-  if (
-    window.confirm("This collection will be removed permanently. Continue?")
-  ) {
-    remove = true;
+
+  const name = $("#contactName").val().trim();
+  const email = $("#contactEmail").val().trim();
+  const subject = $("#contactSubject").val();
+  const message = $("#contactMessage").val().trim();
+
+  if (!name || !email || !subject || !message) {
+    alert("Please fill in all fields");
+    return;
   }
-  if (remove) {
-    const btnValue = $(this).val();
-    $.post(
-      "../MyLibrary.php",
-      { targetCollection: btnValue },
-      function (removeResponse) {
-        console.log(removeResponse);
-        location.reload();
-      },
-    );
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    alert("Please enter a valid email address");
+    return;
   }
+
+  // Simulate form submission (in a real app, this would send to server)
+  alert(`Thank you for your message, ${name}! We'll get back to you soon.`);
+
+  // Clear form
+  $("#contactForm")[0].reset();
 });
 
 /* Collection.php */
@@ -670,7 +857,7 @@ function loadCollectionLoad() {
     function buildCollectionHTML(collection, cid, isSharedByMe) {
       let html = `
     <div class="collection-block displayTable">
-      <h3>${collection.Name}</h3>
+      <h2>${collection.Name}</h2>
       <p>${collection.Description}</p>
 
       <table>
@@ -709,7 +896,9 @@ function loadCollectionLoad() {
   `;
 
       if (isSharedByMe) {
-        html += `<button class='cancel-share-btn' value='${cid}'>Cancel Share</button>`;
+        html += `<button class='cancel-share-btn' value='${cid}'>
+          <i class="fas fa-times"></i> Cancel Share
+        </button>`;
       }
 
       html += `
@@ -744,7 +933,8 @@ function loadCollectionLoad() {
                 <h2>${collection.Name}</h2>
                 <p>${collection.Description}</p>
 
-                <table>
+                <div class="table-container">
+                  <table>
                   <thead>
                     <tr>
                       <th>Measurement ID</th>
@@ -774,8 +964,15 @@ function loadCollectionLoad() {
               tableHtml += `
                   </tbody>
                 </table>
-                <button class='share-btn' value='${collection.Collection_id}'>Share</button>
-                <button class='remove-btn' value='${collection.Collection_id}'>Remove</button>
+                </div>
+                <div class="collection-buttons">
+                  <button class='share-btn' value='${collection.Collection_id}'>
+                    <i class="fas fa-share"></i> Share
+                  </button>
+                  <button class='remove-btn' value='${collection.Collection_id}'>
+                    <i class="fas fa-trash"></i> Remove
+                  </button>
+                </div>
               </div>
             `;
 

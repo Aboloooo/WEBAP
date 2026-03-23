@@ -509,6 +509,68 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
     echo json_encode($measurementsArray);
     exit;
 }
+
+/* Get only NEW measurements after a given timestamp (for real-time polling) */
+if (isset($_POST['getNewMeasurements'], $_POST['stationId'], $_POST['lastTimestamp'])) {
+    $user = getUserInfo($_SESSION['username']);
+    $Owner_id = $user['UserID'];
+    $stationId = (int) $_POST['stationId'];
+    $lastTimestamp = $_POST['lastTimestamp'];
+
+    if ($stationId == 0) {
+        // Get new measurements from all user's stations
+        $sql = "
+            SELECT m.*
+            FROM Measurement m
+            INNER JOIN Station s
+                ON m.Station_id = s.Station_id
+            WHERE s.Owner_id = ?
+                AND m.Timestamp > ?
+            ORDER BY m.Timestamp ASC
+        ";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param("is", $Owner_id, $lastTimestamp);
+    } else {
+        // Get new measurements from specific station
+        $sql = "
+            SELECT m.*
+            FROM Measurement m
+            INNER JOIN Station s
+                ON m.Station_id = s.Station_id
+            WHERE m.Station_id = ?
+                AND s.Owner_id = ?
+                AND m.Timestamp > ?
+            ORDER BY m.Timestamp ASC
+        ";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param("iis", $stationId, $Owner_id, $lastTimestamp);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $measurementsArray = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $measurementsArray[] = [
+            "Measurement_id"   => $row['Measurement_id'],
+            "Timestamp"        => $row['Timestamp'],
+            "Humidity"         => $row['Humidity'],
+            "Air_pressure"     => $row['Air_pressure'],
+            "Light_intensity"  => $row['Light_intensity'],
+            "Air_quality"      => $row['Air_quality'],
+            "Station_id"       => $row['Station_id'],
+        ];
+    }
+
+    echo json_encode([
+        'success' => true,
+        'newMeasurements' => $measurementsArray,
+        'lastTimestamp' => !empty($measurementsArray) ? $measurementsArray[count($measurementsArray) - 1]['Timestamp'] : $_POST['lastTimestamp']
+    ]);
+    exit;
+}
+
     /* save changes of user credentials */;
 
 function NavigationBarE()

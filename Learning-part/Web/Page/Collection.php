@@ -20,15 +20,34 @@ include_once("../MyLibrary.php");
 
 <body>
     <?= NavigationBarE(); ?>
-    <div class="main_container_Collection">
-        <!-- Sections row -->
-        <div class="sections_container">
-            <div class="Collections_container active" data-section="my">My Collections</div>
-            <div class="Collections_shared_container" data-section="shared">Shared Collections</div>
+    <section id="Collections">
+        <div class="collections-header">
+            <h1 class="section-title">My Collections</h1>
+            <p class="section-text">Manage and organize your environmental data collections</p>
         </div>
 
-        <!-- Section information -->
-        <div class="section_info" id="sectionInfo"></div>
+        <div class="main_container_Collection">
+            <!-- Sections row -->
+            <div class="sections_container">
+                <div class="Collections_container active" data-section="my">
+                    <i class="fas fa-folder"></i>
+                    My Collections
+                </div>
+                <div class="Collections_shared_container" data-section="shared">
+                    <i class="fas fa-share-alt"></i>
+                    Shared Collections
+                </div>
+            </div>
+
+            <!-- Section information -->
+            <div class="section_info" id="sectionInfo">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading collections...</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
 </body>
 
