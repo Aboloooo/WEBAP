@@ -407,10 +407,8 @@ include_once("../MyLibrary.php");
                         <button class="chart-btn" data-period="30d">30D</button>
                     </div>
                 </div>
-                <div class="chart-placeholder">
-                    <i class='bx bx-line-chart'></i>
-                    <span>Interactive Chart Area</span>
-                    <small>Real-time data visualization will appear here</small>
+                <div class="chart-canvas-wrap">
+                    <canvas id="tempTrendChart"></canvas>
                 </div>
             </div>
         </div>
