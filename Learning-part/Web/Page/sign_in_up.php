@@ -256,6 +256,9 @@ include_once("../MyLibrary.php");
                         <button class="btn btn-edit" id="editBtn" onclick="enableEditing()" style="display: flex;">
                             ✏️ Edit Information
                         </button>
+                        <button class="btn btn-cancel" id="profileLogoutBtn" onclick="Logout()" style="display: flex;">
+                            🚪 Logout
+                        </button>
                         <!-- save btn will be handeled with php -->
                         <button class="btn btn-save" id="saveBtn" style="display: none;">
                             💾 Save Changes

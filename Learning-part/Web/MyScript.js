@@ -3,13 +3,19 @@ $(start);
 function start() {
   // we can start writing here
   initScrollToTopBubble();
+  updateNavbarSizeOnScroll();
 
   $(window).on("scroll", function () {
     toggleScrollToTopBubble();
+    updateNavbarSizeOnScroll();
     clearTimeout(timer);
     timer = setTimeout(() => {
       PageScrollDetector(); // call the function each time user scrolls
     }, 100); // debounce delay
+  });
+
+  $(window).on("resize", function () {
+    updateNavbarSizeOnScroll();
   });
 
   PageScrollDetector();
@@ -127,6 +133,31 @@ function toggleScrollToTopBubble() {
     window.pageYOffset || document.documentElement.scrollTop || 0,
   );
   $("#scrollTopBubble").toggleClass("visible", currentScroll > 220);
+}
+
+function updateNavbarSizeOnScroll() {
+  const startPercent = 20;
+  const endPercent = 15;
+  const maxScroll = 1000;
+  const currentScroll = Math.max(
+    0,
+    window.scrollY ||
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      0,
+  );
+
+  const progress = Math.min(currentScroll / maxScroll, 1);
+  const viewportHeight =
+    window.innerHeight || document.documentElement.clientHeight;
+  const startPx = (viewportHeight * startPercent) / 100;
+  const endPx = (viewportHeight * endPercent) / 100;
+  const currentPx = startPx - (startPx - endPx) * progress;
+
+  document.documentElement.style.setProperty(
+    "--nav-height",
+    `${currentPx.toFixed(2)}px`,
+  );
 }
 
 function PageScrollDetector() {
@@ -907,13 +938,24 @@ function loadCollectionLoad() {
     function buildCollectionHTML(collection, cid, isSharedByMe) {
       let html = `
     <div class="collection-block displayTable">
-      <h2>${collection.Name}</h2>
+      <div class="collection-header">
+        <h2>${collection.Name}</h2>
+        ${
+          isSharedByMe
+            ? `
+        <div class="collection-buttons top-actions">
+          <button class='cancel-share-btn' value='${cid}'>
+            <i class="fas fa-times"></i> Cancel Share
+          </button>
+        </div>`
+            : ""
+        }
+      </div>
       <p>${collection.Description}</p>
 
       <table>
         <thead>
           <tr>
-            <th>Measurement ID</th>
             <th>Timestamp</th>
             <th>Humidity</th>
             <th>Air Pressure</th>
@@ -943,12 +985,6 @@ function loadCollectionLoad() {
       <!-- Buttons outside the table -->
       <div class="collection-buttons">
   `;
-
-      if (isSharedByMe) {
-        html += `<button class='cancel-share-btn' value='${cid}'>
-          <i class="fas fa-times"></i> Cancel Share
-        </button>`;
-      }
 
       html += `
       </div> <!-- collection-buttons -->
@@ -996,7 +1032,6 @@ function loadCollectionLoad() {
                   <table>
                   <thead>
                     <tr>
-                      <th>Measurement ID</th>
                       <th>Timestamp</th>
                       <th>Humidity</th>
                       <th>Air pressure</th>
@@ -1010,7 +1045,6 @@ function loadCollectionLoad() {
               collection.Measurements.forEach((m) => {
                 tableHtml += `
                 <tr>
-                  <td>${m.Measurement_id}</td>
                   <td>${m.Timestamp}</td>
                   <td>${m.Humidity}</td>
                   <td>${m.Air_pressure}</td>

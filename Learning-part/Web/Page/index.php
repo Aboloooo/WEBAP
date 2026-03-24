@@ -214,57 +214,6 @@ include_once("../MyLibrary.php");
             <div class="service-card">
                 <div class="card-header">
                     <div class="service-icon">
-                        <i class='bx bx-time-five'></i>
-                    </div>
-                </div>
-                <div class="card-content">
-                    <h3>Historical Data Archive</h3>
-                    <p>Access comprehensive historical records with flexible querying, data export, and long-term trend analysis.</p>
-                    <ul class="service-features">
-                        <li><i class='bx bx-check'></i> 10+ years retention</li>
-                        <li><i class='bx bx-check'></i> Advanced filtering</li>
-                        <li><i class='bx bx-check'></i> Data export</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="service-card">
-                <div class="card-header">
-                    <div class="service-icon">
-                        <i class='bx bx-bell'></i>
-                    </div>
-                </div>
-                <div class="card-content">
-                    <h3>Smart Alert System</h3>
-                    <p>Configure intelligent thresholds and receive instant notifications via email, SMS, or API when conditions change.</p>
-                    <ul class="service-features">
-                        <li><i class='bx bx-check'></i> Custom thresholds</li>
-                        <li><i class='bx bx-check'></i> Multi-channel alerts</li>
-                        <li><i class='bx bx-check'></i> Escalation rules</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="service-card">
-                <div class="card-header">
-                    <div class="service-icon">
-                        <i class='bx bx-cog'></i>
-                    </div>
-                </div>
-                <div class="card-content">
-                    <h3>Sensor Management</h3>
-                    <p>Complete lifecycle management of your IoT sensors with remote configuration, firmware updates, and health monitoring.</p>
-                    <ul class="service-features">
-                        <li><i class='bx bx-check'></i> Remote management</li>
-                        <li><i class='bx bx-check'></i> Auto-calibration</li>
-                        <li><i class='bx bx-check'></i> Health diagnostics</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="service-card">
-                <div class="card-header">
-                    <div class="service-icon">
                         <i class='bx bx-cloud-upload'></i>
                     </div>
                 </div>
