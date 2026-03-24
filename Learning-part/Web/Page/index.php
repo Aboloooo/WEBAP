@@ -285,6 +285,9 @@ include_once("../MyLibrary.php");
                 <a href="StationRegistration.php" class="btn btn-primary">
                     <i class='bx bx-plus-circle'></i> Register Station
                 </a>
+                <a href="Friendship.php" class="btn btn-primary">
+                    <i class='bx bx-group'></i> Add Friends
+                </a>
                 <a href="sign_in_up.php" class="btn btn-secondary">
                     <i class='bx bx-user-plus'></i> Create Account
                 </a>
@@ -507,21 +510,21 @@ include_once("../MyLibrary.php");
                 <h2>Send us a Message</h2>
                 <p>We typically respond within 24 hours</p>
 
-                <form class="contact-form">
+                <form class="contact-form" id="contactForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" required>
+                            <label for="contactName">Full Name</label>
+                            <input type="text" id="contactName" name="name" required>
                         </div>
                         <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required>
+                            <label for="contactEmail">Email Address</label>
+                            <input type="email" id="contactEmail" name="email" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="subject">Subject</label>
-                        <select id="subject" name="subject" required>
+                        <label for="contactSubject">Subject</label>
+                        <select id="contactSubject" name="subject" required>
                             <option value="">Select a topic</option>
                             <option value="support">Technical Support</option>
                             <option value="partnership">Partnership Inquiry</option>
@@ -532,8 +535,8 @@ include_once("../MyLibrary.php");
                     </div>
 
                     <div class="form-group">
-                        <label for="message">Message</label>
-                        <textarea id="message" name="message" rows="5" required></textarea>
+                        <label for="contactMessage">Message</label>
+                        <textarea id="contactMessage" name="message" rows="5" required></textarea>
                     </div>
 
                     <button type="submit" class="btn btn-primary">
@@ -562,35 +565,6 @@ include_once("../MyLibrary.php");
                     </div>
                 </div>
             </div>
-        </div>
-
-        </div>
-        </div>
-
-        <div class="contact-form">
-            <h3>Send us a Message</h3>
-            <form id="contactForm">
-                <div class="form-group">
-                    <input type="text" id="contactName" placeholder="Your Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="contactEmail" placeholder="Your Email" required>
-                </div>
-                <div class="form-group">
-                    <select id="contactSubject" required>
-                        <option value="">Select Subject</option>
-                        <option value="support">Technical Support</option>
-                        <option value="partnership">Partnership Inquiry</option>
-                        <option value="feedback">Feedback</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <textarea id="contactMessage" placeholder="Your Message" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-save">Send Message</button>
-            </form>
-        </div>
         </div>
     </section>
 

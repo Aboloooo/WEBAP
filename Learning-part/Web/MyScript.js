@@ -2,7 +2,10 @@ $(start);
 
 function start() {
   // we can start writing here
+  initScrollToTopBubble();
+
   $(window).on("scroll", function () {
+    toggleScrollToTopBubble();
     clearTimeout(timer);
     timer = setTimeout(() => {
       PageScrollDetector(); // call the function each time user scrolls
@@ -101,6 +104,30 @@ function cancelEdit() {
 }
 
 let timer;
+function initScrollToTopBubble() {
+  if ($("#scrollTopBubble").length === 0) {
+    const bubble = $("<button>")
+      .attr("id", "scrollTopBubble")
+      .attr("type", "button")
+      .attr("aria-label", "Back to top")
+      .html("&#8593;")
+      .on("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+    $("body").append(bubble);
+  }
+
+  toggleScrollToTopBubble();
+}
+
+function toggleScrollToTopBubble() {
+  const currentScroll = Math.max(
+    0,
+    window.pageYOffset || document.documentElement.scrollTop || 0,
+  );
+  $("#scrollTopBubble").toggleClass("visible", currentScroll > 220);
+}
 
 function PageScrollDetector() {
   const scrollPosition = $(this).scrollTop();
@@ -207,17 +234,27 @@ function MessageAll() {
   - add message list
   */
   let container = $("<div>").addClass("messageContainer");
-  let heading = $("<h2>").text("Message All").addClass("messageAllHeading");
-  container.append(heading);
+  let heading = $("<h2>").text("Messaging List").addClass("messageAllHeading");
+  let subHeading = $("<p>")
+    .text("Send and receive quick updates with your friends.")
+    .addClass("overlaySubheading");
+  container.append(heading, subHeading);
   let messageList = $("<div>").addClass("messageList");
   let input_container = $("<div>").addClass("inputContainer");
+  let composerLabel = $("<span>")
+    .text("Send Message")
+    .addClass("composerLabel");
   let input = $("<input>")
     .attr("type", "text")
-    .attr("placeholder", "Type your message...");
+    .attr("placeholder", "Write a message...")
+    .attr("maxlength", "255");
   let sendBtn = $("<button>")
-    .text("Send")
+    .html("<i class='bx bx-send'></i> Send")
     .on("click", function () {
-      let message = input.val();
+      let message = input.val().trim();
+      if (!message) {
+        return;
+      }
       let profileImg = "../img/User.png";
       // Create message content holder with username
       let message_content_holder = $("<div>").addClass(
@@ -306,7 +343,7 @@ function MessageAll() {
     });
   }, 1000); // Check for new messages every 1 second
 
-  input_container.append(input, sendBtn);
+  input_container.append(composerLabel, input, sendBtn);
   container.append(messageList, input_container);
   sectionContent.append(container);
 }
@@ -316,13 +353,15 @@ function updateShareButton() {
 }
 
 function DisplayFriends(targetCollection) {
-  // Make sure targetCollection is defined
-  if (!targetCollection) {
-    console.error("No target collection specified");
-    return;
-  }
+  const isSharingMode =
+    targetCollection !== undefined &&
+    targetCollection !== null &&
+    String(targetCollection) !== "" &&
+    String(targetCollection) !== "0";
 
-  console.log("Sharing collection ID:", targetCollection);
+  if (isSharingMode) {
+    console.log("Sharing collection ID:", targetCollection);
+  }
 
   // Remove previous overlay if exists
   $(".blur-background, .content").remove();
@@ -342,6 +381,10 @@ function DisplayFriends(targetCollection) {
     .addClass("confirmShareWithFriendsBtn")
     .prop("disabled", true)
     .on("click", function () {
+      if (!isSharingMode) {
+        return;
+      }
+
       let selectedIds = [];
       friendsList.find(".friendCard.selected").each(function () {
         selectedIds.push($(this).data("id"));
@@ -366,9 +409,20 @@ function DisplayFriends(targetCollection) {
       );
     });
 
-  let title = $("<h3>").text("Share with Friends");
+  let title = $("<h3>").text("Friend List").addClass("friendListHeading");
+  let subtitle = $("<p>")
+    .text(
+      isSharingMode
+        ? "Choose one or more friends to share this collection."
+        : "View and manage your current friends.",
+    )
+    .addClass("overlaySubheading");
 
-  sectionContent.append(exitBtn, title, confirmBtn, friendsList);
+  sectionContent.append(exitBtn, title, subtitle);
+  if (isSharingMode) {
+    sectionContent.append(confirmBtn);
+  }
+  sectionContent.append(friendsList);
   $("body").append(blurDiv, sectionContent);
 
   // Fetch friends from backend
@@ -383,9 +437,11 @@ function DisplayFriends(targetCollection) {
 
       friendsList.empty();
       friends.forEach((friend) => {
-        friendsList.append(createFriendCard(friend, true));
+        friendsList.append(createFriendCard(friend, isSharingMode));
       });
-      updateShareButton();
+      if (isSharingMode) {
+        updateShareButton();
+      }
     },
     "json",
   ).fail(function () {
@@ -424,13 +480,17 @@ function DisplayStationData() {
     .addClass("form-group")
     .append(stationLabel, selectBarStations);
 
-  const collectionLabel = $("<label>").text("Select Collection").css({
+  const collectionLabel = $("<label>").text("Display Collections").css({
     "font-weight": "600",
     color: "var(--text-dark)",
     "margin-bottom": "0.5rem",
   });
-  const selectBarCollection = $("<select>").attr("id", "selectBarCollection");
-  selectBarCollection.append($("<option>").val("0").text("-- Collections --"));
+  const selectBarCollection = $("<select>")
+    .attr("id", "selectBarCollection")
+    .attr("aria-label", "Collections (view only)");
+  selectBarCollection.append(
+    $("<option>").val("0").text("-- Collections (View Only) --"),
+  );
   const collectionGroup = $("<div>")
     .addClass("form-group")
     .append(collectionLabel, selectBarCollection);
@@ -502,7 +562,6 @@ function DisplayStationData() {
   const thead = $("<thead>");
   const headerRow = $("<tr>");
   const headers = [
-    "Measurement ID",
     "Timestamp",
     "Humidity",
     "Air Pressure",
@@ -542,14 +601,6 @@ function DisplayStationData() {
 
       // If no station is selected or "All Stations" is chosen, load all measurements for user-owned stations.
       loadMeasurements(0, defaultDateStart, defaultDateEnd);
-
-      if (stations.length > 0) {
-        stations.forEach((station) => {
-          selectBarStations.append(
-            $("<option>").val(station.stationId).text(station.stationName),
-          );
-        });
-      }
     },
     "json",
   );
@@ -561,7 +612,7 @@ function DisplayStationData() {
     function (Collections) {
       selectBarCollection.empty();
       selectBarCollection.append(
-        $("<option>").val("0").text("-- Collections --"),
+        $("<option>").val("0").text("-- Collections (View Only) --"),
       );
 
       if (Collections && Collections.length > 0) {
@@ -702,7 +753,6 @@ function loadMeasurements(stationId, start, end) {
 
       measurements.forEach((row) => {
         const tr = $("<tr>");
-        tr.append($("<td>").text(row.Measurement_id));
         tr.append($("<td>").text(row.Timestamp));
         tr.append($("<td>").text(row.Humidity));
         tr.append($("<td>").text(row.Air_pressure));
@@ -877,7 +927,6 @@ function loadCollectionLoad() {
       collection.Measurements.forEach((m) => {
         html += `
       <tr>
-        <td>${m.Measurement_id}</td>
         <td>${m.Timestamp}</td>
         <td>${m.Humidity}</td>
         <td>${m.Air_pressure}</td>
@@ -930,7 +979,17 @@ function loadCollectionLoad() {
             collections.forEach((collection) => {
               let tableHtml = `
               <div class="collection-block displayTable">
-                <h2>${collection.Name}</h2>
+                <div class="collection-header">
+                  <h2>${collection.Name}</h2>
+                  <div class="collection-buttons top-actions">
+                    <button class='share-btn' value='${collection.Collection_id}'>
+                      <i class="fas fa-share"></i> Share
+                    </button>
+                    <button class='remove-btn' value='${collection.Collection_id}'>
+                      <i class="fas fa-trash"></i> Remove
+                    </button>
+                  </div>
+                </div>
                 <p>${collection.Description}</p>
 
                 <div class="table-container">
@@ -964,14 +1023,6 @@ function loadCollectionLoad() {
               tableHtml += `
                   </tbody>
                 </table>
-                </div>
-                <div class="collection-buttons">
-                  <button class='share-btn' value='${collection.Collection_id}'>
-                    <i class="fas fa-share"></i> Share
-                  </button>
-                  <button class='remove-btn' value='${collection.Collection_id}'>
-                    <i class="fas fa-trash"></i> Remove
-                  </button>
                 </div>
               </div>
             `;

@@ -468,7 +468,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
                 ON m.Station_id = s.Station_id
             WHERE s.Owner_id = ?
                 AND Timestamp between ? and ?
-            ORDER BY Timestamp ASC
+            ORDER BY Timestamp DESC
         ";
         $stmt = $connection->prepare($sql);
         $stmt->bind_param("iss", $Owner_id, $filterDateStart, $filterDateEnd);
