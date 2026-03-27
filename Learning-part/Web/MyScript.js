@@ -249,135 +249,6 @@ function createFriendCard(friend, allowMultiSelect = false) {
   return card;
 }
 
-function MessageAll() {
-  let blurDiv = $("<div>").attr("class", "blur-background");
-  let sectionContent = $("<section>").attr("class", "content");
-  let exitBtn = $("<button>")
-    .on("click", CloseChatBox)
-    .text("X")
-    .addClass("exitChatBox");
-  sectionContent.append(exitBtn);
-
-  blurDiv.on("click", CloseChatBox);
-
-  $("body").append(blurDiv).append(sectionContent);
-  /* 
-  - add message list
-  */
-  let container = $("<div>").addClass("messageContainer");
-  let heading = $("<h2>").text("Messaging List").addClass("messageAllHeading");
-  let subHeading = $("<p>")
-    .text("Send and receive quick updates with your friends.")
-    .addClass("overlaySubheading");
-  container.append(heading, subHeading);
-  let messageList = $("<div>").addClass("messageList");
-  let input_container = $("<div>").addClass("inputContainer");
-  let composerLabel = $("<span>")
-    .text("Send Message")
-    .addClass("composerLabel");
-  let input = $("<input>")
-    .attr("type", "text")
-    .attr("placeholder", "Write a message...")
-    .attr("maxlength", "255");
-  let sendBtn = $("<button>")
-    .html("<i class='bx bx-send'></i> Send")
-    .on("click", function () {
-      let message = input.val().trim();
-      if (!message) {
-        return;
-      }
-      let profileImg = "../img/User.png";
-      // Create message content holder with username
-      let message_content_holder = $("<div>").addClass(
-        "message_content_holder",
-      );
-
-      // Add timestamp
-      let now = new Date();
-      let timeString =
-        now.getHours().toString().padStart(2, "0") +
-        ":" +
-        now.getMinutes().toString().padStart(2, "0");
-      message_content_holder.append(
-        $("<div>").addClass("message_timestamp").text(timeString),
-      );
-      // sending message to backend (expect JSON response)
-      $.post(
-        "../MyLibrary.php",
-        { sendMessage: true, message: message, timestamp: timeString },
-        function (response) {
-          // response is parsed JSON because we request json below
-          if (response && response.success) {
-            message_content_holder.append(
-              $("<div>").addClass("username_holder").text("You"),
-            );
-            message_content_holder.append($("<div>").text(message));
-          } else {
-            const err =
-              response && response.error
-                ? response.error
-                : "Error sending message";
-            alert(err);
-          }
-        },
-        "json",
-      ).fail(function (post, textStatus, error) {
-        alert("Request failed: " + textStatus + (error ? " - " + error : ""));
-      });
-
-      let message_container = $("<div>").addClass(
-        "sent_message_container sent",
-      );
-      message_container
-        .prepend($("<img>").attr("src", profileImg).addClass("profileImg"))
-        .append(message_content_holder);
-
-      messageList.append(message_container);
-
-      // Auto-scroll to the latest message
-      messageList.scrollTop(messageList[0].scrollHeight);
-
-      input.val(""); // Clear input after sending
-    });
-  // ask server frequently for new messages
-  setInterval(function () {
-    $.post(
-      "../MyLibrary.php",
-      { getNewMessages: true },
-      function (response) {
-        if (response && response.success) {
-          // Append new messages to the message list
-          response.messages.forEach(function (message) {
-            let message_container = $("<div>").addClass(
-              "received_message_container received",
-            );
-            message_container
-              .prepend(
-                $("<img>").attr("src", profileImg).addClass("profileImg"),
-              )
-              .append(
-                $("<div>").addClass("message_content").text(message.content),
-              )
-              .append(
-                $("<div>")
-                  .addClass("message_timestamp")
-                  .text(message.timestamp),
-              );
-
-            messageList.append(message_container);
-          });
-        }
-      },
-      "json",
-    ).fail(function (post, textStatus, error) {
-      alert("Request failed: " + textStatus + (error ? " - " + error : ""));
-    });
-  }, 1000); // Check for new messages every 1 second
-
-  input_container.append(composerLabel, input, sendBtn);
-  container.append(messageList, input_container);
-  sectionContent.append(container);
-}
 function updateShareButton() {
   const selectedCount = $(".friendCard.selected").length;
   $(".confirmShareWithFriendsBtn").prop("disabled", selectedCount === 0);
@@ -491,6 +362,148 @@ function CloseChatBox() {
   $(".content").hide(); */
   $(".blur-background").remove();
   $(".content").remove();
+}
+
+function DisplayPendingRequests() {
+  // Remove previous overlay if exists
+  $(".blur-background, .content").remove();
+
+  let blurDiv = $("<div>").addClass("blur-background");
+  let sectionContent = $("<section>").addClass("content");
+
+  let exitBtn = $("<button>")
+    .text("X")
+    .addClass("exitChatBox")
+    .on("click", CloseChatBox);
+
+  let title = $("<h3>")
+    .text("Friendship Requests")
+    .addClass("friendListHeading");
+  let subtitle = $("<p>")
+    .text("Accept or delete incoming friendship requests.")
+    .addClass("overlaySubheading");
+  let requestsContainer = $("<div>").addClass("pendingRequestsContainer");
+
+  function removeCardOrShowEmpty(card) {
+    card.remove();
+    if (requestsContainer.find(".pendingRequestCard").length === 0) {
+      requestsContainer.html(
+        '<p class="pendingRequestsEmpty">No pending requests right now.</p>',
+      );
+    }
+  }
+
+  function handleRequestAction(action, request, card) {
+    const requestId =
+      request.requestId || request.request_id || request.id || null;
+    const targetUserId =
+      request.userId || request.from_user_id || request.sender_id || null;
+
+    $.post(
+      "../MyLibrary.php",
+      {
+        friendRequestAction: action,
+        requestId: requestId,
+        targetUserId: targetUserId,
+      },
+      function () {
+        removeCardOrShowEmpty(card);
+      },
+    ).fail(function () {
+      // Keep optimistic fallback for frontend-only integration.
+      removeCardOrShowEmpty(card);
+    });
+  }
+
+  function createPendingRequestCard(request) {
+    const username = request.Username || "Unknown user";
+    const email = request.Email || "No email provided";
+    const profileImg = request.image || "../img/User.png";
+
+    const card = $("<div>").addClass("pendingRequestCard");
+
+    const avatar = $("<img>")
+      .addClass("friendAvatar")
+      .attr("src", profileImg)
+      .attr("alt", "Profile");
+
+    const info = $("<div>").addClass("friendInfo");
+    info.append(
+      $("<span>").addClass("friendUsername").text(username),
+      $("<span>").addClass("friendEmail").text(email),
+      $("<span>")
+        .addClass("pendingRequestMeta")
+        .text("Wants to connect with you."),
+    );
+
+    const actions = $("<div>").addClass("pendingRequestActions");
+
+    const acceptBtn = $("<button>")
+      .addClass("requestAcceptBtn")
+      .text("Accept")
+      .on("click", function (e) {
+        e.stopPropagation();
+        handleRequestAction("accept", request, card);
+      });
+
+    const deleteBtn = $("<button>")
+      .addClass("requestDeleteBtn")
+      .text("Delete")
+      .on("click", function (e) {
+        e.stopPropagation();
+        handleRequestAction("delete", request, card);
+      });
+    const cancelBtn = $("<button>")
+      .addClass("requestCancelBtn")
+      .text("Cancel")
+      .on("click", function (e) {
+        e.stopPropagation();
+        handleRequestAction("cancel", request, card);
+      });
+    isOutgoing =
+      request.isOutgoing ||
+      (request.status === "pending" &&
+        request.requested_by === request.currentUserId);
+    // Show cancel button only for outgoing requests
+    if (isOutgoing) {
+      actions.append(cancelBtn);
+    } else {
+      actions.append(acceptBtn, deleteBtn);
+    }
+    card.append(avatar, info, actions);
+    return card;
+  }
+
+  sectionContent.append(exitBtn, title, subtitle, requestsContainer);
+  $("body").append(blurDiv, sectionContent);
+
+  $.post(
+    "../MyLibrary.php",
+    { getPendingRequests: true },
+    function (requests) {
+      if (
+        !requests ||
+        !requests.PendingRequests ||
+        requests.PendingRequests.length === 0
+      ) {
+        requestsContainer.html(
+          '<p class="pendingRequestsEmpty">No pending requests right now.</p>',
+        );
+        return;
+      }
+
+      requests.PendingRequests.forEach((request) => {
+        requestsContainer.append(createPendingRequestCard(request));
+      });
+    },
+    "json",
+  ).fail(function () {
+    requestsContainer.html(
+      '<p class="pendingRequestsEmpty">Unable to load pending requests.</p>',
+    );
+  });
+
+  blurDiv.on("click", CloseChatBox);
 }
 
 function DisplayStationData() {
@@ -1296,3 +1309,368 @@ $(document).on("click", ".delete-btn", function () {
     }
   }
 });
+
+/* ==================== GROUP CHAT ==================== */
+
+let groupPollingInterval = null;
+let currentGroupLastMessageId = 0;
+
+/**
+ * Opens the "My Groups" overlay — lists all groups the user is in,
+ * plus a button to create a new group.
+ */
+function ShowGroupChats() {
+  $(".blur-background, .content").remove();
+
+  const blurDiv = $("<div>")
+    .addClass("blur-background")
+    .on("click", CloseChatBox);
+  const section = $("<section>").addClass("content");
+
+  const exitBtn = $("<button>")
+    .text("X")
+    .addClass("exitChatBox")
+    .on("click", CloseChatBox);
+
+  const heading = $("<h2>").text("Group Chats").addClass("messageAllHeading");
+  const subHeading = $("<p>")
+    .text("Create a group or open an existing one.")
+    .addClass("overlaySubheading");
+
+  const createBtn = $("<button>")
+    .addClass("btn btn-approve")
+    .text("+ Create New Group")
+    .css("margin-bottom", "1rem")
+    .on("click", function () {
+      CloseChatBox();
+      CreateGroupChat();
+    });
+
+  const groupList = $("<div>").addClass("friendsList").attr("id", "groupList");
+  groupList.text("Loading groups...");
+
+  section.append(exitBtn, heading, subHeading, createBtn, groupList);
+  $("body").append(blurDiv, section);
+
+  $.post(
+    "../MyLibrary.php",
+    { getMyGroups: true },
+    function (groups) {
+      groupList.empty();
+      if (!groups || groups.length === 0) {
+        groupList.html("<p>You have no groups yet. Create one!</p>");
+        return;
+      }
+      groups.forEach(function (g) {
+        const card = $("<div>").addClass("friendCard").css("cursor", "default");
+        const nameSpan = $("<span>")
+          .addClass("friendUsername")
+          .text(g.Group_name);
+        const metaSpan = $("<span>")
+          .addClass("friendEmail")
+          .text(
+            "Created by " +
+              g.creator_name +
+              " · " +
+              g.member_count +
+              " member(s)",
+          );
+        const openBtn = $("<button>")
+          .addClass("btn btn-save")
+          .css({ "margin-left": "auto", "flex-shrink": "0" })
+          .text("Open")
+          .on("click", function () {
+            CloseChatBox();
+            OpenGroupChat(g.Group_id, g.Group_name);
+          });
+        const info = $("<div>")
+          .addClass("friendInfo")
+          .append(nameSpan, metaSpan);
+        card.append(info, openBtn);
+        groupList.append(card);
+      });
+    },
+    "json",
+  ).fail(function () {
+    groupList.html("<p>Error loading groups.</p>");
+  });
+}
+
+/**
+ * Shows a form to create a new group: enter group name + select friends to add.
+ */
+function CreateGroupChat() {
+  $(".blur-background, .content").remove();
+
+  const blurDiv = $("<div>")
+    .addClass("blur-background")
+    .on("click", CloseChatBox);
+  const section = $("<section>").addClass("content");
+
+  const exitBtn = $("<button>")
+    .text("X")
+    .addClass("exitChatBox")
+    .on("click", CloseChatBox);
+
+  const heading = $("<h2>")
+    .text("Create Group Chat")
+    .addClass("messageAllHeading");
+  const subHeading = $("<p>")
+    .text("Give your group a name and select friends to add.")
+    .addClass("overlaySubheading");
+
+  const nameInput = $("<input>")
+    .attr({ type: "text", placeholder: "Group name...", maxlength: "100" })
+    .css({
+      width: "100%",
+      "margin-bottom": "1rem",
+      padding: "0.5rem",
+      "box-sizing": "border-box",
+    });
+
+  const friendsLabel = $("<p>")
+    .text("Select friends to add:")
+    .css({ "font-weight": "600", "margin-bottom": "0.5rem" });
+
+  const friendsList = $("<div>")
+    .addClass("friendsList")
+    .attr("id", "createGroupFriendList");
+  friendsList.text("Loading friends...");
+
+  const createBtn = $("<button>")
+    .addClass("btn btn-approve")
+    .text("Create Group")
+    .css("margin-top", "1rem")
+    .on("click", function () {
+      const groupName = nameInput.val().trim();
+      if (!groupName) {
+        alert("Please enter a group name.");
+        return;
+      }
+      const selectedIds = [];
+      friendsList.find(".friendCard.selected").each(function () {
+        selectedIds.push($(this).data("id"));
+      });
+      $.post(
+        "../MyLibrary.php",
+        { createGroup: true, groupName: groupName, memberIds: selectedIds },
+        function (res) {
+          if (res && res.success) {
+            CloseChatBox();
+            OpenGroupChat(res.groupId, res.groupName);
+          } else {
+            alert(res && res.error ? res.error : "Failed to create group.");
+          }
+        },
+        "json",
+      ).fail(function () {
+        alert("Request failed.");
+      });
+    });
+
+  section.append(
+    exitBtn,
+    heading,
+    subHeading,
+    nameInput,
+    friendsLabel,
+    friendsList,
+    createBtn,
+  );
+  $("body").append(blurDiv, section);
+
+  // Load friends as selectable cards
+  $.post(
+    "../MyLibrary.php",
+    { showFriends: "true" },
+    function (friends) {
+      friendsList.empty();
+      if (!friends || friends.length === 0) {
+        friendsList.html("<p>No friends found. Add friends first.</p>");
+        return;
+      }
+      friends.forEach(function (f) {
+        const card = createFriendCard(f, true);
+        // Remove the remove-friend button inside creation context
+        card.find(".removeFriendBtn").hide();
+        friendsList.append(card);
+      });
+    },
+    "json",
+  ).fail(function () {
+    friendsList.html("<p>Error loading friends.</p>");
+  });
+}
+
+/**
+ * Opens a group chat window for the given groupId.
+ */
+function OpenGroupChat(groupId, groupName) {
+  $(".blur-background, .content").remove();
+  if (groupPollingInterval) {
+    clearInterval(groupPollingInterval);
+    groupPollingInterval = null;
+  }
+  currentGroupLastMessageId = 0;
+
+  const blurDiv = $("<div>")
+    .addClass("blur-background")
+    .on("click", function () {
+      if (groupPollingInterval) {
+        clearInterval(groupPollingInterval);
+        groupPollingInterval = null;
+      }
+      CloseChatBox();
+    });
+  const section = $("<section>").addClass("content");
+
+  const exitBtn = $("<button>")
+    .text("X")
+    .addClass("exitChatBox")
+    .on("click", function () {
+      if (groupPollingInterval) {
+        clearInterval(groupPollingInterval);
+        groupPollingInterval = null;
+      }
+      CloseChatBox();
+    });
+
+  const heading = $("<h2>").text(groupName).addClass("messageAllHeading");
+
+  const backBtn = $("<button>")
+    .addClass("btn btn-info")
+    .text("← Back to Groups")
+    .css("margin-bottom", "0.5rem")
+    .on("click", function () {
+      if (groupPollingInterval) {
+        clearInterval(groupPollingInterval);
+        groupPollingInterval = null;
+      }
+      CloseChatBox();
+      ShowGroupChats();
+    });
+
+  const messageList = $("<div>").addClass("messageList");
+
+  const inputContainer = $("<div>").addClass("inputContainer");
+  const composerLabel = $("<span>")
+    .text("Send Message")
+    .addClass("composerLabel");
+  const input = $("<input>").attr({
+    type: "text",
+    placeholder: "Write a message...",
+    maxlength: "255",
+  });
+  const sendBtn = $("<button>")
+    .html("<i class='bx bx-send'></i> Send")
+    .on("click", function () {
+      const message = input.val().trim();
+      if (!message) return;
+      $.post(
+        "../MyLibrary.php",
+        { sendGroupMessage: true, groupId: groupId, content: message },
+        function (res) {
+          if (res && res.success) {
+            // Optimistically render own message immediately; poll will skip it
+            // since currentGroupLastMessageId is updated to res.messageId
+            appendGroupMessage(messageList, {
+              sender_name: window.currentUsername || "You",
+              Content: message,
+              Sent_at: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              Message_id: res.messageId,
+            });
+            currentGroupLastMessageId = Math.max(
+              currentGroupLastMessageId,
+              res.messageId,
+            );
+            messageList.scrollTop(messageList[0].scrollHeight);
+          } else {
+            alert(res && res.error ? res.error : "Failed to send message.");
+          }
+        },
+        "json",
+      ).fail(function () {
+        alert("Request failed.");
+      });
+      input.val("");
+    });
+
+  // Allow Enter key to send
+  input.on("keypress", function (e) {
+    if (e.which === 13) sendBtn.trigger("click");
+  });
+
+  inputContainer.append(composerLabel, input, sendBtn);
+  section.append(exitBtn, heading, backBtn, messageList, inputContainer);
+  $("body").append(blurDiv, section);
+
+  // Load all existing messages first
+  $.post(
+    "../MyLibrary.php",
+    { getGroupMessages: true, groupId: groupId, afterId: 0 },
+    function (res) {
+      if (res && res.success) {
+        res.messages.forEach(function (msg) {
+          appendGroupMessage(messageList, msg);
+          currentGroupLastMessageId = Math.max(
+            currentGroupLastMessageId,
+            parseInt(msg.Message_id),
+          );
+        });
+        messageList.scrollTop(messageList[0].scrollHeight);
+      }
+    },
+    "json",
+  );
+
+  // Poll for new messages every second
+  groupPollingInterval = setInterval(function () {
+    $.post(
+      "../MyLibrary.php",
+      {
+        getGroupMessages: true,
+        groupId: groupId,
+        afterId: currentGroupLastMessageId,
+      },
+      function (res) {
+        if (res && res.success && res.messages.length > 0) {
+          res.messages.forEach(function (msg) {
+            appendGroupMessage(messageList, msg);
+            currentGroupLastMessageId = Math.max(
+              currentGroupLastMessageId,
+              parseInt(msg.Message_id),
+            );
+          });
+          messageList.scrollTop(messageList[0].scrollHeight);
+        }
+      },
+      "json",
+    );
+  }, 1500);
+}
+
+function appendGroupMessage(messageList, msg) {
+  const isMine =
+    typeof window.currentUsername !== "undefined" &&
+    msg.sender_name === window.currentUsername;
+
+  const container = $("<div>").addClass(
+    isMine
+      ? "sent_message_container sent"
+      : "received_message_container received",
+  );
+  const profileImg = $("<img>")
+    .attr("src", "../img/User.png")
+    .addClass("profileImg");
+  const contentHolder = $("<div>").addClass("message_content_holder");
+  contentHolder.append(
+    $("<div>").addClass("username_holder").text(msg.sender_name),
+    $("<div>").text(msg.Content),
+    $("<div>").addClass("message_timestamp").text(msg.Sent_at),
+  );
+  container.append(profileImg, contentHolder);
+  messageList.append(container);
+}

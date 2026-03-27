@@ -401,7 +401,7 @@ if (isset($_POST['targetID'])) {
 if (isset($_POST['removeFriend']) && isset($_POST['target_user'])) {
     $MyInfo = getUserInfo($_SESSION["username"]);
     $MyID = $MyInfo['UserID'];
-    $removeFriend = $connection->prepare("DELETE FROM FriendList WHERE UserA_ID = ? and UserB_ID = ? or UserB_ID = ? and UserA_ID = ?;");
+    $removeFriend = $connection->prepare("DELETE FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?);");
     $removeFriend->bind_param('iiii', $MyID, $_POST['target_user'], $_POST['target_user'], $MyID);
     if ($removeFriend->execute()) {
         echo "Friendship with user ID: " . $_POST['target_user'] . " eneded successfully.";
@@ -417,7 +417,7 @@ if (isset($_POST['showFriends']) && $_POST['showFriends'] == "true") {
     $friends = [];
 
     $friendsInfo = $connection->prepare(
-        "SELECT * FROM FriendList WHERE UserA_ID = ? OR UserB_ID = ?"
+        "SELECT * FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) AND status = 'accepted'"
     );
     $friendsInfo->bind_param('ii', $MyID, $MyID);
     $friendsInfo->execute();
@@ -919,39 +919,229 @@ if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
     exit;
 }
 
-if (isset($_POST['sendMessage']) && $_POST['sendMessage'] && isset($_POST['timestamp'])) {
-    $message = $_POST['message'];
-    $MyInfo = getUserInfo($_SESSION["username"]);
-    $user_id = $MyInfo['UserID'];
-    $timestamp = $_POST['timestamp'];
-    $default_message_view = 'unseen';
+/* ==================== GROUP CHAT HANDLERS ==================== */
 
-    $stmt = $connection->prepare("INSERT INTO Message (Message_content, Sender_ID, isViewed, Message_time) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("sisi", $message, $user_id, $default_message_view, $timestamp);
+/* Create a new chat group and add the creator + selected friends as members */
+if (isset($_POST['createGroup'], $_POST['groupName'])) {
+    if (!$_SESSION['userLogin']) {
+        echo json_encode(['success' => false, 'error' => 'Not logged in']);
+        exit;
+    }
+    $groupName = trim($_POST['groupName']);
+    if ($groupName === '') {
+        echo json_encode(['success' => false, 'error' => 'Group name cannot be empty']);
+        exit;
+    }
+    $user = getUserInfo($_SESSION['username']);
+    $creatorId = $user['UserID'];
 
+    $stmt = $connection->prepare("INSERT INTO ChatGroup (Group_name, Created_by) VALUES (?, ?)");
+    $stmt->bind_param('si', $groupName, $creatorId);
+    if (!$stmt->execute()) {
+        echo json_encode(['success' => false, 'error' => 'Failed to create group']);
+        exit;
+    }
+    $groupId = $connection->insert_id;
+
+    // Add creator as member
+    $addMember = $connection->prepare("INSERT IGNORE INTO GroupMember (Group_id, User_id) VALUES (?, ?)");
+    $addMember->bind_param('ii', $groupId, $creatorId);
+    $addMember->execute();
+
+    // Add selected friends as members
+    $friendIds = isset($_POST['memberIds']) ? $_POST['memberIds'] : [];
+    if (!is_array($friendIds)) {
+        $friendIds = [$friendIds];
+    }
+    foreach ($friendIds as $fid) {
+        $fid = (int)$fid;
+        if ($fid > 0) {
+            $addMember->bind_param('ii', $groupId, $fid);
+            $addMember->execute();
+        }
+    }
+
+    echo json_encode(['success' => true, 'groupId' => $groupId, 'groupName' => $groupName]);
+    exit;
+}
+
+/* Get all groups the current user belongs to */
+if (isset($_POST['getMyGroups']) && $_POST['getMyGroups']) {
+    if (!$_SESSION['userLogin']) {
+        echo json_encode([]);
+        exit;
+    }
+    $user = getUserInfo($_SESSION['username']);
+    $userId = $user['UserID'];
+
+    $stmt = $connection->prepare("
+        SELECT cg.Group_id, cg.Group_name, cg.Created_by, u.Username AS creator_name,
+               COUNT(gm2.User_id) AS member_count
+        FROM ChatGroup cg
+        JOIN GroupMember gm ON cg.Group_id = gm.Group_id AND gm.User_id = ?
+        JOIN Users u ON cg.Created_by = u.UserID
+        LEFT JOIN GroupMember gm2 ON cg.Group_id = gm2.Group_id
+        GROUP BY cg.Group_id
+        ORDER BY cg.Created_at DESC
+    ");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $groups = [];
+    while ($row = $result->fetch_assoc()) {
+        $groups[] = $row;
+    }
+    echo json_encode($groups);
+    exit;
+}
+
+/* Add a friend to an existing group (only group creator can add members) */
+if (isset($_POST['addGroupMember'], $_POST['groupId'], $_POST['friendId'])) {
+    if (!$_SESSION['userLogin']) {
+        echo json_encode(['success' => false, 'error' => 'Not logged in']);
+        exit;
+    }
+    $groupId = (int)$_POST['groupId'];
+    $friendId = (int)$_POST['friendId'];
+    $user = getUserInfo($_SESSION['username']);
+    $userId = $user['UserID'];
+
+    // Verify caller is the group creator
+    $check = $connection->prepare("SELECT Created_by FROM ChatGroup WHERE Group_id = ?");
+    $check->bind_param('i', $groupId);
+    $check->execute();
+    $checkResult = $check->get_result();
+    $groupRow = $checkResult->fetch_assoc();
+    if (!$groupRow || (int)$groupRow['Created_by'] !== $userId) {
+        echo json_encode(['success' => false, 'error' => 'Only the group creator can add members']);
+        exit;
+    }
+
+    $stmt = $connection->prepare("INSERT IGNORE INTO GroupMember (Group_id, User_id) VALUES (?, ?)");
+    $stmt->bind_param('ii', $groupId, $friendId);
     if ($stmt->execute()) {
-        echo json_encode(["success" => true]);
+        echo json_encode(['success' => true]);
     } else {
-        echo json_encode(["success" => false]);
+        echo json_encode(['success' => false, 'error' => 'Failed to add member']);
     }
     exit;
 }
-if (isset($_POST['getNewMessages']) && $_POST['getNewMessages']) {
-    $MyInfo = getUserInfo($_SESSION["username"]);
-    $user_id = $MyInfo['UserID'];
 
-    $stmt = $connection->prepare("SELECT * FROM Message WHERE Receiver_ID = ? AND isViewed = ?");
-    $stmt->bind_param("is", $user_id, $default_message_view);
+/* Get messages for a group */
+if (isset($_POST['getGroupMessages'], $_POST['groupId'])) {
+    if (!$_SESSION['userLogin']) {
+        echo json_encode(['success' => false, 'error' => 'Not logged in']);
+        exit;
+    }
+    $groupId = (int)$_POST['groupId'];
+    $user = getUserInfo($_SESSION['username']);
+    $userId = $user['UserID'];
 
+    // Verify user is a member of the group
+    $check = $connection->prepare("SELECT 1 FROM GroupMember WHERE Group_id = ? AND User_id = ?");
+    $check->bind_param('ii', $groupId, $userId);
+    $check->execute();
+    $check->store_result();
+    if ($check->num_rows === 0) {
+        echo json_encode(['success' => false, 'error' => 'Not a member of this group']);
+        exit;
+    }
+
+    $afterId = isset($_POST['afterId']) ? (int)$_POST['afterId'] : 0;
+    $stmt = $connection->prepare("
+        SELECT gm.Message_id, gm.Content, gm.Sent_at, u.Username AS sender_name
+        FROM GroupMessage gm
+        JOIN Users u ON gm.Sender_id = u.UserID
+        WHERE gm.Group_id = ? AND gm.Message_id > ?
+        ORDER BY gm.Message_id ASC
+    ");
+    $stmt->bind_param('ii', $groupId, $afterId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $messages = [];
+    while ($row = $result->fetch_assoc()) {
+        $messages[] = $row;
+    }
+    echo json_encode(['success' => true, 'messages' => $messages]);
+    exit;
+}
+
+/* Send a message to a group */
+if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
+    if (!$_SESSION['userLogin']) {
+        echo json_encode(['success' => false, 'error' => 'Not logged in']);
+        exit;
+    }
+    $groupId = (int)$_POST['groupId'];
+    $content = trim($_POST['content']);
+    if ($content === '') {
+        echo json_encode(['success' => false, 'error' => 'Message cannot be empty']);
+        exit;
+    }
+    $user = getUserInfo($_SESSION['username']);
+    $userId = $user['UserID'];
+
+    // Verify user is a member
+    $check = $connection->prepare("SELECT 1 FROM GroupMember WHERE Group_id = ? AND User_id = ?");
+    $check->bind_param('ii', $groupId, $userId);
+    $check->execute();
+    $check->store_result();
+    if ($check->num_rows === 0) {
+        echo json_encode(['success' => false, 'error' => 'Not a member of this group']);
+        exit;
+    }
+
+    $stmt = $connection->prepare("INSERT INTO GroupMessage (Group_id, Sender_id, Content) VALUES (?, ?, ?)");
+    $stmt->bind_param('iis', $groupId, $userId, $content);
     if ($stmt->execute()) {
-        $result = $stmt->get_result();
-        $messages = [];
-        while ($row = $result->fetch_assoc()) {
-            $messages[] = $row;
-        }
-        echo json_encode(["success" => true, "messages" => $messages]);
+        echo json_encode(['success' => true, 'messageId' => $connection->insert_id]);
     } else {
-        echo json_encode(["success" => false]);
+        echo json_encode(['success' => false, 'error' => 'Failed to send message']);
     }
     exit;
+}
+
+//get number of Friends either pending or accepted
+function DisplayNumberOfFriends($connection, $status)
+{
+    $currentUser = getUserInfo($_SESSION["username"]);
+    $currentUserID = $currentUser['UserID'];
+    if ($status == "pending") {
+        $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) and status = 'pending'");
+    } else {
+        $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) and status = 'accepted'");
+    }
+    $totalNumberOfFreinds->bind_param("ii", $currentUserID, $currentUserID);
+    $totalNumberOfFreinds->execute();
+    $result = $totalNumberOfFreinds->get_result();
+    $totalFriends = $result->fetch_row()[0];
+    return $totalFriends;
+}
+
+if (isset($_POST['getPendingRequests'])) {
+    $pendingCount = DisplayNumberOfFriends($connection, "pending");
+    $acceptedCount = DisplayNumberOfFriends($connection, "accepted");
+    $currentUser = getUserInfo($_SESSION["username"]);
+    $currentUserID = $currentUser['UserID'];
+    $getPendingRequests = $connection->prepare("SELECT FriendList.*, u.Username, u.Email FROM FriendList JOIN Users u ON FriendList.requested_by = u.UserID WHERE (FriendList.UserA_ID = ? OR FriendList.UserB_ID = ?) AND FriendList.requested_by != ? AND FriendList.status = 'pending'");
+    if (!$getPendingRequests) {
+        echo json_encode(['error' => 'Prepare failed: ' . $connection->error, 'PendingRequests' => []]);
+        exit;
+    }
+    $getPendingRequests->bind_param("iii", $currentUserID, $currentUserID, $currentUserID);
+    if (!$getPendingRequests->execute()) {
+        echo json_encode(['error' => 'Execute failed: ' . $getPendingRequests->error, 'PendingRequests' => []]);
+        exit;
+    }
+    $result = $getPendingRequests->get_result();
+    $pendingRequests = [];
+    while ($row = $result->fetch_assoc()) {
+        $pendingRequests[] = $row;
+    }
+    echo json_encode([
+        'PendingRequests' => $pendingRequests,
+        'PendingRequestsNumber' => $pendingCount,
+        'AcceptedFriendsNumber' => $acceptedCount,
+        'currentUserID' => $currentUserID
+    ]);
 }

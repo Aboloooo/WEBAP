@@ -58,10 +58,12 @@ include_once("../MyLibrary.php");
                     if ($numberOfRow > 0) {
                         echo "You are already friend with this user";
                     } else {
-                        $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID) VALUES (?,?)");
-                        $createFriendship->bind_param('ii', $UserA_ID, $UserB_ID);
+                        $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID,status,requested_by) VALUES (?,?,?,?)");
+                        $status = 'pending';
+                        $requested_by = $UserA_ID;
+                        $createFriendship->bind_param('iisi', $UserA_ID, $UserB_ID, $status, $requested_by);
                         if ($createFriendship->execute()) {
-                            echo "<script>alert('Friend added successfully!');</script>";
+                            echo "<script>alert('Friendship request sent successfully!');</script>";
                         } else {
                             echo "<script>alert('Error adding friend: ' . $connection->error);</script>";
                         }
@@ -74,15 +76,13 @@ include_once("../MyLibrary.php");
             echo "User ID is required";
         }
     }
-    $currentUser = getUserInfo($_SESSION["username"]);
-    $currentUserID = $currentUser['UserID'];
-    $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE UserA_ID = ? OR UserB_ID = ? ");
-    $totalNumberOfFreinds->bind_param("ii", $currentUserID, $currentUserID);
-    $totalNumberOfFreinds->execute();
-    $result = $totalNumberOfFreinds->get_result();
-    $totalFriends = $result->fetch_row()[0];
+    $totalFriends = DisplayNumberOfFriends($connection, 'accepted');
+    $totalPendingRequests = DisplayNumberOfFriends($connection, 'pending');
 
     ?>
+    <script>
+        window.currentUsername = <?= json_encode($_SESSION["username"]) ?>;
+    </script>
     <section id="Friendship" class="friendship-page">
         <div class="friendship-header">
             <h1 class="section-title">Grow Your Friend Network</h1>
@@ -98,15 +98,15 @@ include_once("../MyLibrary.php");
                     <span class="friendship-stat-label">Total Friends</span>
                     <span class="friendship-stat-value"><?= $totalFriends ?></span>
                 </div>
-                <div class="card friendship-stat-card" onclick="MessageAll()" role="button" tabindex="0">
-                    <div class="friendship-stat-icon"><i class='bx bx-message-rounded-dots'></i></div>
-                    <span class="friendship-stat-label">Message All</span>
-                    <span class="friendship-stat-value">Start Chat</span>
+                <div class="card friendship-stat-card" onclick="ShowGroupChats()" role="button" tabindex="0">
+                    <div class="friendship-stat-icon"><i class='bx bx-group'></i></div>
+                    <span class="friendship-stat-label">Group Chats</span>
+                    <span class="friendship-stat-value">Create / Open</span>
                 </div>
-                <div class="card friendship-stat-card">
+                <div class="card friendship-stat-card" onclick="DisplayPendingRequests()" role="button" tabindex="0">
                     <div class="friendship-stat-icon"><i class='bx bx-user-plus'></i></div>
-                    <span class="friendship-stat-label">Pending Requests</span>
-                    <span class="friendship-stat-value">0</span>
+                    <span class="friendship-stat-label">Friendship Requests</span>
+                    <span class="friendship-stat-value"><?= $totalPendingRequests ?></span>
                 </div>
             </div>
 

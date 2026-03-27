@@ -100,9 +100,11 @@ ADD FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id);
 CREATE TABLE FriendList(
     UserA_ID int NOT NULL,
     UserB_ID int NOT NULL,
+    status ENUM('pending', 'accepted') DEFAULT 'pending',
+    requested_by int NOT NULL,
     PRIMARY KEY (UserA_ID, UserB_ID),
     FOREIGN KEY (UserA_ID) REFERENCES Users(UserID),
-    FOREIGN KEY (UserB_ID) REFERENCES Users(UserID)
+    FOREIGN KEY (UserB_ID) REFERENCES Users(UserID),
 );
 
 -- CollectionShare table
@@ -133,4 +135,33 @@ INSERT INTO Message (Message_content, Sender_ID, isViewed, Message_time) VALUES
 ('Reminder: Meeting at 10 AM', 1, 'unseen', '10:00'),
 ('sure', 2, 'unseen', '12:00'),
 ('Im not aware!', 3, 'unseen', '14:00');
+
+-- ChatGroup table
+CREATE TABLE ChatGroup (
+    Group_id INT PRIMARY KEY AUTO_INCREMENT,
+    Group_name VARCHAR(100) NOT NULL,
+    Created_by INT NOT NULL,
+    Created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Created_by) REFERENCES Users(UserID)
+);
+
+-- GroupMember table (creator is also added as a member)
+CREATE TABLE GroupMember (
+    Group_id INT NOT NULL,
+    User_id INT NOT NULL,
+    PRIMARY KEY (Group_id, User_id),
+    FOREIGN KEY (Group_id) REFERENCES ChatGroup(Group_id),
+    FOREIGN KEY (User_id) REFERENCES Users(UserID)
+);
+
+-- GroupMessage table
+CREATE TABLE GroupMessage (
+    Message_id INT PRIMARY KEY AUTO_INCREMENT,
+    Group_id INT NOT NULL,
+    Sender_id INT NOT NULL,
+    Content VARCHAR(255) NOT NULL,
+    Sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Group_id) REFERENCES ChatGroup(Group_id),
+    FOREIGN KEY (Sender_id) REFERENCES Users(UserID)
+);
 
