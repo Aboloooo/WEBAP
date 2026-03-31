@@ -100,7 +100,7 @@ ADD FOREIGN KEY (Measurement_id) REFERENCES Measurement(Measurement_id);
 CREATE TABLE FriendList(
     UserA_ID int NOT NULL,
     UserB_ID int NOT NULL,
-    status ENUM('pending', 'accepted') DEFAULT 'pending',
+    status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
     requested_by int NOT NULL default 0,
     PRIMARY KEY (UserA_ID, UserB_ID),
     FOREIGN KEY (UserA_ID) REFERENCES Users(UserID),

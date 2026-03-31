@@ -1147,8 +1147,6 @@ if (isset($_POST['getPendingRequests'])) {
     ]);
 }
 if (isset($_POST['friendRequestAction'], $_POST['requestId'])) {
-    echo json_encode(['output:' => $_POST['friendRequestAction']]);
-
     $current_user = getUserInfo($_SESSION["username"]);
     $current_userId = $current_user['UserID'];
     list($UserA_ID, $UserB_ID) = explode(',', $_POST['requestId']);
