@@ -13,7 +13,7 @@ include_once("../MyLibrary.php");
     <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>index</title>
+    <title>EnvMonitor - Station Registration</title>
     <link rel="stylesheet" href="../MyStyle.css">
 </head>
 

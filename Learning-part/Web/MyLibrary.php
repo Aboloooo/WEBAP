@@ -579,7 +579,7 @@ function NavigationBarE()
 ?>
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-logo">MyBrand</div>
+            <div class="nav-logo">EnvMonitor</div>
             <ul class="nav-links">
                 <li><a href="index.php#Home">Home</a></li>
                 <li><a href="index.php#About">About</a></li>

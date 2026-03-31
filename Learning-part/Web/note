@@ -1,3 +1,9 @@
 Checking user with plain password and password verification of plain text needs to be stopped.
 
-a shared collection can not be noticiable for the person who got shared with
+only received friendship request must be visiable
+number of received friendship request visiable
+
+number of friends who accepted freindship request
+
+first three inputs in Dashboard must be onChange so:
+    They update the four cards under it
