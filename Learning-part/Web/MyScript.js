@@ -394,20 +394,21 @@ function DisplayPendingRequests() {
   }
 
   function handleRequestAction(action, request, card) {
-    const requestId =
-      request.requestId || request.request_id || request.id || null;
-    const targetUserId =
-      request.userId || request.from_user_id || request.sender_id || null;
+    const userA_id =
+      request.UserA_ID || request.userA_id || request.user_a_id || null;
+    const userB_id =
+      request.UserB_ID || request.userB_id || request.user_b_id || null;
+    const requestId = `${userA_id},${userB_id}`; // Construct a unique ID for the request card
 
     $.post(
       "../MyLibrary.php",
       {
         friendRequestAction: action,
         requestId: requestId,
-        targetUserId: targetUserId,
       },
-      function () {
+      function (serverRespond) {
         removeCardOrShowEmpty(card);
+        window.location.href = "./Friendship.php";
       },
     ).fail(function () {
       // Keep optimistic fallback for frontend-only integration.
@@ -416,11 +417,20 @@ function DisplayPendingRequests() {
   }
 
   function createPendingRequestCard(request) {
+    const userA_id =
+      request.UserA_ID || request.userA_id || request.user_a_id || null;
+    const userB_id =
+      request.UserB_ID || request.userB_id || request.user_b_id || null;
+
+    const requestId = `${userA_id},${userB_id}`; // Construct a unique ID for the request card
+
     const username = request.Username || "Unknown user";
     const email = request.Email || "No email provided";
     const profileImg = request.image || "../img/User.png";
 
-    const card = $("<div>").addClass("pendingRequestCard");
+    const card = $("<div>")
+      .addClass("pendingRequestCard")
+      .data("id", requestId);
 
     const avatar = $("<img>")
       .addClass("friendAvatar")
@@ -453,23 +463,7 @@ function DisplayPendingRequests() {
         e.stopPropagation();
         handleRequestAction("delete", request, card);
       });
-    const cancelBtn = $("<button>")
-      .addClass("requestCancelBtn")
-      .text("Cancel")
-      .on("click", function (e) {
-        e.stopPropagation();
-        handleRequestAction("cancel", request, card);
-      });
-    isOutgoing =
-      request.isOutgoing ||
-      (request.status === "pending" &&
-        request.requested_by === request.currentUserId);
-    // Show cancel button only for outgoing requests
-    if (isOutgoing) {
-      actions.append(cancelBtn);
-    } else {
-      actions.append(acceptBtn, deleteBtn);
-    }
+    actions.append(acceptBtn, deleteBtn);
     card.append(avatar, info, actions);
     return card;
   }

@@ -1,9 +1,12 @@
 Checking user with plain password and password verification of plain text needs to be stopped.
 
-only received friendship request must be visiable
-number of received friendship request visiable
-
-number of friends who accepted freindship request
+End friendship through friendlist
+    MyScript.js line 1847
 
 first three inputs in Dashboard must be onChange so:
     They update the four cards under it
+
+
+Update admin panel
+
+

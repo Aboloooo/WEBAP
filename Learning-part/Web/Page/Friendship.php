@@ -56,7 +56,7 @@ include_once("../MyLibrary.php");
                     $checkResult = $checkQuery->get_result();
                     $numberOfRow = $checkResult->num_rows;
                     if ($numberOfRow > 0) {
-                        echo "You are already friend with this user";
+                        echo "Your friendship request is already sent or you are already friends with this user.";
                     } else {
                         $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID,status,requested_by) VALUES (?,?,?,?)");
                         $status = 'pending';
@@ -65,7 +65,7 @@ include_once("../MyLibrary.php");
                         if ($createFriendship->execute()) {
                             echo "<script>alert('Friendship request sent successfully!');</script>";
                         } else {
-                            echo "<script>alert('Error adding friend: ' . $connection->error);</script>";
+                            echo "<script>alert('Error adding friend: " . $connection->error . "');</script>";
                         }
                     }
                 }

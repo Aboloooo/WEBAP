@@ -1107,11 +1107,12 @@ function DisplayNumberOfFriends($connection, $status)
     $currentUser = getUserInfo($_SESSION["username"]);
     $currentUserID = $currentUser['UserID'];
     if ($status == "pending") {
-        $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) and status = 'pending'");
+        $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) and status = 'pending' and requested_by != ?");
+        $totalNumberOfFreinds->bind_param("iii", $currentUserID, $currentUserID, $currentUserID);
     } else {
         $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) and status = 'accepted'");
+        $totalNumberOfFreinds->bind_param("ii", $currentUserID, $currentUserID);
     }
-    $totalNumberOfFreinds->bind_param("ii", $currentUserID, $currentUserID);
     $totalNumberOfFreinds->execute();
     $result = $totalNumberOfFreinds->get_result();
     $totalFriends = $result->fetch_row()[0];
@@ -1144,4 +1145,24 @@ if (isset($_POST['getPendingRequests'])) {
         'AcceptedFriendsNumber' => $acceptedCount,
         'currentUserID' => $currentUserID
     ]);
+}
+if (isset($_POST['friendRequestAction'], $_POST['requestId'])) {
+    echo json_encode(['output:' => $_POST['friendRequestAction']]);
+
+    $current_user = getUserInfo($_SESSION["username"]);
+    $current_userId = $current_user['UserID'];
+    list($UserA_ID, $UserB_ID) = explode(',', $_POST['requestId']);
+
+    $newStatus = $_POST['friendRequestAction'] == "accept" ? "accepted"
+        : ($_POST['friendRequestAction'] == "delete" ? "rejected" : null);
+
+    $changeFriendshipStatus = $connection->prepare("UPDATE Friendlist SET status = ? WHERE (UserA_ID = ? AND UserB_ID = ?) AND requested_by != ?");
+    $changeFriendshipStatus->bind_param("siii", $newStatus, $UserA_ID, $UserB_ID, $current_userId);
+
+
+    if ($changeFriendshipStatus->execute()) {
+        echo json_encode(['success' => "Friendship status updated to $newStatus"]);
+    } else {
+        echo json_encode(['error' => 'Failed to update friendship status: ' . $changeFriendshipStatus->error]);
+    }
 }
