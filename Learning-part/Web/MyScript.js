@@ -740,13 +740,10 @@ function DisplayStationData() {
   $(document).on("click", "#createCollectionBtn", function () {
     const measurements = [];
     $("#measurementsTable tbody tr").each(function () {
-      const rowData = $(this)
-        .find("td")
-        .map(function () {
-          return $(this).text();
-        })
-        .get();
-      measurements.push(rowData);
+      const measurementId = $(this).data("measurement-id");
+      if (measurementId !== undefined) {
+        measurements.push([measurementId]);
+      }
     });
 
     if (measurements.length === 0) {
@@ -790,7 +787,7 @@ function loadMeasurements(stationId, start, end) {
       tbody.empty();
 
       measurements.forEach((row) => {
-        const tr = $("<tr>");
+        const tr = $("<tr>").data("measurement-id", row.Measurement_id);
         tr.append($("<td>").text(row.Timestamp));
         tr.append($("<td>").text(row.Humidity));
         tr.append($("<td>").text(row.Air_pressure));
@@ -842,8 +839,7 @@ function startRealtimeMeasurementPolling(stationId) {
 
           // Add new measurements to the table
           response.newMeasurements.forEach((row) => {
-            const tr = $("<tr>");
-            tr.append($("<td>").text(row.Measurement_id));
+            const tr = $("<tr>").data("measurement-id", row.Measurement_id);
             tr.append($("<td>").text(row.Timestamp));
             tr.append($("<td>").text(row.Humidity));
             tr.append($("<td>").text(row.Air_pressure));

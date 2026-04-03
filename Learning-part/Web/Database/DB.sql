@@ -54,18 +54,7 @@ CREATE TABLE CollectionContains (
     Measurement_id INT NOT NULL,
     PRIMARY KEY (Collection_id, Measurement_id)
 );
-
--- Measurement table - Now this references CollectionContains indirectly through Collection_id
-/* CREATE TABLE Measurement(
-    Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
-    Timestamp DATETIME NOT NULL,
-    Humidity VARCHAR(255),
-    Air_pressure VARCHAR(255),
-    Light_intensity VARCHAR(255),
-    Air_quality VARCHAR(255),
-    Station_id INT,
-    FOREIGN KEY (Station_id) REFERENCES Station(Station_id)
-); */
+ 
 CREATE TABLE Measurement(
     Measurement_id INT PRIMARY KEY AUTO_INCREMENT,
     Timestamp DATETIME NOT NULL,
