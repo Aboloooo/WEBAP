@@ -27,19 +27,17 @@ if (!isset($_SESSION["SecurityAccess"])) {
 function userHasCollections(int $userId): bool
 {
     global $connection;
-    // Prepare the statement
-    $stmt = mysqli_prepare($connection, "SELECT 1 FROM Collection WHERE Creator_ID = ? LIMIT 1");
-    if (!$stmt) {
-        return false; // failed to prepare
-    }
-    // Bind the parameter
-    mysqli_stmt_bind_param($stmt, 'i', $userId);
-    // Execute
-    mysqli_stmt_execute($stmt);
-    // Store result to get number of rows
-    mysqli_stmt_store_result($stmt);
-    $hasCollections = mysqli_stmt_num_rows($stmt) > 0;
-    return $hasCollections;
+    $stmt = $connection->prepare("
+        SELECT 
+            EXISTS(SELECT 1 FROM Collection WHERE Creator_ID = ?) 
+            OR EXISTS(SELECT 1 FROM CollectionShare WHERE Shared_with = ?) 
+            AS has_collections
+    ");
+    if (!$stmt) return false;
+    $stmt->bind_param('ii', $userId, $userId);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    return isset($result['has_collections']) && (bool)$result['has_collections'];
 }
 
 
@@ -81,7 +79,8 @@ if (isset($_POST['targetCollection'])) {
 if (isset($_POST["logoutBtn"])) {
     session_unset();
     session_destroy();
-    /* header("Refresh:0"); */
+    echo json_encode(['redirect' => './Page/sign_in_up.php']);
+    exit;
 }
 
 if (isset($_POST["saveButtonClicked"], $_POST["fullName"], $_POST["userName"], $_POST["email"])) {
@@ -398,14 +397,39 @@ if (isset($_POST['targetID'])) {
     }
 };
 
+// remove friend
 if (isset($_POST['removeFriend']) && isset($_POST['target_user'])) {
     $MyInfo = getUserInfo($_SESSION["username"]);
     $MyID = $MyInfo['UserID'];
     $removeFriend = $connection->prepare("DELETE FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?);");
-    $removeFriend->bind_param('iiii', $MyID, $_POST['target_user'], $_POST['target_user'], $MyID);
+    $removeFriend->bind_param('iiii', $MyID, $_POST['target_user'], $MyID, $_POST['target_user']);
     if ($removeFriend->execute()) {
-        echo "Friendship with user ID: " . $_POST['target_user'] . " eneded successfully.";
+        echo "Friendship with user ID: " . $_POST['target_user'] . " ended successfully.";
     }
+}
+// remove collection
+if (isset($_POST['removeCollection'], $_POST['targetCollectionID']) && $_POST['removeCollection'] == true) {
+    $targetCollectionID = (int) $_POST['targetCollectionID'];
+
+    // 1. Remove from CollectionContains
+    $stmt = $connection->prepare('DELETE FROM CollectionContains WHERE Collection_id = ?');
+    $stmt->bind_param("i", $targetCollectionID);
+    $stmt->execute();
+
+    // 2. Remove from CollectionShare (FK blocks Collection deletion if skipped)
+    $stmt = $connection->prepare('DELETE FROM CollectionShare WHERE Collection_id = ?');
+    $stmt->bind_param("i", $targetCollectionID);
+    $stmt->execute();
+
+    // 3. Now safely delete from Collection
+    $stmt = $connection->prepare('DELETE FROM Collection WHERE Collection_id = ?');
+    $stmt->bind_param("i", $targetCollectionID);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => "Collection $targetCollectionID deleted successfully."]);
+    } else {
+        echo json_encode(['error' => "Failed to delete collection: " . $stmt->error]);
+    }
+    exit;
 }
 
 // show my Friends
@@ -1104,7 +1128,8 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
 //get number of Friends either pending or accepted
 function DisplayNumberOfFriends($connection, $status)
 {
-    $currentUser = getUserInfo($_SESSION["username"]);
+    $currentUser = getUserInfo($_SESSION["username"] ?? '');
+    if (!$currentUser) return 0;
     $currentUserID = $currentUser['UserID'];
     if ($status == "pending") {
         $totalNumberOfFreinds = $connection->prepare("SELECT count(*) FROM FriendList WHERE (UserA_ID = ? OR UserB_ID = ?) and status = 'pending' and requested_by != ?");

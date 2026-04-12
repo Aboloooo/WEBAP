@@ -1,7 +1,5 @@
 Checking user with plain password and password verification of plain text needs to be stopped.
 
-End friendship through friendlist
-    MyScript.js line 1847
 
 first three inputs in Dashboard must be onChange so:
     They update the four cards under it
@@ -12,13 +10,6 @@ Update admin panel
 
 user must be able to change staion info after owning them
 
-my collection link must be visible even if user has no collection but shared collection
-
 a notification new collection could improve 
 
-a collection either 
-    shared with me
-    shared by me
-the target user must be understandble 
 
-a collection must be removable

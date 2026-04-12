@@ -2,7 +2,6 @@ $(start);
 
 function start() {
   // we can start writing here
-  initScrollToTopBubble();
   updateNavbarSizeOnScroll();
 
   $(window).on("scroll", function () {
@@ -58,12 +57,18 @@ function toggleMyClass(classTarget, className) {
   });
 }
 function Logout() {
-  let data = {
-    logoutBtn: true,
-  };
-  $.post("../MyLibrary.php", data, function () {
-    location.reload(); // Changed from history.go(0)
-  });
+  $.post(
+    "../MyLibrary.php",
+    { logoutBtn: true },
+    function (res) {
+      if (res && res.redirect) {
+        window.location.href = res.redirect;
+      } else {
+        window.location.href = "../Page/sign_in_up.php";
+      }
+    },
+    "json",
+  );
 }
 
 function saveChanges() {
@@ -110,30 +115,6 @@ function cancelEdit() {
 }
 
 let timer;
-function initScrollToTopBubble() {
-  if ($("#scrollTopBubble").length === 0) {
-    const bubble = $("<button>")
-      .attr("id", "scrollTopBubble")
-      .attr("type", "button")
-      .attr("aria-label", "Back to top")
-      .html("&#8593;")
-      .on("click", function () {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-
-    $("body").append(bubble);
-  }
-
-  toggleScrollToTopBubble();
-}
-
-function toggleScrollToTopBubble() {
-  const currentScroll = Math.max(
-    0,
-    window.pageYOffset || document.documentElement.scrollTop || 0,
-  );
-  $("#scrollTopBubble").toggleClass("visible", currentScroll > 220);
-}
 
 function updateNavbarSizeOnScroll() {
   const startPercent = 20;
@@ -923,7 +904,6 @@ $(document).on("submit", "#contactForm", function (e) {
 });
 
 /* Collection.php */
-/* Collection.php */
 function loadCollectionLoad() {
   $(document).ready(function () {
     const $myTab = $(".Collections_container");
@@ -1218,6 +1198,26 @@ function loadCollectionLoad() {
           }
           console.log("Remove collection:", collectionID);
           // Add remove collection logic if needed
+          if (
+            !confirm(
+              "Are you sure you want to remove this collection? This action cannot be undone.",
+            )
+          ) {
+            return;
+          }
+          $.post(
+            "../MyLibrary.php",
+            { targetCollectionID: collectionID, removeCollection: true },
+            function (res) {
+              const response = typeof res === "string" ? JSON.parse(res) : res;
+              if (response.success) {
+                alert(response.success);
+                window.location.href = "./Collection.php";
+              } else {
+                alert("Failed to delete collection: " + response.error);
+              }
+            },
+          );
         });
 
       // Cancel Share button
