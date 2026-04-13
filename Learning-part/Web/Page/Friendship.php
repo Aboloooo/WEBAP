@@ -50,19 +50,37 @@ include_once("../MyLibrary.php");
                         return;
                     }
 
-                    $checkQuery = $connection->prepare("SELECT * FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?) ");
+                    $checkQuery = $connection->prepare("SELECT status FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?) ");
                     $checkQuery->bind_param("iiii", $UserA_ID, $UserB_ID, $UserB_ID, $UserA_ID);
                     $checkQuery->execute();
                     $checkResult = $checkQuery->get_result();
-                    $numberOfRow = $checkResult->num_rows;
-                    if ($numberOfRow > 0) {
-                        echo "Your friendship request is already sent or you are already friends with this user.";
+                    if ($checkResult->num_rows > 0) {
+                        $existingRow = $checkResult->fetch_assoc();
+                        $existingStatus = $existingRow['status'];
+                        if ($existingStatus === 'rejected') {
+                            // allow resending — reset to pending
+                            $resend = $connection->prepare("UPDATE FriendList SET status = 'pending', requested_by = ? WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?)");
+                            $resend->bind_param('iiiii', $UserA_ID, $UserA_ID, $UserB_ID, $UserA_ID, $UserB_ID);
+                            if ($resend->execute()) {
+                                echo "<script>alert('Friendship request sent successfully!');</script>";
+                            }
+                        } else {
+                            echo "Your friendship request is already sent or you are already friends with this user.";
+                        }
                     } else {
                         $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID,status,requested_by) VALUES (?,?,?,?)");
                         $status = 'pending';
                         $requested_by = $UserA_ID;
                         $createFriendship->bind_param('iisi', $UserA_ID, $UserB_ID, $status, $requested_by);
                         if ($createFriendship->execute()) {
+                            // notify the recipient about the new friend request
+                            $senderName = $_SESSION['username'];
+                            $notifMsg = "$senderName sent you a friend request";
+                            $notifStmt = $connection->prepare("INSERT INTO Notifications (user_id, type, message) VALUES (?, 'friend_request', ?)");
+                            if ($notifStmt) {
+                                $notifStmt->bind_param('is', $UserB_ID, $notifMsg);
+                                $notifStmt->execute();
+                            }
                             echo "<script>alert('Friendship request sent successfully!');</script>";
                         } else {
                             echo "<script>alert('Error adding friend: " . $connection->error . "');</script>";

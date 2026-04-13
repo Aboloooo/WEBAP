@@ -3,6 +3,26 @@
 use LDAP\Result;
 
 include_once("../MyLibrary.php");
+
+/* Handle sign-in before any HTML output so header() works */
+if (isset($_POST['signin_username'], $_POST['signin_password'])) {
+    $loginCheck = $connection->prepare('SELECT * FROM Users WHERE Username = ?');
+    $loginCheck->bind_param('s', $_POST["signin_username"]);
+    $loginCheck->execute();
+    $result = $loginCheck->get_result();
+    if ($row = $result->fetch_assoc()) {
+        if (password_verify($_POST['signin_password'], $row['Password']) || $_POST['signin_password'] === $row['Password']) {
+            $_SESSION["username"]  = $row['Username'];
+            $_SESSION["userLogin"] = true;
+            header("location: index.php");
+            exit;
+        } else {
+            $loginError = "Incorrect password.";
+        }
+    } else {
+        $loginError = "Username not found.";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,29 +121,7 @@ include_once("../MyLibrary.php");
                         </form>
                     </div>
 
-                    <?php
-                    if (isset($_POST['signin_username']) && isset($_POST['signin_password'])) {
-                        $loginCheck = $connection->prepare('select * from Users where Username =?');
-                        $loginCheck->bind_param('s', $_POST["signin_username"]);
-                        $loginCheck->execute();
-                        $result = $loginCheck->get_result();
-                        if ($row = $result->fetch_assoc()) {
-                            $username = $row['Username'];
-                            $password = $row['Password'];
-                            $level = $row['AccessLevelID'];
-                            //check uniquly hash password not plain password
-                            if (password_verify($_POST['signin_password'], $password) || $_POST['signin_password'] === $password) {
-                                $_SESSION["username"] = $username;
-                                $_SESSION["userLogin"] = true;
-                                header("location: index.php");
-                            } else {
-                                echo "<script>alert('incorrect password')</script>";
-                            }
-                        } else {
-                            echo "<script>alert('Username not found')</script>";
-                        }
-                    }
-                    ?>
+                    <?php if (isset($loginError)) echo "<script>alert('" . addslashes($loginError) . "')</script>"; ?>
                     <div class="right_side_container">
                         <form method="post" action="#">
                             <h2>Sign In</h2>

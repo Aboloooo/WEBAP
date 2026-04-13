@@ -5,21 +5,27 @@ function start() {
   updateNavbarSizeOnScroll();
 
   $(window).on("scroll", function () {
-    toggleScrollToTopBubble();
     updateNavbarSizeOnScroll();
     clearTimeout(timer);
     timer = setTimeout(() => {
-      PageScrollDetector(); // call the function each time user scrolls
-    }, 100); // debounce delay
+      PageScrollDetector();
+    }, 100);
   });
 
   $(window).on("resize", function () {
     updateNavbarSizeOnScroll();
   });
 
-  PageScrollDetector();
+  // Run after all assets/styles are loaded so section offsets are accurate
+  $(window).on("load", function () {
+    PageScrollDetector();
+  });
+
+  highlightActiveNavLink();
+  applySavedTheme();
   DisplayStationData();
   loadCollectionLoad();
+  startNotificationPolling();
 
   $("#goToLogin").on("click", function () {
     window.location.href = "./sign_in_up.php";
@@ -61,14 +67,38 @@ function Logout() {
     "../MyLibrary.php",
     { logoutBtn: true },
     function (res) {
-      if (res && res.redirect) {
-        window.location.href = res.redirect;
-      } else {
-        window.location.href = "../Page/sign_in_up.php";
-      }
+      window.location.href = res.redirect || "./sign_in_up.php";
     },
     "json",
   );
+}
+
+/* Toggles dark mode and saves preference to localStorage */
+function toggleDarkMode() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  if (isDark) {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem("theme", "light");
+    document.getElementById("darkModeIcon").setAttribute("name", "moon");
+    $("#darkModeBtn").attr("title", "Switch to dark mode");
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+    localStorage.setItem("theme", "dark");
+    document.getElementById("darkModeIcon").setAttribute("name", "sun");
+    $("#darkModeBtn").attr("title", "Switch to light mode");
+  }
+}
+
+/* Applies saved theme on page load */
+function applySavedTheme() {
+  if (localStorage.getItem("theme") === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    const icon = document.getElementById("darkModeIcon");
+    if (icon) {
+      icon.setAttribute("name", "sun");
+      $("#darkModeBtn").attr("title", "Switch to light mode");
+    }
+  }
 }
 
 function saveChanges() {
@@ -116,6 +146,41 @@ function cancelEdit() {
 
 let timer;
 
+/* Highlights the navbar link for the currently visible section (index.php scroll) */
+function PageScrollDetector() {
+  const navHeight = $("nav").outerHeight() || 0;
+  let activeId = null;
+
+  $("section[id]").each(function () {
+    const rect = this.getBoundingClientRect();
+    if (rect.top <= navHeight + 60) {
+      activeId = this.id;
+    }
+  });
+
+  $('nav a[href^="index.php#"]').removeClass("active");
+  if (activeId) {
+    $('nav a[href="index.php#' + activeId + '"]').addClass("active");
+  }
+}
+
+/* Highlights the navbar link matching the current page filename */
+function highlightActiveNavLink() {
+  const page = window.location.pathname.split("/").pop().toLowerCase();
+
+  const pageLinks = {
+    "collection.php": "./Collection.php",
+    "friendship.php": "./Friendship.php",
+    "stationregistration.php": "./StationRegistration.php",
+    "admin.php": "./admin.php",
+    "sign_in_up.php": "./sign_in_up.php",
+  };
+
+  if (pageLinks[page]) {
+    $('nav a[href="' + pageLinks[page] + '"]').addClass("active");
+  }
+}
+
 function updateNavbarSizeOnScroll() {
   const startPercent = 20;
   const endPercent = 15;
@@ -141,25 +206,6 @@ function updateNavbarSizeOnScroll() {
   );
 }
 
-function PageScrollDetector() {
-  const scrollPosition = $(this).scrollTop();
-  $("section").each(function () {
-    let sectionId = $(this).attr("id");
-    const sectionTop = $(this).offset().top;
-    const sectionHeight = $(this).outerHeight();
-    if (
-      scrollPosition >= sectionTop - sectionHeight / 3 &&
-      scrollPosition < sectionTop + sectionHeight - sectionHeight / 3
-    ) {
-      if (sectionId) {
-        $('nav a[href="index.php#' + sectionId + '"]').addClass("active");
-      }
-    } else {
-      $('nav a[href="index.php#' + sectionId + '"]').removeClass("active");
-    }
-  });
-}
-
 /* sign in up overlayout trigger */
 function overlayoutTrigger() {
   let currentPosition = parseInt($(".overlayout").css("left"));
@@ -174,7 +220,6 @@ function overlayoutTrigger() {
 /* everytime we want to edit the initial data, we simply change the
 value of the field and call function initializeOriginalData() */
 function removeFriend(target_user) {
-  console.log(target_user);
   $.post(
     "../MyLibrary.php",
     { removeFriend: true, target_user: target_user },
@@ -241,10 +286,6 @@ function DisplayFriends(targetCollection) {
     targetCollection !== null &&
     String(targetCollection) !== "" &&
     String(targetCollection) !== "0";
-
-  if (isSharingMode) {
-    console.log("Sharing collection ID:", targetCollection);
-  }
 
   // Remove previous overlay if exists
   $(".blur-background, .content").remove();
@@ -333,14 +374,7 @@ function DisplayFriends(targetCollection) {
 
   blurDiv.on("click", CloseChatBox);
 }
-$(document).on("click", ".shareCollectionBtn, .share-btn", function () {
-  const collectionID = $(this).data("id") || $(this).val();
-  DisplayFriends(collectionID); // pass it to your existing function
-});
 function CloseChatBox() {
-  /* close the chatbox */
-  /* $(".blur-background").hide();
-  $(".content").hide(); */
   $(".blur-background").remove();
   $(".content").remove();
 }
@@ -615,6 +649,22 @@ function DisplayStationData() {
         );
       });
 
+      // populate the dashboard metric cards station dropdown with same data
+      const $dash = $("#dashboardStationSelect");
+      $dash.empty().append($("<option>").val("0").text("-- All Stations --"));
+      stations.forEach((station) => {
+        $dash.append(
+          $("<option>").val(station.stationId).text(station.stationName),
+        );
+      });
+      // default: first real station if available
+      if (stations.length > 0) {
+        $dash.val(stations[0].stationId);
+        loadDashboardMetrics(stations[0].stationId);
+      } else {
+        loadDashboardMetrics(0);
+      }
+
       const defaultDateStart = $("#meeting-time-start").val();
       const defaultDateEnd = $("#meeting-time-end").val();
 
@@ -652,8 +702,6 @@ function DisplayStationData() {
     if (isLive) {
       // If 0 or no station, poll all own stations
       startRealtimeMeasurementPolling(newStationId);
-      const logStation = newStationId === "0" ? "all stations" : newStationId;
-      console.log("Live mode switched to station: " + logStation);
     }
   });
 
@@ -755,6 +803,65 @@ function DisplayStationData() {
   });
 }
 
+let dashboardMetricPollingInterval = null;
+
+function loadDashboardMetrics(stationId) {
+  $.post(
+    "../MyLibrary.php",
+    { getLatestMeasurement: true, stationId: stationId },
+    function (response) {
+      if (response && response.success) {
+        updateMetricCards(response.measurement);
+      }
+    },
+    "json",
+  );
+}
+
+function updateMetricCards(m) {
+  if (!m) return;
+  $("#metric-humidity").text(
+    m.Humidity !== null ? parseFloat(m.Humidity).toFixed(2) + "%" : "--%",
+  );
+  $("#metric-pressure").text(
+    m.Air_pressure !== null
+      ? parseFloat(m.Air_pressure).toFixed(2) + " hPa"
+      : "-- hPa",
+  );
+  $("#metric-light").text(
+    m.Light_intensity !== null
+      ? parseFloat(m.Light_intensity).toFixed(2) + " lx"
+      : "-- lx",
+  );
+  $("#metric-airquality").text(
+    m.Air_quality !== null ? m.Air_quality + " ppm" : "-- ppm",
+  );
+  $(
+    "#metric-humidity-trend, #metric-pressure-trend, #metric-light-trend, #metric-airquality-trend",
+  ).text(m.Timestamp ? "Last: " + m.Timestamp : "--");
+}
+
+function startDashboardMetricPolling(stationId) {
+  stopDashboardMetricPolling();
+  loadDashboardMetrics(stationId);
+  dashboardMetricPollingInterval = setInterval(function () {
+    loadDashboardMetrics(stationId);
+  }, 5000);
+}
+
+function stopDashboardMetricPolling() {
+  if (dashboardMetricPollingInterval) {
+    clearInterval(dashboardMetricPollingInterval);
+    dashboardMetricPollingInterval = null;
+  }
+}
+
+$(document).on("change", "#dashboardStationSelect", function () {
+  const stationId = $(this).val();
+  loadDashboardMetrics(stationId);
+  startDashboardMetricPolling(stationId);
+});
+
 function loadMeasurements(stationId, start, end) {
   $.post(
     "../MyLibrary.php",
@@ -833,6 +940,11 @@ function startRealtimeMeasurementPolling(stationId) {
           // Update timestamp for next poll
           lastMeasurementTimestamp = response.lastTimestamp;
 
+          // Update the dashboard metric cards with the latest measurement
+          const latest =
+            response.newMeasurements[response.newMeasurements.length - 1];
+          updateMetricCards(latest);
+
           // Enable collection button if we have measurements
           const totalRows = tbody.find("tr").length;
           $("#createCollectionBtn").prop("disabled", totalRows === 0);
@@ -857,12 +969,55 @@ function stopRealtimeMeasurementPolling() {
 // unassign my station
 function removeMyStation(targetStationId) {
   $.post(
-    "../MyLibrary.php", // Fixed: removed double slash
+    "../MyLibrary.php",
     { targetID: targetStationId },
     function (removeRespond) {
-      console.log(removeRespond);
       window.location.href = "./StationRegistration.php";
     },
+  );
+}
+
+function editStation(stationId) {
+  const card = $("#stationCard-" + stationId);
+  card.find(".station-name-display, .station-desc-display").hide();
+  card.find(".station-edit-form").show();
+  card.find(".edit-station-btn").hide();
+}
+
+function cancelStationEdit(stationId) {
+  const card = $("#stationCard-" + stationId);
+  card.find(".station-name-display, .station-desc-display").show();
+  card.find(".station-edit-form").hide();
+  card.find(".edit-station-btn").show();
+}
+
+function saveStationEdit(stationId) {
+  const card = $("#stationCard-" + stationId);
+  const newName = card.find(".station-edit-name").val().trim();
+  const newDesc = card.find(".station-edit-desc").val().trim();
+  if (!newName) {
+    alert("Station name cannot be empty.");
+    return;
+  }
+  $.post(
+    "../MyLibrary.php",
+    {
+      updateStation: true,
+      stationId: stationId,
+      stationName: newName,
+      stationDesc: newDesc,
+    },
+    function (response) {
+      if (response.success) {
+        card.find(".station-name-display").text(newName).show();
+        card.find(".station-desc-display").text(newDesc).show();
+        card.find(".station-edit-form").hide();
+        card.find(".edit-station-btn").show();
+      } else {
+        alert("Failed to update station.");
+      }
+    },
+    "json",
   );
 }
 // share this collection (vlaue of btn is the collection id)
@@ -1054,24 +1209,15 @@ function loadCollectionLoad() {
       } else {
         $sharedTab.addClass("active");
 
-        console.log("DEBUG: Fetching shared collections...");
-
         $.post(
           "../MyLibrary.php",
           { FetchSharedCollection: true },
           function (response) {
-            console.log("DEBUG: Raw response from server:", response);
-
             try {
               const SharedCollections =
                 typeof response === "string" ? JSON.parse(response) : response;
-              console.log("DEBUG: Parsed response:", SharedCollections);
 
               if (!SharedCollections.success) {
-                console.error(
-                  "DEBUG: Server returned error:",
-                  SharedCollections.message,
-                );
                 $sectionInfo.html(
                   "<p>Error loading shared collections: " +
                     SharedCollections.message +
@@ -1082,35 +1228,14 @@ function loadCollectionLoad() {
 
               let html = "";
 
-              // Check what we received
-              console.log(
-                "DEBUG: sharedWithMe keys:",
-                Object.keys(SharedCollections.sharedWithMeCollections),
-              );
-              console.log(
-                "DEBUG: sharedByMe keys:",
-                Object.keys(SharedCollections.sharedByMeCollections),
-              );
-
               // --- Shared With Me ---
               const sharedWithMe = SharedCollections.sharedWithMeCollections;
               if (Object.keys(sharedWithMe).length > 0) {
                 html += "<h2>Shared With Me</h2>";
                 html += "<p>Collections shared with you by other users.</p>";
 
-                console.log(
-                  "DEBUG: Found " +
-                    Object.keys(sharedWithMe).length +
-                    " collections shared WITH me",
-                );
-
                 for (const cid in sharedWithMe) {
                   const collection = sharedWithMe[cid];
-                  console.log(
-                    "DEBUG: Processing collection shared WITH me:",
-                    cid,
-                    collection.Name,
-                  );
                   html += buildCollectionHTML(collection, cid, false);
                 }
               } else {
@@ -1132,19 +1257,8 @@ function loadCollectionLoad() {
                 html += "<h2>Shared By Me</h2>";
                 html += "<p>Collections you have shared with other users.</p>";
 
-                console.log(
-                  "DEBUG: Found " +
-                    Object.keys(sharedByMe).length +
-                    " collections shared BY me",
-                );
-
                 for (const cid in sharedByMe) {
                   const collection = sharedByMe[cid];
-                  console.log(
-                    "DEBUG: Processing collection shared BY me:",
-                    cid,
-                    collection.Name,
-                  );
                   html += buildCollectionHTML(collection, cid, true);
                 }
               } else {
@@ -1155,19 +1269,12 @@ function loadCollectionLoad() {
               $sectionInfo.html(html);
               reattachEventHandlers();
             } catch (error) {
-              console.error("DEBUG: JSON parse error:", error);
-              console.error("DEBUG: Response was:", response);
-              $sectionInfo.html(
-                "<p>Error parsing server response. Check console for details.</p>",
-              );
+              $sectionInfo.html("<p>Error parsing server response.</p>");
             }
           },
           "json",
-        ).fail(function (jqXHR, textStatus, errorThrown) {
-          console.error("DEBUG: AJAX request failed:", textStatus, errorThrown);
-          $sectionInfo.html(
-            "<p>Failed to load shared collections. Check console.</p>",
-          );
+        ).fail(function () {
+          $sectionInfo.html("<p>Failed to load shared collections.</p>");
         });
       }
     }
@@ -1664,3 +1771,48 @@ function appendGroupMessage(messageList, msg) {
   container.append(profileImg, contentHolder);
   messageList.append(container);
 }
+
+/* ==================== NOTIFICATIONS ==================== */
+
+function startNotificationPolling() {
+  pollNotifications();
+  setInterval(pollNotifications, 20000);
+}
+
+function pollNotifications() {
+  $.post(
+    "../MyLibrary.php",
+    { getNotifCounts: true },
+    function (data) {
+      updateNotifBadge("#friendsNotifBadge", data.friend_request);
+      updateNotifBadge("#collectionNotifBadge", data.collection_share);
+    },
+    "json",
+  );
+}
+
+function updateNotifBadge(selector, count) {
+  const badge = $(selector);
+  if (!badge.length) return;
+  if (count > 0) {
+    badge.show();
+  } else {
+    badge.hide();
+  }
+}
+
+$(document).on("click", "#navFriendsLink", function () {
+  $.post("../MyLibrary.php", {
+    markNotifRead: true,
+    notifType: "friend_request",
+  });
+  $("#friendsNotifBadge").hide();
+});
+
+$(document).on("click", "#navCollectionLink", function () {
+  $.post("../MyLibrary.php", {
+    markNotifRead: true,
+    notifType: "collection_share",
+  });
+  $("#collectionNotifBadge").hide();
+});

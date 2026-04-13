@@ -257,32 +257,9 @@ include_once("../MyLibrary.php");
 
         <div class="dashboard-controls">
             <div class="control-group">
-                <label for="sensorSelect">Select Sensor:</label>
-                <select id="sensorSelect" class="form-control">
-                    <option value="">All Sensors</option>
-                    <option value="temp1">Temperature Sensor 1</option>
-                    <option value="temp2">Temperature Sensor 2</option>
-                    <option value="humidity1">Humidity Sensor 1</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label for="timeRange">Time Range:</label>
-                <select id="timeRange" class="form-control">
-                    <option value="1h">Last Hour</option>
-                    <option value="24h">Last 24 Hours</option>
-                    <option value="7d">Last 7 Days</option>
-                    <option value="30d">Last 30 Days</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label for="dataType">Data Type:</label>
-                <select id="dataType" class="form-control">
-                    <option value="temperature">Temperature</option>
-                    <option value="humidity">Humidity</option>
-                    <option value="pressure">Pressure</option>
-                    <option value="all">All Metrics</option>
+                <label for="dashboardStationSelect">Select Station:</label>
+                <select id="dashboardStationSelect" class="form-control">
+                    <option value="0">Loading stations…</option>
                 </select>
             </div>
         </div>
@@ -290,28 +267,14 @@ include_once("../MyLibrary.php");
         <div class="dashboard-metrics">
             <div class="metric-card">
                 <div class="metric-icon">
-                    <i class='bx bx-thermometer'></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">--°C</div>
-                    <div class="metric-label">Current Temperature</div>
-                    <div class="metric-trend">
-                        <i class='bx bx-trending-up'></i>
-                        <span>+0.5°C from yesterday</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="metric-card">
-                <div class="metric-icon">
                     <i class='bx bx-droplet'></i>
                 </div>
                 <div class="metric-content">
-                    <div class="metric-value">--%</div>
+                    <div class="metric-value" id="metric-humidity">--%</div>
                     <div class="metric-label">Humidity</div>
                     <div class="metric-trend">
-                        <i class='bx bx-trending-down'></i>
-                        <span>-2% from yesterday</span>
+                        <i class='bx bx-minus'></i>
+                        <span id="metric-humidity-trend">--</span>
                     </div>
                 </div>
             </div>
@@ -321,11 +284,25 @@ include_once("../MyLibrary.php");
                     <i class='bx bx-wind'></i>
                 </div>
                 <div class="metric-content">
-                    <div class="metric-value">-- hPa</div>
+                    <div class="metric-value" id="metric-pressure">-- hPa</div>
                     <div class="metric-label">Air Pressure</div>
                     <div class="metric-trend">
                         <i class='bx bx-minus'></i>
-                        <span>Stable</span>
+                        <span id="metric-pressure-trend">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class='bx bx-sun'></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="metric-light">-- lx</div>
+                    <div class="metric-label">Light Intensity</div>
+                    <div class="metric-trend">
+                        <i class='bx bx-minus'></i>
+                        <span id="metric-light-trend">--</span>
                     </div>
                 </div>
             </div>
@@ -335,11 +312,11 @@ include_once("../MyLibrary.php");
                     <i class='bx bx-leaf'></i>
                 </div>
                 <div class="metric-content">
-                    <div class="metric-value">-- ppm</div>
+                    <div class="metric-value" id="metric-airquality">-- ppm</div>
                     <div class="metric-label">Air Quality</div>
                     <div class="metric-trend">
-                        <i class='bx bx-check-circle'></i>
-                        <span>Good</span>
+                        <i class='bx bx-minus'></i>
+                        <span id="metric-airquality-trend">--</span>
                     </div>
                 </div>
             </div>

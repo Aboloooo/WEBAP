@@ -110,11 +110,20 @@ include_once("../MyLibrary.php");
                         $name = $stationRow['Name'];
                         $Description = $stationRow['Description'];
                 ?>
-                        <div class="stationCard">
+                        <div class="stationCard" id="stationCard-<?= $ID ?>">
                             <button onclick="removeMyStation(<?= $ID ?>)" class="remove-station-btn" title="Remove station">×</button>
+                            <button onclick="editStation(<?= $ID ?>)" class="edit-station-btn" title="Edit station">✏️</button>
                             <div class="station-icon">📡</div>
-                            <h3><?= htmlspecialchars($name) ?></h3>
-                            <p><?= htmlspecialchars($Description) ?></p>
+                            <h3 class="station-name-display"><?= htmlspecialchars($name) ?></h3>
+                            <p class="station-desc-display"><?= htmlspecialchars($Description) ?></p>
+                            <div class="station-edit-form" style="display:none;">
+                                <input type="text" class="station-edit-name" value="<?= htmlspecialchars($name) ?>" placeholder="Station name" maxlength="50">
+                                <textarea class="station-edit-desc" placeholder="Description" maxlength="255"><?= htmlspecialchars($Description) ?></textarea>
+                                <div class="station-edit-actions">
+                                    <button onclick="saveStationEdit(<?= $ID ?>)" class="btn btn-save">Save</button>
+                                    <button onclick="cancelStationEdit(<?= $ID ?>)" class="btn btn-secondary">Cancel</button>
+                                </div>
+                            </div>
                         </div>
                     <?php
                     }

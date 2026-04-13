@@ -154,3 +154,14 @@ CREATE TABLE GroupMessage (
     FOREIGN KEY (Sender_id) REFERENCES Users(UserID)
 );
 
+-- Notifications table
+CREATE TABLE Notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    type ENUM('friend_request', 'collection_share') NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    is_read BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(UserID)
+);
+

@@ -27,17 +27,22 @@ if (!isset($_SESSION["SecurityAccess"])) {
 function userHasCollections(int $userId): bool
 {
     global $connection;
-    $stmt = $connection->prepare("
-        SELECT 
-            EXISTS(SELECT 1 FROM Collection WHERE Creator_ID = ?) 
-            OR EXISTS(SELECT 1 FROM CollectionShare WHERE Shared_with = ?) 
-            AS has_collections
-    ");
+
+    // Check if user created any collection
+    $stmt = $connection->prepare("SELECT 1 FROM Collection WHERE Creator_ID = ? LIMIT 1");
     if (!$stmt) return false;
-    $stmt->bind_param('ii', $userId, $userId);
+    $stmt->bind_param('i', $userId);
     $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
-    return isset($result['has_collections']) && (bool)$result['has_collections'];
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) return true;
+
+    // Check if any collection is shared with the user
+    $stmt = $connection->prepare("SELECT 1 FROM CollectionShare WHERE Shared_with = ? LIMIT 1");
+    if (!$stmt) return false;
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->store_result();
+    return $stmt->num_rows > 0;
 }
 
 
@@ -79,7 +84,7 @@ if (isset($_POST['targetCollection'])) {
 if (isset($_POST["logoutBtn"])) {
     session_unset();
     session_destroy();
-    echo json_encode(['redirect' => './Page/sign_in_up.php']);
+    echo json_encode(['redirect' => './sign_in_up.php']);
     exit;
 }
 
@@ -221,6 +226,14 @@ if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
         $stmt->bind_param('iii', $targetToShare, $sharedBy, $friendId);
         if ($stmt->execute()) {
             $success++;
+            // notify the recipient about the shared collection
+            $senderName = $_SESSION['username'] ?? 'Someone';
+            $notifMsg = "$senderName shared a collection with you";
+            $notifStmt = $connection->prepare("INSERT INTO Notifications (user_id, type, message) VALUES (?, 'collection_share', ?)");
+            if ($notifStmt) {
+                $notifStmt->bind_param('is', $friendId, $notifMsg);
+                $notifStmt->execute();
+            }
         }
     }
 
@@ -385,6 +398,39 @@ if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'
 }
 
 
+// get unread notification counts per type
+if (isset($_POST['getNotifCounts'])) {
+    $counts = ['friend_request' => 0, 'collection_share' => 0];
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if ($user) {
+        $userId = $user['UserID'];
+        $stmt = $connection->prepare("SELECT type, COUNT(*) as cnt FROM Notifications WHERE user_id = ? AND is_read = 0 GROUP BY type");
+        if ($stmt) {
+            $stmt->bind_param('i', $userId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            while ($row = $result->fetch_assoc()) {
+                $counts[$row['type']] = (int)$row['cnt'];
+            }
+        }
+    }
+    echo json_encode($counts);
+    exit;
+}
+
+// mark notifications as read for a given type
+if (isset($_POST['markNotifRead'], $_POST['notifType'])) {
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if ($user) {
+        $userId = $user['UserID'];
+        $type = $_POST['notifType'];
+        $stmt = $connection->prepare("UPDATE Notifications SET is_read = 1 WHERE user_id = ? AND type = ? AND is_read = 0");
+        $stmt->bind_param('is', $userId, $type);
+        $stmt->execute();
+    }
+    exit;
+}
+
 // unassign my station
 if (isset($_POST['targetID'])) {
     $newStatus = "available";
@@ -396,6 +442,27 @@ if (isset($_POST['targetID'])) {
         echo "Station with ID " .  $_POST['targetID'] . " unassigned successfully";
     }
 };
+
+// update station name and description
+if (isset($_POST['updateStation'], $_POST['stationId'], $_POST['stationName'], $_POST['stationDesc'])) {
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if ($user) {
+        $userId = $user['UserID'];
+        $stationId = (int) $_POST['stationId'];
+        $newName = trim($_POST['stationName']);
+        $newDesc = trim($_POST['stationDesc']);
+        $stmt = $connection->prepare("UPDATE Station SET Name = ?, Description = ? WHERE Station_id = ? AND Owner_id = ?");
+        $stmt->bind_param('ssii', $newName, $newDesc, $stationId, $userId);
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false]);
+        }
+    } else {
+        echo json_encode(['success' => false]);
+    }
+    exit;
+}
 
 // remove friend
 if (isset($_POST['removeFriend']) && isset($_POST['target_user'])) {
@@ -473,7 +540,29 @@ if (isset($_POST['showFriends']) && $_POST['showFriends'] == "true") {
     exit;
 }
 
-
+// get latest single measurement for the dashboard metric cards
+if (isset($_POST['getLatestMeasurement'])) {
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if (!$user) {
+        echo json_encode(['success' => false]);
+        exit;
+    }
+    $ownerId = $user['UserID'];
+    $stationId = (int)($_POST['stationId'] ?? 0);
+    if ($stationId == 0) {
+        $sql = "SELECT m.* FROM Measurement m INNER JOIN Station s ON m.Station_id = s.Station_id WHERE s.Owner_id = ? ORDER BY m.Timestamp DESC LIMIT 1";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param('i', $ownerId);
+    } else {
+        $sql = "SELECT m.* FROM Measurement m INNER JOIN Station s ON m.Station_id = s.Station_id WHERE m.Station_id = ? AND s.Owner_id = ? ORDER BY m.Timestamp DESC LIMIT 1";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param('ii', $stationId, $ownerId);
+    }
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    echo json_encode(['success' => (bool)$row, 'measurement' => $row]);
+    exit;
+}
 
 if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDateEnd'])) {
 
@@ -599,7 +688,8 @@ if (isset($_POST['getNewMeasurements'], $_POST['stationId'], $_POST['lastTimesta
 
 function NavigationBarE()
 {
-    global $t;
+    $MyInfo = getUserInfo($_SESSION['username'] ?? '');
+    $isLoggedIn = $_SESSION["userLogin"] ?? false;
 ?>
     <nav class="navbar">
         <div class="nav-container">
@@ -609,25 +699,26 @@ function NavigationBarE()
                 <li><a href="index.php#About">About</a></li>
                 <li><a href="index.php#Service">Service</a></li>
                 <li><a href="index.php#Dashboard">Dashboard</a></li>
-                <?php
-                $MyInfo = getUserInfo($_SESSION['username']);
-                if ($MyInfo && userHasCollections($MyInfo['UserID'])) {
-                    echo '<li><a href="./Collection.php">My Collection</a></li>';
-                }
-                // Add Admin Panel link if user is admin
-                if ($_SESSION["Admin"]) {
-                    echo '<li><a href="./admin.php">Admin Panel</a></li>';
-                }
-                ?>
+                <?php if ($isLoggedIn): ?>
+                    <li><a href="./StationRegistration.php"><i class='bx bx-plus-circle'></i> Register Station</a></li>
+                    <li><a href="./Friendship.php" id="navFriendsLink"><i class='bx bx-group'></i> Friends<span class="notif-badge" id="friendsNotifBadge" style="display:none"></span></a></li>
+                    <?php if ($MyInfo && userHasCollections($MyInfo['UserID'])): ?>
+                        <li><a href="./Collection.php" id="navCollectionLink">My Collection<span class="notif-badge" id="collectionNotifBadge" style="display:none"></span></a></li>
+                    <?php endif; ?>
+                    <?php if ($_SESSION["Admin"]): ?>
+                        <li><a href="./admin.php">Admin Panel</a></li>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <li><a href="./sign_in_up.php" class="nav-cta-btn"><i class='bx bx-user-plus'></i> Create Account</a></li>
+                <?php endif; ?>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
         </div>
-
     </nav>
     <div class="login_container_indexPage">
         <div id="goToLogin">
             <img src="../img/User.png" alt="not found">
-            <span><?php if ($_SESSION["userLogin"]) {
+            <span><?php if ($isLoggedIn) {
                         print($_SESSION["username"]);
                     ?>
                     <br>
@@ -636,9 +727,16 @@ function NavigationBarE()
                     } else {
                         print("username");
                     } ?></span>
-
         </div>
+        <?php if ($isLoggedIn): ?>
+            <button class="nav-logout-btn" onclick="Logout()"><i class='bx bx-log-out'></i> Logout</button>
+        <?php endif; ?>
     </div>
+    <!-- Fixed dark/light mode toggle -->
+    <button class="theme-toggle-fab" onclick="toggleDarkMode()" id="darkModeBtn" title="Switch to dark mode">
+        <!-- <box-icon name="moon" id="darkModeIcon"></box-icon> -->
+        <box-icon name="moon"></box-icon>
+    </button>
 <?php
 }
 
@@ -700,33 +798,42 @@ if (isset($_POST['get_all_users']) && $_POST['get_all_users']) {
 
     $result = $connection->query("SELECT UserID, Username, Fullname, Email, AccessLevelID FROM Users ORDER BY UserID");
 
-    $html = '<table style="width:100%; border-collapse: collapse;">
-                <tr style="background: #f4f4f4;">
-                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Username</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Full Name</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Email</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Role</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Actions</th>
-                </tr>';
+    $html = '<table>
+                <thead><tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr></thead><tbody>';
 
     if ($result->num_rows == 0) {
         $html .= '<tr><td colspan="6" style="text-align:center; padding:20px;">No users found</td></tr>';
     } else {
         while ($row = $result->fetch_assoc()) {
-            $role = $row['AccessLevelID'] == 1 ? 'Admin' : ($row['AccessLevelID'] == 2 ? 'Dev' : 'User');
+            $uid = $row['UserID'];
+            $roleVal = $row['AccessLevelID'];
             $html .= '<tr>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['UserID'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Username'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Fullname'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Email'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $role . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">
-<button class="delete-btn" value="user_' . $row['UserID'] . '" style="background:#f44336; color:white; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; width:100%;">Delete</button>                      </tr>';
+                        <td>' . $uid . '</td>
+                        <td>' . htmlspecialchars($row['Username']) . '</td>
+                        <td>' . htmlspecialchars($row['Fullname']) . '</td>
+                        <td>' . htmlspecialchars($row['Email']) . '</td>
+                        <td>
+                          <select class="role-select admin-inline-select" data-user-id="' . $uid . '">
+                            <option value="1"' . ($roleVal == 1 ? ' selected' : '') . '>Admin</option>
+                            <option value="2"' . ($roleVal == 2 ? ' selected' : '') . '>Dev</option>
+                            <option value="3"' . ($roleVal == 3 ? ' selected' : '') . '>User</option>
+                          </select>
+                        </td>
+                        <td>
+                          <button class="admin-delete-btn" data-type="user" data-id="' . $uid . '">🗑 Delete</button>
+                        </td>
+                      </tr>';
         }
     }
 
-    $html .= '</table>';
+    $html .= '</tbody></table>';
     echo $html;
     exit;
 }
@@ -767,30 +874,68 @@ if (isset($_POST['get_all_stations']) && $_POST['get_all_stations']) {
         ORDER BY s.Station_id
     ");
 
-    $html = '<table style="width:100%; border-collapse: collapse;">
-                <tr style="background: #f4f4f4;">
-                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Name</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Serial</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Status</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Owner</th>
-                </tr>';
+    $html = '<table>
+                <thead><tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Serial</th>
+                    <th>Status</th>
+                    <th>Owner</th>
+                    <th>Actions</th>
+                </tr></thead><tbody>';
 
     if ($result->num_rows == 0) {
-        $html .= '<tr><td colspan="5" style="text-align:center; padding:20px;">No stations found</td></tr>';
+        $html .= '<tr><td colspan="6" style="text-align:center; padding:20px;">No stations found</td></tr>';
     } else {
         while ($row = $result->fetch_assoc()) {
-            $html .= '<tr>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Station_id'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Name'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Serial_number'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Status'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . ($row['Owner'] ?: 'None') . '</td>
+            $sid = $row['Station_id'];
+            $ownerId = $row['Owner_id'] ?? '';
+            $statusBadge = $row['Status'] === 'assigned'
+                ? '<span class="admin-badge admin-badge-green">Assigned</span>'
+                : '<span class="admin-badge admin-badge-gray">Available</span>';
+            $html .= '<tr id="station-row-' . $sid . '">
+                        <td>' . $sid . '</td>
+                        <td>' . htmlspecialchars($row['Name']) . '</td>
+                        <td>' . htmlspecialchars($row['Serial_number']) . '</td>
+                        <td>' . $statusBadge . '</td>
+                        <td>' . htmlspecialchars($row['Owner'] ?: 'None') . '</td>
+                        <td>
+                          <button class="admin-edit-station-btn admin-btn admin-btn-blue admin-btn-sm"
+                            data-id="' . $sid . '"
+                            data-name="' . htmlspecialchars($row['Name'], ENT_QUOTES) . '"
+                            data-owner="' . $ownerId . '">
+                            ✏️ Edit
+                          </button>
+                          <button class="admin-delete-btn" data-type="station" data-id="' . $sid . '">🗑 Delete</button>
+                        </td>
+                      </tr>
+                      <tr class="station-edit-row" id="station-edit-' . $sid . '" style="display:none;">
+                        <td colspan="6">
+                          <div class="station-admin-edit-form">
+                            <div class="station-admin-edit-fields">
+                              <div class="station-admin-edit-field">
+                                <label>Station Name</label>
+                                <input type="text" class="station-edit-name-input" value="' . htmlspecialchars($row['Name'], ENT_QUOTES) . '">
+                              </div>
+                              <div class="station-admin-edit-field">
+                                <label>Owner</label>
+                                <select class="station-edit-owner-select">
+                                  <option value="">— No owner (unassign) —</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="station-admin-edit-actions">
+                              <button class="admin-btn admin-btn-green save-station-edit-btn" data-id="' . $sid . '" data-current-owner="' . $ownerId . '">💾 Save</button>
+                              <button class="admin-btn cancel-station-edit-btn" data-id="' . $sid . '">Cancel</button>
+                            </div>
+                            <div class="station-edit-feedback" id="station-edit-feedback-' . $sid . '"></div>
+                          </div>
+                        </td>
                       </tr>';
         }
     }
 
-    $html .= '</table>';
+    $html .= '</tbody></table>';
     echo $html;
     exit;
 }
@@ -810,30 +955,34 @@ if (isset($_POST['get_all_measurements']) && $_POST['get_all_measurements']) {
         LIMIT 50
     ");
 
-    $html = '<table style="width:100%; border-collapse: collapse;">
-                <tr style="background: #f4f4f4;">
-                    <th style="border:1px solid #ddd; padding:8px;">ID</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Timestamp</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Station</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Humidity</th>
-                    <th style="border:1px solid #ddd; padding:8px;">Air Pressure</th>
-                </tr>';
+    $html = '<table>
+                <thead><tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Station</th>
+                    <th>Humidity (%)</th>
+                    <th>Air Pressure (hPa)</th>
+                    <th>Light (lux)</th>
+                    <th>Air Quality</th>
+                </tr></thead><tbody>';
 
     if ($result->num_rows == 0) {
-        $html .= '<tr><td colspan="5" style="text-align:center; padding:20px;">No measurements found</td></tr>';
+        $html .= '<tr><td colspan="7" style="text-align:center; padding:20px;">No measurements found</td></tr>';
     } else {
         while ($row = $result->fetch_assoc()) {
             $html .= '<tr>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Measurement_id'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Timestamp'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['StationName'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Humidity'] . '</td>
-                        <td style="border:1px solid #ddd; padding:8px;">' . $row['Air_pressure'] . '</td>
+                        <td>' . $row['Measurement_id'] . '</td>
+                        <td>' . htmlspecialchars($row['Timestamp']) . '</td>
+                        <td>' . htmlspecialchars($row['StationName']) . '</td>
+                        <td>' . $row['Humidity'] . '</td>
+                        <td>' . $row['Air_pressure'] . '</td>
+                        <td>' . $row['Light_intensity'] . '</td>
+                        <td>' . $row['Air_quality'] . '</td>
                       </tr>';
         }
     }
 
-    $html .= '</table>';
+    $html .= '</tbody></table>';
     echo $html;
     exit;
 }
@@ -943,7 +1092,111 @@ if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
     exit;
 }
 
+/* Delete station (Admin only) */
+if (isset($_POST['delete_station']) && isset($_POST['station_id'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+    $station_id = (int)$_POST['station_id'];
+    $stmt = $connection->prepare("DELETE FROM Station WHERE Station_id = ?");
+    $stmt->bind_param("i", $station_id);
+    echo $stmt->execute() ? "Station deleted successfully" : "Error deleting station";
+    exit;
+}
+
+/* Change user role (Admin only) */
+if (isset($_POST['change_role'], $_POST['user_id'], $_POST['new_role'])) {
+    if (!$_SESSION["Admin"]) {
+        echo "Unauthorized";
+        exit;
+    }
+    $userId = (int)$_POST['user_id'];
+    $newRole = (int)$_POST['new_role'];
+    $current_user = getUserInfo($_SESSION['username']);
+    if ($current_user['UserID'] == $userId) {
+        echo json_encode(['success' => false, 'message' => 'Cannot change your own role']);
+        exit;
+    }
+    $stmt = $connection->prepare("UPDATE Users SET AccessLevelID = ? WHERE UserID = ?");
+    $stmt->bind_param("ii", $newRole, $userId);
+    echo $stmt->execute() ? json_encode(['success' => true]) : json_encode(['success' => false]);
+    exit;
+}
+
+/* Get admin stats (Admin only) */
+if (isset($_POST['get_admin_stats'])) {
+    if (!$_SESSION["Admin"]) {
+        echo json_encode([]);
+        exit;
+    }
+    $users = $connection->query("SELECT COUNT(*) as c FROM Users")->fetch_assoc()['c'];
+    $stations = $connection->query("SELECT COUNT(*) as c FROM Station")->fetch_assoc()['c'];
+    $measurements = $connection->query("SELECT COUNT(*) as c FROM Measurement")->fetch_assoc()['c'];
+    $collections = $connection->query("SELECT COUNT(*) as c FROM Collection")->fetch_assoc()['c'];
+    echo json_encode(['users' => $users, 'stations' => $stations, 'measurements' => $measurements, 'collections' => $collections]);
+    exit;
+}
+
 /* ==================== GROUP CHAT HANDLERS ==================== */
+
+/* Get all users as JSON for admin dropdowns (Admin only) */
+if (isset($_POST['get_users_for_select'])) {
+    if (!$_SESSION["Admin"]) {
+        echo json_encode([]);
+        exit;
+    }
+    $result = $connection->query("SELECT UserID, Username, Fullname FROM Users ORDER BY Username");
+    $users = [];
+    while ($row = $result->fetch_assoc()) {
+        $users[] = $row;
+    }
+    echo json_encode($users);
+    exit;
+}
+
+/* Update station name and/or owner (Admin only) */
+if (isset($_POST['update_station_admin'], $_POST['station_id'])) {
+    if (!$_SESSION["Admin"]) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit;
+    }
+    $stationId = (int)$_POST['station_id'];
+    $newName   = trim($_POST['station_name'] ?? '');
+    $newOwner  = $_POST['new_owner_id'] !== '' ? (int)$_POST['new_owner_id'] : null;
+
+    if ($newName === '') {
+        echo json_encode(['success' => false, 'message' => 'Station name cannot be empty']);
+        exit;
+    }
+
+    // Determine status based on owner
+    $newStatus = $newOwner !== null ? 'assigned' : 'available';
+
+    if ($newOwner !== null) {
+        $stmt = $connection->prepare("UPDATE Station SET Name = ?, Owner_id = ?, Status = ? WHERE Station_id = ?");
+        $stmt->bind_param("sisi", $newName, $newOwner, $newStatus, $stationId);
+    } else {
+        $stmt = $connection->prepare("UPDATE Station SET Name = ?, Owner_id = NULL, Status = ? WHERE Station_id = ?");
+        $stmt->bind_param("ssi", $newName, $newStatus, $stationId);
+    }
+
+    if ($stmt->execute()) {
+        // Fetch updated owner username for response
+        $ownerName = 'None';
+        if ($newOwner !== null) {
+            $r = $connection->prepare("SELECT Username FROM Users WHERE UserID = ?");
+            $r->bind_param("i", $newOwner);
+            $r->execute();
+            $r->bind_result($ownerName);
+            $r->fetch();
+        }
+        echo json_encode(['success' => true, 'name' => $newName, 'owner' => $ownerName, 'status' => $newStatus]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error']);
+    }
+    exit;
+}
 
 /* Create a new chat group and add the creator + selected friends as members */
 if (isset($_POST['createGroup'], $_POST['groupName'])) {
