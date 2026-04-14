@@ -224,16 +224,22 @@ if (!$_SESSION["Admin"]) {
             loadStations();
             loadMeasurementsList();
 
-            $.post("../MyLibrary.php", { get_collections_dropdown: true }, function(data) {
+            $.post("../MyLibrary.php", {
+                get_collections_dropdown: true
+            }, function(data) {
                 $("#collectionSelect").html(data);
             });
-            $.post("../MyLibrary.php", { get_measurements_dropdown: true }, function(data) {
+            $.post("../MyLibrary.php", {
+                get_measurements_dropdown: true
+            }, function(data) {
                 $("#measurementSelect").html(data);
             });
 
             // Pre-load user list for station owner dropdowns
             let allUsers = [];
-            $.post("../MyLibrary.php", { get_users_for_select: true }, function(data) {
+            $.post("../MyLibrary.php", {
+                get_users_for_select: true
+            }, function(data) {
                 allUsers = data;
             }, "json");
 
@@ -319,18 +325,28 @@ if (!$_SESSION["Admin"]) {
                 if (!confirm("Are you sure you want to delete this " + type + "?")) return;
                 const $row = $(this).closest("tr");
                 if (type === "user") {
-                    $.post("../MyLibrary.php", { delete_user: true, user_id: id }, function(res) {
+                    $.post("../MyLibrary.php", {
+                        delete_user: true,
+                        user_id: id
+                    }, function(res) {
                         if (res.includes("success")) {
-                            $row.fadeOut(300, function() { $(this).remove(); });
+                            $row.fadeOut(300, function() {
+                                $(this).remove();
+                            });
                             loadStats();
                         } else {
                             alert(res);
                         }
                     });
                 } else if (type === "station") {
-                    $.post("../MyLibrary.php", { delete_station: true, station_id: id }, function(res) {
+                    $.post("../MyLibrary.php", {
+                        delete_station: true,
+                        station_id: id
+                    }, function(res) {
                         if (res.includes("success")) {
-                            $row.fadeOut(300, function() { $(this).remove(); });
+                            $row.fadeOut(300, function() {
+                                $(this).remove();
+                            });
                             loadStats();
                         } else {
                             alert(res);
@@ -393,7 +409,7 @@ if (!$_SESSION["Admin"]) {
             $(document).on("click", ".save-station-edit-btn", function() {
                 const sid = $(this).data("id");
                 const $editRow = $("#station-edit-" + sid);
-                const newName  = $editRow.find(".station-edit-name-input").val().trim();
+                const newName = $editRow.find(".station-edit-name-input").val().trim();
                 const newOwner = $editRow.find(".station-edit-owner-select").val();
                 const $feedback = $("#station-edit-feedback-" + sid);
 
@@ -412,9 +428,9 @@ if (!$_SESSION["Admin"]) {
                         // Update the main row cells in place
                         const $mainRow = $("#station-row-" + sid);
                         $mainRow.find("td:nth-child(2)").text(res.name);
-                        const statusHtml = res.status === "assigned"
-                            ? '<span class="admin-badge admin-badge-green">Assigned</span>'
-                            : '<span class="admin-badge admin-badge-gray">Available</span>';
+                        const statusHtml = res.status === "assigned" ?
+                            '<span class="admin-badge admin-badge-green">Assigned</span>' :
+                            '<span class="admin-badge admin-badge-gray">Available</span>';
                         $mainRow.find("td:nth-child(4)").html(statusHtml);
                         $mainRow.find("td:nth-child(5)").text(res.owner);
                         // Update edit button data attributes
