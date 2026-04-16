@@ -2,7 +2,14 @@ Checking user with plain password and password verification of plain text needs 
 
 Live receiving measurement doenst work(requires page refresh)
 
+ 
+Warning
+: Cannot modify header information - headers already sent by (output started at /var/www/html/Web/sign_in_up.php:68) in
+/var/www/html/Web/sign_in_up.php
+on line
+119
+requires page refresh
 
-
+friends page dosnt pops up
 
 direct massaging betweem users
