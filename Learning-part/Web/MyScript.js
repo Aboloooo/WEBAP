@@ -748,17 +748,18 @@ function DisplayStationData() {
       const selectedStationLabel =
         stationId === "0" ? "all stations" : "station " + stationId;
 
-      // Load initial measurements and start polling
+      // Load initial measurements and start polling after load finishes
       const defaultDateStart = $("#meeting-time-start").val();
       const defaultDateEnd = formatThisDate($("#meeting-time-end").val());
       loadMeasurements(
         stationId,
         formatThisDate(defaultDateStart),
         defaultDateEnd,
+        function () {
+          // Start real-time polling after measurements are rendered
+          startRealtimeMeasurementPolling(stationId);
+        },
       );
-
-      // Start real-time polling
-      startRealtimeMeasurementPolling(stationId);
 
       // Update button appearance
       $btn
@@ -878,7 +879,7 @@ $(document).on("change", "#dashboardStationSelect", function () {
   startDashboardMetricPolling(stationId);
 });
 
-function loadMeasurements(stationId, start, end) {
+function loadMeasurements(stationId, start, end, doneCallback) {
   $.post(
     "../MyLibrary.php",
     {
@@ -902,6 +903,15 @@ function loadMeasurements(stationId, start, end) {
       });
 
       $("#createCollectionBtn").prop("disabled", measurements.length === 0);
+
+      // Call optional callback after measurements are loaded
+      if (typeof doneCallback === "function") {
+        try {
+          doneCallback();
+        } catch (e) {
+          console.error("loadMeasurements(doneCallback) threw:", e);
+        }
+      }
     },
     "json",
   );
@@ -919,13 +929,37 @@ function startRealtimeMeasurementPolling(stationId) {
   currentStationForPolling = stationId;
 
   // Set initial timestamp to now
-  lastMeasurementTimestamp = new Date()
-    .toISOString()
-    .slice(0, 19)
-    .replace("T", " ");
+  // Prefer the timestamp of the last measurement already displayed in the table
+  // so we don't miss recent rows loaded just before enabling live mode.
+  const lastRowTs = $("#measurementsTable tbody tr:last td:first")
+    .text()
+    .trim();
+  if (lastRowTs) {
+    lastMeasurementTimestamp = lastRowTs;
+  } else {
+    lastMeasurementTimestamp = new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+  }
+
+  console.log(
+    "[RealtimePolling] startRealtimeMeasurementPolling called for station:",
+    currentStationForPolling,
+  );
+  console.log(
+    "[RealtimePolling] initial lastMeasurementTimestamp:",
+    lastMeasurementTimestamp,
+  );
 
   // Poll every 1 second for new measurements
   realtimePollingInterval = setInterval(function () {
+    console.log(
+      "[RealtimePolling] poll tick - asking for measurements since:",
+      lastMeasurementTimestamp,
+      "for station:",
+      currentStationForPolling,
+    );
     $.post(
       "../MyLibrary.php",
       {
@@ -934,6 +968,7 @@ function startRealtimeMeasurementPolling(stationId) {
         lastTimestamp: lastMeasurementTimestamp,
       },
       function (response) {
+        console.log("[RealtimePolling] server response:", response);
         if (
           response &&
           response.success &&
@@ -943,6 +978,13 @@ function startRealtimeMeasurementPolling(stationId) {
 
           // Add new measurements to the table
           response.newMeasurements.forEach((row) => {
+            // Avoid duplicating rows that are already present (safe-guard)
+            if (
+              tbody.find(`tr[data-measurement-id=\"${row.Measurement_id}\"]`)
+                .length > 0
+            ) {
+              return;
+            }
             const tr = $("<tr>").data("measurement-id", row.Measurement_id);
             tr.append($("<td>").text(row.Timestamp));
             tr.append($("<td>").text(row.Humidity));
@@ -972,12 +1014,22 @@ function startRealtimeMeasurementPolling(stationId) {
         }
       },
       "json",
-    );
+    ).fail(function (jqXHR, textStatus, errorThrown) {
+      console.log(
+        "[RealtimePolling] AJAX fail:",
+        textStatus,
+        errorThrown,
+        jqXHR && jqXHR.responseText,
+      );
+    });
   }, 1000); // Poll every 1 second
 }
 
 function stopRealtimeMeasurementPolling() {
   if (realtimePollingInterval) {
+    console.log(
+      "[RealtimePolling] stopRealtimeMeasurementPolling called - clearing interval",
+    );
     clearInterval(realtimePollingInterval);
     realtimePollingInterval = null;
   }
