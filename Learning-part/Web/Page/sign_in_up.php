@@ -1,4 +1,5 @@
 <?php
+ob_start();
 
 use LDAP\Result;
 
@@ -14,6 +15,8 @@ if (isset($_POST['signin_username'], $_POST['signin_password'])) {
         if (password_verify($_POST['signin_password'], $row['Password']) || $_POST['signin_password'] === $row['Password']) {
             $_SESSION["username"]  = $row['Username'];
             $_SESSION["userLogin"] = true;
+            // clear any buffered output from included files before sending headers
+            if (ob_get_level()) ob_clean();
             header("location: index.php");
             exit;
         } else {
