@@ -573,7 +573,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
     $filterDateStart = $_POST['filterDateStart'];
     $filterDateEnd = $_POST['filterDateEnd'];
     if ($stationId == 0) {
-        // Filter based on date only
+        // Filter based on date only, oldest -> newest for top-to-bottom display
         $sql = "
             select m.*
            FROM Measurement m
@@ -581,7 +581,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
                 ON m.Station_id = s.Station_id
             WHERE s.Owner_id = ?
                 AND Timestamp between ? and ?
-            ORDER BY Timestamp DESC
+            ORDER BY Timestamp ASC
         ";
         $stmt = $connection->prepare($sql);
         $stmt->bind_param("iss", $Owner_id, $filterDateStart, $filterDateEnd);

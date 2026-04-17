@@ -891,7 +891,11 @@ function loadMeasurements(stationId, start, end, doneCallback) {
       const tbody = $("#measurementsTable tbody");
       tbody.empty();
 
-      measurements.forEach((row) => {
+      const sortedMeasurements = [...measurements].sort(
+        (a, b) => new Date(a.Timestamp) - new Date(b.Timestamp),
+      );
+
+      sortedMeasurements.forEach((row) => {
         const tr = $("<tr>").data("measurement-id", row.Measurement_id);
         tr.append($("<td>").text(row.Timestamp));
         tr.append($("<td>").text(row.Humidity));
