@@ -1425,20 +1425,59 @@ if (isset($_POST['getPendingRequests'])) {
     ]);
 }
 if (isset($_POST['friendRequestAction'], $_POST['requestId'])) {
+    // Return JSON so client can inspect errors on the webserver
+    header('Content-Type: application/json');
+
+    if (!isset($_SESSION["username"]) || empty($_SESSION["username"])) {
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
     $current_user = getUserInfo($_SESSION["username"]);
+    if (!$current_user) {
+        echo json_encode(['error' => 'Invalid session user']);
+        exit;
+    }
     $current_userId = $current_user['UserID'];
-    list($UserA_ID, $UserB_ID) = explode(',', $_POST['requestId']);
 
-    $newStatus = $_POST['friendRequestAction'] == "accept" ? "accepted"
-        : ($_POST['friendRequestAction'] == "delete" ? "rejected" : null);
+    $parts = explode(',', $_POST['requestId']);
+    if (count($parts) !== 2) {
+        echo json_encode(['error' => 'Invalid requestId format']);
+        exit;
+    }
 
-    $changeFriendshipStatus = $connection->prepare("UPDATE Friendlist SET status = ? WHERE (UserA_ID = ? AND UserB_ID = ?) AND requested_by != ?");
-    $changeFriendshipStatus->bind_param("siii", $newStatus, $UserA_ID, $UserB_ID, $current_userId);
+    $UserA_ID = (int) $parts[0];
+    $UserB_ID = (int) $parts[1];
 
+    $action = $_POST['friendRequestAction'];
+    if ($action === "accept") {
+        $newStatus = 'accepted';
+    } elseif ($action === "delete") {
+        $newStatus = 'rejected';
+    } else {
+        echo json_encode(['error' => 'Unknown action']);
+        exit;
+    }
+
+    // Update regardless of user order (UserA/UserB) and ensure the actor is not the one who requested it
+    $sql = "UPDATE FriendList SET status = ? WHERE ((UserA_ID = ? AND UserB_ID = ?) OR (UserA_ID = ? AND UserB_ID = ?)) AND requested_by != ?";
+    $changeFriendshipStatus = $connection->prepare($sql);
+    if (!$changeFriendshipStatus) {
+        echo json_encode(['error' => 'Prepare failed: ' . $connection->error]);
+        exit;
+    }
+
+    // bind: s (status) then 5 ints
+    $changeFriendshipStatus->bind_param("siiiii", $newStatus, $UserA_ID, $UserB_ID, $UserB_ID, $UserA_ID, $current_userId);
 
     if ($changeFriendshipStatus->execute()) {
-        echo json_encode(['success' => "Friendship status updated to $newStatus"]);
+        if ($changeFriendshipStatus->affected_rows > 0) {
+            echo json_encode(['success' => true, 'message' => "Friendship status updated to $newStatus"]);
+        } else {
+            echo json_encode(['error' => 'No rows updated. Either the request does not exist or you are the requester.']);
+        }
     } else {
-        echo json_encode(['error' => 'Failed to update friendship status: ' . $changeFriendshipStatus->error]);
+        echo json_encode(['error' => 'Execute failed: ' . $changeFriendshipStatus->error]);
     }
+    exit;
 }

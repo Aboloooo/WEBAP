@@ -422,8 +422,24 @@ function DisplayPendingRequests() {
         requestId: requestId,
       },
       function (serverRespond) {
-        removeCardOrShowEmpty(card);
-        window.location.href = "./Friendship.php";
+        // serverRespond is expected to be JSON with either {success: true} or {error: '...'}
+        try {
+          const resp =
+            typeof serverRespond === "object"
+              ? serverRespond
+              : JSON.parse(serverRespond);
+          if (resp && resp.error) {
+            alert("Server error: " + resp.error);
+          } else {
+            // success
+            removeCardOrShowEmpty(card);
+            window.location.href = "./Friendship.php";
+          }
+        } catch (e) {
+          // non-JSON response: fallback to existing behavior
+          removeCardOrShowEmpty(card);
+          window.location.href = "./Friendship.php";
+        }
       },
     ).fail(function () {
       // Keep optimistic fallback for frontend-only integration.
