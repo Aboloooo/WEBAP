@@ -1,13 +1,8 @@
 <?php
 session_start();
+require_once(__DIR__ . '/db_config.php');
 /* connection to database */
-$host = 'localhost';
-$username = 'root';
-$password = '';
-$port = '3306';
-$certificate_file_path = '';
-$database = 'PIF_2026';
-$connection = mysqli_connect($host, $username, $password, $database);
+$connection = createDatabaseConnection();
 
 if (!isset($_SESSION["userLogin"])) {
     $_SESSION["userLogin"] = false;
