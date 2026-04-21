@@ -184,6 +184,8 @@ body {
   transition: all 0.3s ease;
   white-space: nowrap;
   position: relative;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid transparent;
 }
 
 .notif-badge {
@@ -195,10 +197,6 @@ body {
   width: 10px;
   height: 10px;
   pointer-events: none;
-}
-  padding-bottom: 0.25rem;
-  border-bottom: 2px solid transparent;
-  position: relative;
 }
 
 .nav-links a:hover {
@@ -288,7 +286,10 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
 }
 
 .theme-toggle-fab box-icon {
@@ -3650,11 +3651,24 @@ section h2 {
   box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
-.admin-btn-green { background: #10b981; color: #fff; }
-.admin-btn-green:hover { background: #059669; }
-.admin-btn-blue { background: var(--primary-color); color: #fff; }
-.admin-btn-blue:hover { background: var(--primary-dark); }
-.admin-btn-sm { padding: 0.45rem 0.9rem; font-size: 0.82rem; }
+.admin-btn-green {
+  background: #10b981;
+  color: #fff;
+}
+.admin-btn-green:hover {
+  background: #059669;
+}
+.admin-btn-blue {
+  background: var(--primary-color);
+  color: #fff;
+}
+.admin-btn-blue:hover {
+  background: var(--primary-dark);
+}
+.admin-btn-sm {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+}
 
 .admin-delete-btn {
   background: #ef4444;
@@ -3667,7 +3681,9 @@ section h2 {
   transition: background 0.2s;
 }
 
-.admin-delete-btn:hover { background: #dc2626; }
+.admin-delete-btn:hover {
+  background: #dc2626;
+}
 
 /* Inline role select */
 .admin-inline-select {
@@ -3742,8 +3758,14 @@ section h2 {
   font-weight: 600;
 }
 
-.admin-badge-green { background: #d1fae5; color: #065f46; }
-.admin-badge-gray  { background: #f1f5f9; color: #475569; }
+.admin-badge-green {
+  background: #d1fae5;
+  color: #065f46;
+}
+.admin-badge-gray {
+  background: #f1f5f9;
+  color: #475569;
+}
 
 /* Feedback messages */
 .admin-feedback {
@@ -3754,8 +3776,16 @@ section h2 {
   margin-top: 0.25rem;
 }
 
-.feedback-success { background: #d1fae5; color: #065f46; display: block; }
-.feedback-error   { background: #fee2e2; color: #991b1b; display: block; }
+.feedback-success {
+  background: #d1fae5;
+  color: #065f46;
+  display: block;
+}
+.feedback-error {
+  background: #fee2e2;
+  color: #991b1b;
+  display: block;
+}
 
 /* Make tables responsive */
 table {
@@ -3854,13 +3884,21 @@ th {
 }
 
 @media (max-width: 600px) {
-  .station-admin-edit-fields { grid-template-columns: 1fr; }
+  .station-admin-edit-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 600px) {
-  .admin-stats-row { grid-template-columns: 1fr; }
-  .admin-tabs { flex-wrap: wrap; }
-  .admin-container { padding: 1rem; }
+  .admin-stats-row {
+    grid-template-columns: 1fr;
+  }
+  .admin-tabs {
+    flex-wrap: wrap;
+  }
+  .admin-container {
+    padding: 1rem;
+  }
 }
 /* Responsive adjustments */
 @media (max-width: 768px) {

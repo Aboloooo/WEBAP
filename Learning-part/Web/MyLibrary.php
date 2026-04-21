@@ -1,13 +1,8 @@
 <?php
 session_start();
+require_once(__DIR__ . '/db_config.php');
 /* connection to database */
-$host = 'localhost';
-$username = 'root';
-$password = '';
-$port = '3306';
-$certificate_file_path = '';
-$database = 'PIF_2026';
-$connection = mysqli_connect($host, $username, $password, $database);
+$connection = createDatabaseConnection();
 
 if (!isset($_SESSION["userLogin"])) {
     $_SESSION["userLogin"] = false;
@@ -573,7 +568,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
     $filterDateStart = $_POST['filterDateStart'];
     $filterDateEnd = $_POST['filterDateEnd'];
     if ($stationId == 0) {
-        // Filter based on date only
+        // Filter based on date only, oldest -> newest for top-to-bottom display
         $sql = "
             select m.*
            FROM Measurement m
@@ -581,7 +576,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
                 ON m.Station_id = s.Station_id
             WHERE s.Owner_id = ?
                 AND Timestamp between ? and ?
-            ORDER BY Timestamp DESC
+            ORDER BY Timestamp ASC
         ";
         $stmt = $connection->prepare($sql);
         $stmt->bind_param("iss", $Owner_id, $filterDateStart, $filterDateEnd);

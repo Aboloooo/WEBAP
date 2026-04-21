@@ -13,30 +13,20 @@ if (
 ) {
     $station_serial = $_POST['station_serial'];
     $timestamp      = $_POST['timestamp'];
-    $temperature    = (float)$_POST['temperature'];    
-    $humidity       = (float)$_POST['humidity'];        
-    $pressure       = (float)$_POST['pressure'];        
-    $light          = (float)$_POST['light'];           
-    $air_quality    = (int)$_POST['gas'];               
+    $temperature    = (float)$_POST['temperature'];
+    $humidity       = (float)$_POST['humidity'];
+    $pressure       = (float)$_POST['pressure'];
+    $light          = (float)$_POST['light'];
+    $air_quality    = (int)$_POST['gas'];
 } else {
     die("Error: Missing required POST parameters.");
 }
 
-$host = 'localhost';
-$username = 'root';
-$password = 'mysql_secure_installation'; 
-$database = 'PIF_2026';
-
-$connection = mysqli_connect($host, $username, $password, $database);
-
-if (!$connection) {
-    die("Connection failed: " . mysqli_connect_error());
-}
-
-mysqli_set_charset($connection, "utf8mb4");
+require_once(__DIR__ . '/db_config.php');
+$connection = createDatabaseConnection();
 
 if (strpos($timestamp, '.') !== false) {
-    $timestamp = explode('.', $timestamp)[0]; 
+    $timestamp = explode('.', $timestamp)[0];
 }
 
 $station_query = "SELECT Station_id FROM Station WHERE Serial_number = ?";
@@ -48,14 +38,14 @@ $result = $stmt->get_result();
 if ($row = $result->fetch_assoc()) {
     $station_id = $row['Station_id'];
     $stmt->close();
-    
+
     $insert_query = "INSERT INTO Measurement (Timestamp, Temperature, Humidity, Air_pressure, Light_intensity, Air_quality, Station_id) 
                      VALUES (?, ?, ?, ?, ?, ?, ?)";
-    
+
     $stat = $connection->prepare($insert_query);
-    
+
     $stat->bind_param("sddddii", $timestamp, $temperature, $humidity, $pressure, $light, $air_quality, $station_id);
-    
+
     if ($stat->execute()) {
         echo "Data inserted successfully. Measurement ID: " . $stat->insert_id;
     } else {
@@ -68,4 +58,3 @@ if ($row = $result->fetch_assoc()) {
 }
 
 $connection->close();
-?>
