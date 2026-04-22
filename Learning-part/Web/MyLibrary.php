@@ -708,6 +708,9 @@ function NavigationBarE()
                 <?php endif; ?>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
+            <button class="public-message-notif-bell" onclick="showPublicMessage()" id="DisplayPublicMessage" title="Display Public Message">
+                <box-icon name="bell"></box-icon>
+            </button>
         </div>
     </nav>
     <div class="login_container_indexPage">
@@ -729,7 +732,6 @@ function NavigationBarE()
     </div>
     <!-- Fixed dark/light mode toggle -->
     <button class="theme-toggle-fab" onclick="toggleDarkMode()" id="darkModeBtn" title="Switch to dark mode">
-        <!-- <box-icon name="moon" id="darkModeIcon"></box-icon> -->
         <box-icon name="moon"></box-icon>
     </button>
 <?php

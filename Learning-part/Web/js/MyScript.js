@@ -921,6 +921,19 @@ function loadMeasurements(stationId, start, end, doneCallback) {
   );
 }
 
+function showPublicMessage() {
+  // Remove previous overlay if exists
+  $(".blur-background, .content").remove();
+
+  let blurDiv = $("<div>").addClass("blur-background");
+  let sectionContent = $("<section>").addClass("content");
+
+  let exitBtn = $("<button>")
+    .text("X")
+    .addClass("exitChatBox")
+    .on("click", CloseChatBox);
+}
+
 // ===== REAL-TIME MEASUREMENT POLLING =====
 let realtimePollingInterval = null;
 let currentStationForPolling = null;
