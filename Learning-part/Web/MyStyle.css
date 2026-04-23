@@ -5405,6 +5405,83 @@ section > article {
   transform: translateY(-2px);
 }
 
+/* === 7-inch (approx) responsive improvements === */
+/* Target devices roughly between 600px and 820px width (common 7" tablets) */
+@media (min-width: 600px) and (max-width: 820px) {
+  .tempretureDisplay {
+    padding: 0.75rem;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .dashboard-controls,
+  .dropdowns-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  #btnContainer {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  #btnContainer .btn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .dashboard-metrics {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .dashboard-metrics .metric-card {
+    flex: 1 1 48%;
+    padding: 0.6rem;
+    min-width: 140px;
+  }
+
+  .metric-value {
+    font-size: 1.15rem;
+  }
+
+  .chart-canvas-wrap {
+    height: 220px;
+  }
+
+  .displayTable {
+    overflow: auto;
+    max-height: 420px;
+  }
+
+  #measurementsTable {
+    font-size: 14px;
+  }
+
+  .messageList {
+    max-height: 340px;
+  }
+
+  .message_content_holder {
+    font-size: 14px;
+  }
+
+  /* Slightly larger touch targets */
+  .btn,
+  button {
+    min-height: 40px;
+  }
+
+  /* Reduce spacing for nav to fit screen */
+  .nav-container {
+    padding: 0.6rem;
+  }
+}
+
 /* === Print Styles === */
 @media print {
   .navbar,
