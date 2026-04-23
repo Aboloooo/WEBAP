@@ -923,17 +923,20 @@ function loadMeasurements(stationId, start, end, doneCallback) {
   );
 }
 
-function showPublicMessage() {
+function DisplayNotification() {
   // Remove previous overlay if exists
   $(".blur-background, .content").remove();
 
   let blurDiv = $("<div>").addClass("blur-background");
-  let sectionContent = $("<section>").addClass("content");
+  let sectionContent = $("<section>").addClass("content content-notification");
 
   let exitBtn = $("<button>")
     .text("X")
     .addClass("exitChatBox")
     .on("click", CloseChatBox);
+
+  sectionContent.append(exitBtn);
+  $("body").append(blurDiv).append(sectionContent);
 }
 
 // ===== REAL-TIME MEASUREMENT POLLING =====
@@ -1870,10 +1873,21 @@ function startNotificationPolling() {
 function pollNotifications() {
   $.post(
     "../MyLibrary.php",
-    { getNotifCounts: true },
+    { getNotifCounts: true, userId: window.currentUserId },
     function (data) {
       updateNotifBadge("#friendsNotifBadge", data.friend_request);
       updateNotifBadge("#collectionNotifBadge", data.collection_share);
+      //pull all notifications and update unread notifications
+      $.post(
+        "../MyLibrary.php",
+        { getAllNotifications: true, userId: window.currentUserId },
+        function (notifData) {
+          if (notifData && notifData.success) {
+            // Process and display notifications
+          }
+        },
+        "json",
+      );
     },
     "json",
   );

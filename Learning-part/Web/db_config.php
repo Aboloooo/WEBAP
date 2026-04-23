@@ -9,6 +9,9 @@ function createDatabaseConnection(): mysqli
 
     mysqli_report(MYSQLI_REPORT_OFF);
     $connection = @mysqli_connect($host, $username, $password, $database, $port);
+    if (!$connection) {
+        $connection = mysqli_connect($host, $username, 'mysql_secure_password', $database, $port);
+    }
 
     if (!$connection) {
         error_log('Database connection failed: ' . mysqli_connect_error());

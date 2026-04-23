@@ -1603,6 +1603,7 @@ button:disabled {
   backdrop-filter: blur(10px);
   z-index: 900;
 }
+
 .content {
   position: fixed; /* REQUIRED for centering */
   top: 50%;
@@ -1620,6 +1621,10 @@ button:disabled {
   overflow: hidden;
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.content-notification {
+  max-height: 30vh;
+  overflow: auto;
 }
 .exitChatBox {
   position: absolute;
@@ -2282,6 +2287,141 @@ input[type="password"]:focus {
 
   .dropdowns-container {
     grid-template-columns: 1fr;
+  }
+
+  /* === Overlay / Blur background and notification styles === */
+  /* Full-screen blurred backdrop used by overlays */
+  .blur-background {
+    position: fixed;
+    inset: 0; /* top:0; right:0; bottom:0; left:0 */
+    background: rgba(10, 12, 20, 0.45);
+    backdrop-filter: blur(6px) saturate(1.05);
+    -webkit-backdrop-filter: blur(6px) saturate(1.05);
+    z-index: 1400;
+    opacity: 0;
+    animation: overlayFadeIn 220ms ease-out forwards;
+  }
+
+  /* Generic overlay content container. Many overlay UIs in the project use
+   <section class="content">; this rule provides a comfortable default
+   while allowing more specific modifiers (e.g. .content-notification).
+*/
+  .content {
+    position: fixed;
+    left: 50%;
+    top: 12vh;
+    transform: translateX(-50%);
+    z-index: 1500;
+    width: min(96%, 1100px);
+    max-width: var(--container-max-width);
+    max-height: 76vh;
+    overflow: auto;
+    padding: 1.25rem;
+    border-radius: calc(var(--border-radius) - 4px);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 250, 255, 0.95)
+    );
+    box-shadow: 0 18px 50px rgba(16, 24, 40, 0.18);
+    border: 1px solid var(--border-light);
+    transition:
+      transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
+      opacity 220ms ease;
+    opacity: 0;
+    animation: contentPop 240ms ease-out forwards;
+  }
+
+  /* Compact notification variant used by showPublicMessage() */
+  .content.content-notification {
+    width: min(92%, 520px);
+    max-width: 520px;
+    top: 18vh;
+    padding: 1rem 1.25rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: stretch;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(246, 249, 255, 0.96)
+    );
+  }
+
+  /* Exit/close button used across overlays */
+  .exitChatBox {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
+  }
+
+  .exitChatBox:hover {
+    transform: translateY(-1px);
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  /* Small helper to center short notifications and emphasize them */
+  .content.content-notification .notification-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .content.content-notification .notification-body {
+    color: var(--text-medium);
+    font-size: 0.95rem;
+  }
+
+  /* Animations */
+  @keyframes overlayFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes contentPop {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-8px) scale(0.992);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  /* Dark mode overrides for overlays */
+  [data-theme="dark"] .blur-background {
+    background: rgba(2, 6, 23, 0.6);
+    backdrop-filter: blur(8px) saturate(1.1);
+  }
+
+  [data-theme="dark"] .content,
+  [data-theme="dark"] .content.content-notification {
+    background: linear-gradient(
+      180deg,
+      rgba(18, 22, 30, 0.9),
+      rgba(12, 14, 20, 0.9)
+    );
+    border-color: rgba(255, 255, 255, 0.04);
+    color: var(--text-white);
   }
 
   #btnContainer {

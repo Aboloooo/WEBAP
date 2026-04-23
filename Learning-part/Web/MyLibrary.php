@@ -708,7 +708,7 @@ function NavigationBarE()
                 <?php endif; ?>
                 <li><a href="index.php#Contact">Contact</a></li>
             </ul>
-            <button class="public-message-notif-bell" onclick="showPublicMessage()" id="DisplayPublicMessage" title="Display Public Message">
+            <button class="public-message-notif-bell" onclick="DisplayNotification()" id="DisplayPublicMessage" title="Display Public Message">
                 <box-icon name="bell"></box-icon>
             </button>
         </div>
@@ -1370,10 +1370,16 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
         echo json_encode(['success' => false, 'error' => 'Failed to prepare message insert']);
         exit;
     }
-    $insertMessage->bind_param('siii', $content, $userId, $groupId, $currentTime);
+    $insertMessage->bind_param('siis', $content, $userId, $groupId, $currentTime);
     if ($insertMessage->execute()) {
         $messageId = $insertMessage->insert_id;
         echo json_encode(['success' => true, 'messageId' => $messageId]);
+        // Notify the user
+        $NewMessageDefault = "New message from {$user['Username']}";
+        $NotificationType = 'message';
+        $notifyTargetUser = $connection->prepare("INSERT INTO Notifications (user_id, type, message) VALUES (?, ?, ?)");
+        $notifyTargetUser->bind_param("iss", $userId, $NotificationType, $NewMessageDefault);
+        $notifyTargetUser->execute();
     } else {
         echo json_encode(['success' => false, 'error' => 'Failed to send message']);
     }
