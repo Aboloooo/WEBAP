@@ -892,7 +892,8 @@ function loadMeasurements(stationId, start, end, doneCallback) {
       tbody.empty();
 
       const sortedMeasurements = [...measurements].sort(
-        (a, b) => new Date(a.Timestamp) - new Date(b.Timestamp),
+        // Sort descending so newest measurements appear first (at the top of the table)
+        (a, b) => new Date(b.Timestamp) - new Date(a.Timestamp),
       );
 
       sortedMeasurements.forEach((row) => {
@@ -903,6 +904,7 @@ function loadMeasurements(stationId, start, end, doneCallback) {
         tr.append($("<td>").text(row.Light_intensity));
         tr.append($("<td>").text(row.Air_quality));
         tr.append($("<td>").text(row.Station_id));
+        // Append in this sorted order (newest first) so table shows newest at top
         tbody.append(tr);
       });
 
@@ -946,9 +948,10 @@ function startRealtimeMeasurementPolling(stationId) {
   currentStationForPolling = stationId;
 
   // Set initial timestamp to now
-  // Prefer the timestamp of the last measurement already displayed in the table
-  // so we don't miss recent rows loaded just before enabling live mode.
-  const lastRowTs = $("#measurementsTable tbody tr:last td:first")
+  // Prefer the timestamp of the newest measurement already displayed in the table
+  // (table now shows newest entries at the top), so we don't miss recent rows
+  // loaded just before enabling live mode.
+  const lastRowTs = $("#measurementsTable tbody tr:first td:first")
     .text()
     .trim();
   if (lastRowTs) {
@@ -994,6 +997,7 @@ function startRealtimeMeasurementPolling(stationId) {
           const tbody = $("#measurementsTable tbody");
 
           // Add new measurements to the table
+          // Insert new measurements at the top so newest entries appear first
           response.newMeasurements.forEach((row) => {
             // Avoid duplicating rows that are already present (safe-guard)
             if (
@@ -1009,7 +1013,8 @@ function startRealtimeMeasurementPolling(stationId) {
             tr.append($("<td>").text(row.Light_intensity));
             tr.append($("<td>").text(row.Air_quality));
             tr.append($("<td>").text(row.Station_id));
-            tbody.append(tr);
+            // Prepend so newest rows are at the top
+            tbody.prepend(tr);
           });
 
           // Update timestamp for next poll
@@ -1024,10 +1029,8 @@ function startRealtimeMeasurementPolling(stationId) {
           const totalRows = tbody.find("tr").length;
           $("#createCollectionBtn").prop("disabled", totalRows === 0);
 
-          // Auto-scroll to bottom
-          $("#measurementsTable")
-            .parent()
-            .scrollTop($("#measurementsTable").height());
+          // Auto-scroll to top (newest entries are at the top)
+          $("#measurementsTable").parent().scrollTop(0);
         }
       },
       "json",

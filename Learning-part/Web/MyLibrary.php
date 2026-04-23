@@ -45,7 +45,7 @@ function userHasCollections(int $userId): bool
 function getUserInfo($username)
 {
     global $connection;
-    $userInfo = $connection->prepare("SELECT * FROM Users WHERE Username =?");
+    $userInfo = $connection->prepare("SELECT * FROM Users WHERE Username = ?");
     $userInfo->bind_param('s', $username);
     $userInfo->execute();
     $result = $userInfo->get_result();
@@ -106,17 +106,17 @@ if (isset($_POST['DisplayCollection']) && $_POST['DisplayCollection']) {
     $MyID = $MyInfo['UserID'];
 
     $statement = "
-        SELECT 
-            c.Collection_id,
-            c.Name,
-            c.Description,
-            m.*
-        FROM Collection c
-        JOIN CollectionContains cc ON c.Collection_id = cc.Collection_id
-        JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
-        WHERE c.Creator_ID = ?
-        ORDER BY c.Collection_id
-    ";
+            SELECT 
+                c.Collection_id,
+                c.Name,
+                c.Description,
+                m.*
+            FROM Collection c
+            JOIN CollectionContains cc ON c.Collection_id = cc.Collection_id
+            JOIN Measurement m ON cc.Measurement_id = m.Measurement_id
+            WHERE c.Creator_ID = ?
+            ORDER BY c.Collection_id
+        ";
 
     $stmt = $connection->prepare($statement);
     $stmt->bind_param('i', $MyID);
@@ -1322,13 +1322,11 @@ if (isset($_POST['getGroupMessages'], $_POST['groupId'])) {
     }
 
     $afterId = isset($_POST['afterId']) ? (int)$_POST['afterId'] : 0;
-    $stmt = $connection->prepare("
-        SELECT gm.Message_id, gm.Content, gm.Sent_at, u.Username AS sender_name
-        FROM GroupMessage gm
-        JOIN Users u ON gm.Sender_id = u.UserID
-        WHERE gm.Group_id = ? AND gm.Message_id > ?
-        ORDER BY gm.Message_id ASC
-    ");
+
+    // Fetch group messages directly from Message table; Group_id is stored on Message
+    $stmt = $connection->prepare(
+        "SELECT m.Message_ID AS Message_id, m.Message_content AS Content, m.Message_time AS Sent_at, u.Username AS sender_name FROM Message m JOIN Users u ON m.Sender_ID = u.UserID WHERE m.Group_id = ? AND m.Message_ID > ? ORDER BY m.Message_ID ASC"
+    );
     $stmt->bind_param('ii', $groupId, $afterId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -1365,17 +1363,16 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
         exit;
     }
 
-    //insert message into Message table
-    $insertMessage = $connection->prepare("INSERT INTO Message (Content, Sender_ID) VALUES (?, ?)");
-    $insertMessage->bind_param('si', $content, $userId);
-    $insertMessage->execute();
-    $messageId = $insertMessage->insert_id;
-
-    // Now insert into GroupMessage table
-    $stmt = $connection->prepare("INSERT INTO GroupMessage (Group_id, Sender_id, Message_Content_ID) VALUES (?, ?, ?)");
-    $stmt->bind_param('iis', $groupId, $userId, $messageId);
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'messageId' => $connection->insert_id]);
+    // Insert message into Message table and set Group_id so group messages live only in Message
+    $insertMessage = $connection->prepare("INSERT INTO Message (Message_content, Sender_ID, Group_id, Message_time) VALUES (?, ?, ?, NOW())");
+    if (!$insertMessage) {
+        echo json_encode(['success' => false, 'error' => 'Failed to prepare message insert']);
+        exit;
+    }
+    $insertMessage->bind_param('sii', $content, $userId, $groupId);
+    if ($insertMessage->execute()) {
+        $messageId = $insertMessage->insert_id;
+        echo json_encode(['success' => true, 'messageId' => $messageId]);
     } else {
         echo json_encode(['success' => false, 'error' => 'Failed to send message']);
     }

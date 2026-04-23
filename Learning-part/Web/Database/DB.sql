@@ -111,9 +111,12 @@ CREATE TABLE Message(
     Message_ID INT PRIMARY KEY AUTO_INCREMENT,
     Message_content VARCHAR(255),
     Sender_ID INT,
+    -- Optional link to a chat group; NULL for direct/other messages
+    Group_id INT DEFAULT NULL,
     isViewed ENUM('unseen', 'seen') DEFAULT 'unseen',
-    Message_time TIME NOT NULL,
-    FOREIGN KEY (Sender_ID) REFERENCES Users(UserID)
+    Message_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Sender_ID) REFERENCES Users(UserID),
+    FOREIGN KEY (Group_id) REFERENCES ChatGroup(Group_id)
 );
 insert into Users(Fullname, Email, Username, Password, AccessLevelID) values
 ('Alice Smith', 'alice@example.com', 'user1', '1', 3),
