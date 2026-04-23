@@ -1,15 +1,9 @@
 Checking user with plain password and password verification of plain text needs to be stopped.
 
-Live receiving measurement doenst work(requires page refresh)
+bell icone => notification
+-   A list of notification and all news display when bell clicked
+-   the pulic massages can be displayed when we click the bell like a notification
+-   Bell icone can be toggled and changed when there is a notification
 
- 
-Warning
-: Cannot modify header information - headers already sent by (output started at /var/www/html/Web/sign_in_up.php:68) in
-/var/www/html/Web/sign_in_up.php
-on line
-119
-requires page refresh
 
-friends page dosnt pops up
-
-direct massaging betweem users
+Displaying measrement order needs to be fixed

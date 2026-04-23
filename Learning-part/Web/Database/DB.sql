@@ -148,10 +148,11 @@ CREATE TABLE GroupMessage (
     Message_id INT PRIMARY KEY AUTO_INCREMENT,
     Group_id INT NOT NULL,
     Sender_id INT NOT NULL,
-    Content VARCHAR(255) NOT NULL,
+    Message_Content_ID INT NOT NULL,
     Sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Group_id) REFERENCES ChatGroup(Group_id),
-    FOREIGN KEY (Sender_id) REFERENCES Users(UserID)
+    FOREIGN KEY (Sender_id) REFERENCES Users(UserID),
+    FOREIGN KEY (Message_Content_ID) REFERENCES Message(Message_ID)
 );
 
 -- Notifications table

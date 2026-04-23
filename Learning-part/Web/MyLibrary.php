@@ -1365,8 +1365,15 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
         exit;
     }
 
-    $stmt = $connection->prepare("INSERT INTO GroupMessage (Group_id, Sender_id, Content) VALUES (?, ?, ?)");
-    $stmt->bind_param('iis', $groupId, $userId, $content);
+    //insert message into Message table
+    $insertMessage = $connection->prepare("INSERT INTO Message (Content, Sender_ID) VALUES (?, ?)");
+    $insertMessage->bind_param('si', $content, $userId);
+    $insertMessage->execute();
+    $messageId = $insertMessage->insert_id;
+
+    // Now insert into GroupMessage table
+    $stmt = $connection->prepare("INSERT INTO GroupMessage (Group_id, Sender_id, Message_Content_ID) VALUES (?, ?, ?)");
+    $stmt->bind_param('iis', $groupId, $userId, $messageId);
     if ($stmt->execute()) {
         echo json_encode(['success' => true, 'messageId' => $connection->insert_id]);
     } else {
