@@ -1364,12 +1364,13 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
     }
 
     // Insert message into Message table and set Group_id so group messages live only in Message
-    $insertMessage = $connection->prepare("INSERT INTO Message (Message_content, Sender_ID, Group_id, Message_time) VALUES (?, ?, ?, NOW())");
+    $currentTime = date('Y-m-d H:i:s');
+    $insertMessage = $connection->prepare("INSERT INTO Message (Message_content, Sender_ID, Group_id, Message_time) VALUES (?, ?, ?, ?)");
     if (!$insertMessage) {
         echo json_encode(['success' => false, 'error' => 'Failed to prepare message insert']);
         exit;
     }
-    $insertMessage->bind_param('sii', $content, $userId, $groupId);
+    $insertMessage->bind_param('siii', $content, $userId, $groupId, $currentTime);
     if ($insertMessage->execute()) {
         $messageId = $insertMessage->insert_id;
         echo json_encode(['success' => true, 'messageId' => $messageId]);
