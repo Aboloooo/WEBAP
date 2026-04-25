@@ -76,6 +76,18 @@ if (!$_SESSION["Admin"]) {
             <!-- USERS TAB -->
             <div class="admin-tab-panel active" id="tab-users">
                 <div class="admin-card">
+                    <h3><i class='bx bx-megaphone'></i> Publish Public Message</h3>
+                    <div class="admin-form" id="publicMessageForm">
+                        <div class="admin-form-row">
+                            <textarea id="public_message_text" placeholder="Write a public message for all users..." maxlength="255" style="width:100%; min-height:100px; resize:vertical;"></textarea>
+                        </div>
+                        <div class="admin-form-row">
+                            <button class="admin-btn admin-btn-blue" id="publishPublicMessageBtn"><i class='bx bx-send'></i> Publish Message</button>
+                        </div>
+                        <div class="admin-feedback" id="publicMessageFeedback"></div>
+                    </div>
+                </div>
+                <div class="admin-card">
                     <h3><i class='bx bx-user-plus'></i> Create New User</h3>
                     <div class="admin-form" id="createUserForm">
                         <div class="admin-form-row">
@@ -275,6 +287,26 @@ if (!$_SESSION["Admin"]) {
                         loadUsers();
                         loadStats();
                     }
+                });
+            });
+
+            // === PUBLISH PUBLIC MESSAGE ===
+            $("#publishPublicMessageBtn").on("click", function() {
+                const msg = $("#public_message_text").val().trim();
+                if (!msg) {
+                    showFeedback("#publicMessageFeedback", "Please write a message before publishing.", "error");
+                    return;
+                }
+                $.post("../MyLibrary.php", {
+                    publish_public_message: true,
+                    public_message: msg
+                }, function(res) {
+                    showFeedback("#publicMessageFeedback", res.message || "Done", res.success ? "success" : "error");
+                    if (res.success) {
+                        $("#public_message_text").val("");
+                    }
+                }, "json").fail(function() {
+                    showFeedback("#publicMessageFeedback", "Failed to publish message.", "error");
                 });
             });
 

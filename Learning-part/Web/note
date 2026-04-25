@@ -9,3 +9,10 @@ bell icone => notification
 Displaying measrement order needs to be fixed
 
 Sending message facing problem
+
+
+WEBAP requirements:
+- public message by admin view by everybody
+- number of unseen message shown
+- last time a user was login
+- notify when a target user is typing

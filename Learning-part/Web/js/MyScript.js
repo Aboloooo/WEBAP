@@ -923,20 +923,201 @@ function loadMeasurements(stationId, start, end, doneCallback) {
   );
 }
 
+function formatNotificationTimestamp(rawValue) {
+  if (!rawValue) return "Unknown time";
+
+  const parsedDate = new Date(rawValue.replace(" ", "T"));
+  if (Number.isNaN(parsedDate.getTime())) {
+    return rawValue;
+  }
+
+  const now = new Date();
+  const diffMs = now.getTime() - parsedDate.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+  return parsedDate.toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getNotificationPresentation(typeKey, displayName) {
+  const config = {
+    public_announcement: {
+      icon: "bx-megaphone",
+      label: "Public announcement",
+    },
+    collection_share: {
+      icon: "bx-share-alt",
+      label: "Collection share",
+    },
+    friend_request: {
+      icon: "bx-user-plus",
+      label: "Friend request",
+    },
+    message: {
+      icon: "bx-message-rounded-dots",
+      label: "Message",
+    },
+  };
+
+  return (
+    config[typeKey] || {
+      icon: "bx-bell",
+      label: displayName || typeKey || "Notification",
+    }
+  );
+}
+
+function renderNotificationList(target, items) {
+  target.empty();
+
+  if (!items.length) {
+    const emptyState = $("<div>").addClass("notification-empty-state");
+    const emptyTitle = $("<h4>").text("No notifications yet");
+    const emptyHint = $("<p>").text("New alerts and updates will appear here.");
+    emptyState.append(emptyTitle, emptyHint);
+    target.append(emptyState);
+    return;
+  }
+
+  items.forEach(function (item, index) {
+    const presentation = getNotificationPresentation(
+      item.type_key,
+      item.display_name,
+    );
+    const card = $("<article>").addClass("notification-message-card");
+    card.css("animationDelay", `${Math.min(index * 60, 420)}ms`);
+    if (String(item.is_read) === "0") {
+      card.addClass("is-unread");
+    }
+
+    const icon = $("<div>")
+      .addClass("notification-message-icon")
+      .html(`<i class='bx ${presentation.icon}'></i>`);
+
+    const content = $("<div>").addClass("notification-message-content");
+    const text = $("<p>")
+      .addClass("notification-message-text")
+      .text(item.message || "");
+
+    const meta = $("<div>").addClass("notification-message-meta");
+    meta.append(
+      $("<span>").addClass("notification-source-pill").text(presentation.label),
+      $("<time>").text(formatNotificationTimestamp(item.created_at)),
+    );
+
+    content.append(text, meta);
+    card.append(icon, content);
+    target.append(card);
+  });
+}
+
 function DisplayNotification() {
   // Remove previous overlay if exists
   $(".blur-background, .content").remove();
 
-  let blurDiv = $("<div>").addClass("blur-background");
-  let sectionContent = $("<section>").addClass("content content-notification");
+  const blurDiv = $("<div>").addClass("blur-background");
+  const panel = $("<section>").addClass(
+    "content content-notification notification-panel",
+  );
 
-  let exitBtn = $("<button>")
-    .text("X")
+  const closeBtn = $("<button>")
+    .attr("type", "button")
+    .html("<i class='bx bx-x'></i>")
     .addClass("exitChatBox")
     .on("click", CloseChatBox);
 
-  sectionContent.append(exitBtn);
-  $("body").append(blurDiv).append(sectionContent);
+  const header = $("<div>").addClass("notification-panel-header");
+  header.append(
+    $("<div>")
+      .addClass("notification-panel-title-wrap")
+      .append(
+        $("<h3>").addClass("notification-title").text("Notifications"),
+        $("<p>")
+          .addClass("notification-subtitle")
+          .text("Messages, requests, shares, and announcements"),
+      ),
+    $("<div>").addClass("notification-total-pill").text("0 items"),
+  );
+
+  const toolbar = $("<div>").addClass("notification-toolbar");
+  const refreshBtn = $("<button>")
+    .attr("type", "button")
+    .addClass("notification-refresh-btn")
+    .html("<i class='bx bx-refresh'></i> Refresh");
+  toolbar.append(refreshBtn);
+
+  const statusRow = $("<div>")
+    .addClass("notification-status-row")
+    .text("Loading announcements...");
+  const listContainer = $("<div>").addClass("notification-list-container");
+
+  panel.append(closeBtn, header, toolbar, statusRow, listContainer);
+  $("body").append(blurDiv).append(panel);
+
+  let allNotifications = [];
+
+  function updateCountLabel(count) {
+    panel
+      .find(".notification-total-pill")
+      .text(`${count} item${count === 1 ? "" : "s"}`);
+  }
+
+  function loadNotifications() {
+    statusRow.text("Loading notifications...").removeClass("error");
+
+    $.post(
+      "../MyLibrary.php",
+      { getAllNotifications: true },
+      function (res) {
+        if (!res || !res.success) {
+          statusRow
+            .addClass("error")
+            .text("Could not load notifications right now.");
+          listContainer.empty();
+          updateCountLabel(0);
+          return;
+        }
+
+        allNotifications = Array.isArray(res.notifications)
+          ? res.notifications
+          : [];
+        statusRow.text("Showing newest notifications first.");
+        updateCountLabel(allNotifications.length);
+        renderNotificationList(listContainer, allNotifications);
+      },
+      "json",
+    ).fail(function () {
+      statusRow
+        .addClass("error")
+        .text("Could not load notifications right now.");
+      listContainer.empty();
+      updateCountLabel(0);
+    });
+  }
+
+  refreshBtn.on("click", loadNotifications);
+
+  loadNotifications();
+
+  $.post("../MyLibrary.php", {
+    markAllNotificationsRead: true,
+  });
+  $("#friendsNotifBadge, #collectionNotifBadge").hide();
+  $("#DisplayPublicMessage").removeClass("has-unread");
 }
 
 // ===== REAL-TIME MEASUREMENT POLLING =====
@@ -1877,6 +2058,17 @@ function pollNotifications() {
     function (data) {
       updateNotifBadge("#friendsNotifBadge", data.friend_request);
       updateNotifBadge("#collectionNotifBadge", data.collection_share);
+      const totalUnread = Object.values(data || {}).reduce(function (
+        sum,
+        value,
+      ) {
+        return sum + (Number(value) || 0);
+      }, 0);
+      if (totalUnread > 0) {
+        $("#DisplayPublicMessage").addClass("has-unread");
+      } else {
+        $("#DisplayPublicMessage").removeClass("has-unread");
+      }
       //pull all notifications and update unread notifications
       $.post(
         "../MyLibrary.php",

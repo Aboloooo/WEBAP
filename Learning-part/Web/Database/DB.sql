@@ -156,17 +156,30 @@ CREATE TABLE GroupMessage (
     FOREIGN KEY (Message_Content_ID) REFERENCES Message(Message_ID)
 );
 
+-- NotificationType table
+CREATE TABLE NotificationType (
+    NotificationType_ID INT PRIMARY KEY AUTO_INCREMENT,
+    type_key VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NOT NULL,
+    description VARCHAR(255)
+);
+
+INSERT INTO NotificationType (type_key, display_name, description) VALUES
+('friend_request', 'Friendship Request', 'Sent when a user receives a friend request.'),
+('collection_share', 'Collection Share', 'Sent when a collection is shared with a user.'),
+('message', 'Message', 'Sent when a user receives a chat or group message.'),
+('public_announcement', 'Public Announcement', 'Sent when an admin publishes a public message.');
+
 -- Notifications table
 CREATE TABLE Notifications (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
-    -- ... sent you a friend request
-    -- New message(s) from ...
-    type ENUM('friend_request', 'collection_share', 'message', 'public_announcement') NOT NULL,
+    notification_type_id INT NOT NULL,
     message VARCHAR(255) NOT NULL,
     is_read BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(UserID)
+    FOREIGN KEY (user_id) REFERENCES Users(UserID),
+    FOREIGN KEY (notification_type_id) REFERENCES NotificationType(NotificationType_ID)
 );
 
 ALTER TABLE Message

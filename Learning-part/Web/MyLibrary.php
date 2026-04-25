@@ -62,6 +62,47 @@ function getUserInfo($username)
     } */
 }
 
+function getNotificationTypeId(string $typeKey): ?int
+{
+    global $connection;
+
+    static $typeCache = [];
+    if (array_key_exists($typeKey, $typeCache)) {
+        return $typeCache[$typeKey];
+    }
+
+    $stmt = $connection->prepare("SELECT NotificationType_ID FROM NotificationType WHERE type_key = ? LIMIT 1");
+    if (!$stmt) {
+        return null;
+    }
+
+    $stmt->bind_param('s', $typeKey);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result ? $result->fetch_assoc() : null;
+    $typeCache[$typeKey] = $row ? (int)$row['NotificationType_ID'] : null;
+
+    return $typeCache[$typeKey];
+}
+
+function createNotification(int $userId, string $typeKey, string $message): bool
+{
+    global $connection;
+
+    $notificationTypeId = getNotificationTypeId($typeKey);
+    if (!$notificationTypeId) {
+        return false;
+    }
+
+    $stmt = $connection->prepare("INSERT INTO Notifications (user_id, notification_type_id, message) VALUES (?, ?, ?)");
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bind_param('iis', $userId, $notificationTypeId, $message);
+    return $stmt->execute();
+}
+
 /* Remove or delete my collection */
 if (isset($_POST['targetCollection'])) {
     $removeCollectionContains = $connection->prepare("DELETE FROM CollectionContains WHERE Collection_id = ?");
@@ -224,11 +265,7 @@ if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
             // notify the recipient about the shared collection
             $senderName = $_SESSION['username'] ?? 'Someone';
             $notifMsg = "$senderName shared a collection with you";
-            $notifStmt = $connection->prepare("INSERT INTO Notifications (user_id, type, message) VALUES (?, 'collection_share', ?)");
-            if ($notifStmt) {
-                $notifStmt->bind_param('is', $friendId, $notifMsg);
-                $notifStmt->execute();
-            }
+            createNotification((int)$friendId, 'collection_share', $notifMsg);
         }
     }
 
@@ -395,21 +432,47 @@ if (isset($_POST['measurementValues'], $_POST['CollecionN'], $_POST['CollecionD'
 
 // get unread notification counts per type
 if (isset($_POST['getNotifCounts'])) {
-    $counts = ['friend_request' => 0, 'collection_share' => 0];
+    $counts = ['friend_request' => 0, 'collection_share' => 0, 'message' => 0, 'public_announcement' => 0];
     $user = getUserInfo($_SESSION['username'] ?? '');
     if ($user) {
         $userId = $user['UserID'];
-        $stmt = $connection->prepare("SELECT type, COUNT(*) as cnt FROM Notifications WHERE user_id = ? AND is_read = 0 GROUP BY type");
+        $stmt = $connection->prepare("SELECT nt.type_key, COUNT(*) as cnt FROM Notifications n JOIN NotificationType nt ON n.notification_type_id = nt.NotificationType_ID WHERE n.user_id = ? AND n.is_read = 0 GROUP BY nt.type_key");
         if ($stmt) {
             $stmt->bind_param('i', $userId);
             $stmt->execute();
             $result = $stmt->get_result();
             while ($row = $result->fetch_assoc()) {
-                $counts[$row['type']] = (int)$row['cnt'];
+                $counts[$row['type_key']] = (int)$row['cnt'];
             }
         }
     }
     echo json_encode($counts);
+    exit;
+}
+
+if (isset($_POST['getAllNotifications'])) {
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if (!$user) {
+        echo json_encode(['success' => false, 'notifications' => []]);
+        exit;
+    }
+
+    $userId = (int)$user['UserID'];
+    $stmt = $connection->prepare("SELECT n.id, n.message, n.is_read, n.created_at, nt.type_key, nt.display_name FROM Notifications n JOIN NotificationType nt ON n.notification_type_id = nt.NotificationType_ID WHERE n.user_id = ? ORDER BY n.created_at DESC, n.id DESC LIMIT 50");
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'notifications' => []]);
+        exit;
+    }
+
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $notifications = [];
+    while ($row = $result->fetch_assoc()) {
+        $notifications[] = $row;
+    }
+
+    echo json_encode(['success' => true, 'notifications' => $notifications]);
     exit;
 }
 
@@ -419,9 +482,22 @@ if (isset($_POST['markNotifRead'], $_POST['notifType'])) {
     if ($user) {
         $userId = $user['UserID'];
         $type = $_POST['notifType'];
-        $stmt = $connection->prepare("UPDATE Notifications SET is_read = 1 WHERE user_id = ? AND type = ? AND is_read = 0");
+        $stmt = $connection->prepare("UPDATE Notifications n JOIN NotificationType nt ON n.notification_type_id = nt.NotificationType_ID SET n.is_read = 1 WHERE n.user_id = ? AND nt.type_key = ? AND n.is_read = 0");
         $stmt->bind_param('is', $userId, $type);
         $stmt->execute();
+    }
+    exit;
+}
+
+if (isset($_POST['markAllNotificationsRead'])) {
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if ($user) {
+        $userId = (int)$user['UserID'];
+        $stmt = $connection->prepare("UPDATE Notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0");
+        if ($stmt) {
+            $stmt->bind_param('i', $userId);
+            $stmt->execute();
+        }
     }
     exit;
 }
@@ -783,6 +859,89 @@ if (isset($_POST['create_user']) && isset($_POST['new_username'])) {
     } else {
         echo "Error creating user";
     }
+    exit;
+}
+
+/* Publish public message (Admin only) */
+if (isset($_POST['publish_public_message'], $_POST['public_message'])) {
+    if (!$_SESSION["Admin"]) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    $publicMessage = trim($_POST['public_message']);
+    if ($publicMessage === '') {
+        echo json_encode(['success' => false, 'message' => 'Message cannot be empty']);
+        exit;
+    }
+    if (strlen($publicMessage) > 255) {
+        echo json_encode(['success' => false, 'message' => 'Message is too long (max 255 characters)']);
+        exit;
+    }
+
+    $usersResult = $connection->query("SELECT UserID FROM Users");
+    if (!$usersResult || $usersResult->num_rows === 0) {
+        echo json_encode(['success' => false, 'message' => 'No users found']);
+        exit;
+    }
+
+    $publicAnnouncementTypeId = getNotificationTypeId('public_announcement');
+    if (!$publicAnnouncementTypeId) {
+        echo json_encode(['success' => false, 'message' => 'Notification type not found']);
+        exit;
+    }
+
+    $insertNotif = $connection->prepare("INSERT INTO Notifications (user_id, notification_type_id, message) VALUES (?, ?, ?)");
+    if (!$insertNotif) {
+        echo json_encode(['success' => false, 'message' => 'Failed to prepare notification insert']);
+        exit;
+    }
+
+    $inserted = 0;
+    $connection->begin_transaction();
+    try {
+        while ($userRow = $usersResult->fetch_assoc()) {
+            $targetUserId = (int)$userRow['UserID'];
+            $insertNotif->bind_param('iis', $targetUserId, $publicAnnouncementTypeId, $publicMessage);
+            if (!$insertNotif->execute()) {
+                throw new Exception('Insert failed');
+            }
+            $inserted++;
+        }
+        $connection->commit();
+        echo json_encode(['success' => true, 'message' => "Public message published to {$inserted} users."]);
+    } catch (Exception $e) {
+        $connection->rollback();
+        echo json_encode(['success' => false, 'message' => 'Failed to publish public message']);
+    }
+    exit;
+}
+
+/* Get public announcements for logged-in user */
+if (isset($_POST['get_public_announcements'])) {
+    if (!($_SESSION['userLogin'] ?? false)) {
+        echo json_encode(['success' => false, 'messages' => []]);
+        exit;
+    }
+
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if (!$user) {
+        echo json_encode(['success' => false, 'messages' => []]);
+        exit;
+    }
+
+    $userId = (int)$user['UserID'];
+    $stmt = $connection->prepare("SELECT n.id, n.message, n.created_at FROM Notifications n JOIN NotificationType nt ON n.notification_type_id = nt.NotificationType_ID WHERE n.user_id = ? AND nt.type_key = 'public_announcement' ORDER BY n.created_at DESC LIMIT 20");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $messages = [];
+    while ($row = $result->fetch_assoc()) {
+        $messages[] = $row;
+    }
+
+    echo json_encode(['success' => true, 'messages' => $messages]);
     exit;
 }
 
@@ -1376,10 +1535,7 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
         echo json_encode(['success' => true, 'messageId' => $messageId]);
         // Notify the user
         $NewMessageDefault = "New message from {$user['Username']}";
-        $NotificationType = 'message';
-        $notifyTargetUser = $connection->prepare("INSERT INTO Notifications (user_id, type, message) VALUES (?, ?, ?)");
-        $notifyTargetUser->bind_param("iss", $userId, $NotificationType, $NewMessageDefault);
-        $notifyTargetUser->execute();
+        createNotification($userId, 'message', $NewMessageDefault);
     } else {
         echo json_encode(['success' => false, 'error' => 'Failed to send message']);
     }
