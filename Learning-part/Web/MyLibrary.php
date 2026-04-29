@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once(__DIR__ . '/db_config.php');
-/* connection to database */
+// connect to the database
 $connection = createDatabaseConnection();
 
 if (!isset($_SESSION["userLogin"])) {
@@ -41,7 +41,7 @@ function userHasCollections(int $userId): bool
 }
 
 
-/* user info from DB */
+// get user info by username
 function getUserInfo($username)
 {
     global $connection;
@@ -103,7 +103,7 @@ function createNotification(int $userId, string $typeKey, string $message): bool
     return $stmt->execute();
 }
 
-/* Remove or delete my collection */
+// Remove a collection
 if (isset($_POST['targetCollection'])) {
     $removeCollectionContains = $connection->prepare("DELETE FROM CollectionContains WHERE Collection_id = ?");
     $removeCollectionContains->bind_param('i', $_POST['targetCollection']);
@@ -116,7 +116,7 @@ if (isset($_POST['targetCollection'])) {
     }
 }
 
-/* logout */
+// Logout
 if (isset($_POST["logoutBtn"])) {
     session_unset();
     session_destroy();
@@ -240,7 +240,7 @@ if (isset($_POST['displayCollections']) && $_POST['displayCollections']) {
     exit;
 }
 
-/* share Collection with Friends */
+// Share a collection with friends
 if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
     $user = getUserInfo($_SESSION['username']);
     $sharedBy = $user['UserID'];
@@ -273,7 +273,7 @@ if (isset($_POST['shareWith'], $_POST['targetCollectionToShare'])) {
     exit;
 }
 
-/* Stop sharing this collection */
+// Stop sharing a collection
 if (isset($_POST['CancelSharedCollection'])) {
     $collectionId = (int)$_POST['CancelSharedCollection'];
     $user = getUserInfo($_SESSION['username']);
@@ -292,8 +292,8 @@ if (isset($_POST['CancelSharedCollection'])) {
     }
     exit;
 }
-/* Return all the Collection related to ME */
-/* Return all the Collection related to ME */
+// Return collections related to me
+// Return collections related to me
 if (isset($_POST['FetchSharedCollection']) && $_POST['FetchSharedCollection']) {
     $user = getUserInfo($_SESSION['username']);
     $currentUserID = $user['UserID'];
@@ -447,6 +447,28 @@ if (isset($_POST['getNotifCounts'])) {
         }
     }
     echo json_encode($counts);
+    exit;
+}
+
+// Simple poll endpoint: returns a single number 'total_unread'
+// Use this when your client just wants to know if there are any unread items
+// Example AJAX: { simplePollNotif: true }
+if (isset($_POST['simplePollNotif'])) {
+    $total = 0;
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if ($user) {
+        $uid = (int)$user['UserID'];
+        $s = $connection->prepare("SELECT COUNT(*) as c FROM Notifications WHERE user_id = ? AND is_read = 0");
+        if ($s) {
+            $s->bind_param('i', $uid);
+            $s->execute();
+            $r = $s->get_result();
+            if ($row = $r->fetch_assoc()) {
+                $total = (int)$row['c'];
+            }
+        }
+    }
+    echo json_encode(['total_unread' => $total]);
     exit;
 }
 
@@ -694,7 +716,7 @@ if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDat
     exit;
 }
 
-/* Get only NEW measurements after a given timestamp (for real-time polling) */
+// Get new measurements since a timestamp (real-time)
 if (isset($_POST['getNewMeasurements'], $_POST['stationId'], $_POST['lastTimestamp'])) {
     $user = getUserInfo($_SESSION['username']);
     $Owner_id = $user['UserID'];
@@ -755,7 +777,7 @@ if (isset($_POST['getNewMeasurements'], $_POST['stationId'], $_POST['lastTimesta
     exit;
 }
 
-    /* save changes of user credentials */;
+// Save changes to user credentials
 
 function NavigationBarE()
 {
@@ -814,9 +836,9 @@ function NavigationBarE()
 }
 
 
-/* ==================== ADMIN FUNCTIONS ==================== */
+// === Admin functions ===
 
-/* Check if user is admin */
+// Check if a user is an admin
 function isAdmin($username)
 {
     global $connection;
@@ -831,14 +853,14 @@ function isAdmin($username)
     return false;
 }
 
-/* Update session Admin status - Add this after session_start section */
+// Update session admin flag after login
 if ($_SESSION["userLogin"]) {
     $_SESSION["Admin"] = isAdmin($_SESSION["username"]);
 }
 
-/* ==================== ADMIN POST HANDLERS ==================== */
+// Admin POST handlers
 
-/* Create new user (Admin only) */
+// Create a new user (admin only)
 if (isset($_POST['create_user']) && isset($_POST['new_username'])) {
     if (!$_SESSION["Admin"]) {
         echo "Unauthorized";
@@ -862,7 +884,7 @@ if (isset($_POST['create_user']) && isset($_POST['new_username'])) {
     exit;
 }
 
-/* Publish public message (Admin only) */
+// Publish a public announcement to all users (admin only)
 if (isset($_POST['publish_public_message'], $_POST['public_message'])) {
     if (!$_SESSION["Admin"]) {
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -917,7 +939,7 @@ if (isset($_POST['publish_public_message'], $_POST['public_message'])) {
     exit;
 }
 
-/* Get public announcements for logged-in user */
+// Get public announcements for the logged-in user
 if (isset($_POST['get_public_announcements'])) {
     if (!($_SESSION['userLogin'] ?? false)) {
         echo json_encode(['success' => false, 'messages' => []]);
@@ -945,7 +967,7 @@ if (isset($_POST['get_public_announcements'])) {
     exit;
 }
 
-/* Get all users for admin (Admin only) */
+// Get all users (admin only)
 if (isset($_POST['get_all_users']) && $_POST['get_all_users']) {
     if (!$_SESSION["Admin"]) {
         echo "Unauthorized";
@@ -1294,7 +1316,7 @@ if (isset($_POST['get_admin_stats'])) {
     exit;
 }
 
-/* ==================== GROUP CHAT HANDLERS ==================== */
+// === Group chat handlers ===
 
 /* Get all users as JSON for admin dropdowns (Admin only) */
 if (isset($_POST['get_users_for_select'])) {
@@ -1533,9 +1555,35 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
     if ($insertMessage->execute()) {
         $messageId = $insertMessage->insert_id;
         echo json_encode(['success' => true, 'messageId' => $messageId]);
-        // Notify the user
+        // Notify all other group members (exclude sender)
+        // Fetch group name for nicer notification text
+        $groupName = '';
+        $gstmt = $connection->prepare("SELECT Group_name FROM ChatGroup WHERE Group_id = ? LIMIT 1");
+        if ($gstmt) {
+            $gstmt->bind_param('i', $groupId);
+            $gstmt->execute();
+            $gstmt->bind_result($groupName);
+            $gstmt->fetch();
+            $gstmt->close();
+        }
+
         $NewMessageDefault = "New message from {$user['Username']}";
-        createNotification($userId, 'message', $NewMessageDefault);
+        if (!empty($groupName)) {
+            $NewMessageDefault .= " in group '{$groupName}'";
+        }
+
+        $membersStmt = $connection->prepare("SELECT User_id FROM GroupMember WHERE Group_id = ? AND User_id != ?");
+        if ($membersStmt) {
+            $membersStmt->bind_param('ii', $groupId, $userId);
+            $membersStmt->execute();
+            $membersResult = $membersStmt->get_result();
+            while ($mrow = $membersResult->fetch_assoc()) {
+                $targetId = (int)$mrow['User_id'];
+                // best-effort: create notification for each member; ignore failures
+                createNotification($targetId, 'message', $NewMessageDefault);
+            }
+            $membersStmt->close();
+        }
     } else {
         echo json_encode(['success' => false, 'error' => 'Failed to send message']);
     }

@@ -1036,7 +1036,7 @@ function DisplayNotification() {
 
   const closeBtn = $("<button>")
     .attr("type", "button")
-    .html("<i class='bx bx-x'></i>")
+    .html("X")
     .addClass("exitChatBox")
     .on("click", CloseChatBox);
 
@@ -1973,8 +1973,24 @@ function OpenGroupChat(groupId, groupName) {
   });
 
   inputContainer.append(composerLabel, input, sendBtn);
-  section.append(exitBtn, heading, backBtn, messageList, inputContainer);
+  // Add a container that constrains the chat width/height for better UX
+  const chatWrapper = $("<div>").addClass("chatOverlay");
+  chatWrapper.append(messageList, inputContainer);
+  section.append(exitBtn, heading, backBtn, chatWrapper);
   $("body").append(blurDiv, section);
+
+  // When user opens the chat, mark message notifications as read on the server
+  $.post(
+    "../MyLibrary.php",
+    { markNotifRead: true, notifType: "message" },
+    function () {
+      // clear the bell unread indicator (simple visual update)
+      $("#DisplayPublicMessage").removeClass("has-unread");
+    },
+    "json",
+  ).fail(function () {
+    // ignore failures for this best-effort call
+  });
 
   // Load all existing messages first
   $.post(
@@ -2025,11 +2041,8 @@ function appendGroupMessage(messageList, msg) {
   const isMine =
     typeof window.currentUsername !== "undefined" &&
     msg.sender_name === window.currentUsername;
-
   const container = $("<div>").addClass(
-    isMine
-      ? "sent_message_container sent"
-      : "received_message_container received",
+    isMine ? "sent_message_container sent" : "sent_message_container received",
   );
   const profileImg = $("<img>")
     .attr("src", "../img/User.png")
@@ -2052,37 +2065,44 @@ function startNotificationPolling() {
 }
 
 function pollNotifications() {
+  // Fast, lightweight poll: ask server only for total unread first.
+  // If there are unread items, fetch per-type counts to update badges.
   $.post(
     "../MyLibrary.php",
-    { getNotifCounts: true, userId: window.currentUserId },
-    function (data) {
-      updateNotifBadge("#friendsNotifBadge", data.friend_request);
-      updateNotifBadge("#collectionNotifBadge", data.collection_share);
-      const totalUnread = Object.values(data || {}).reduce(function (
-        sum,
-        value,
-      ) {
-        return sum + (Number(value) || 0);
-      }, 0);
-      if (totalUnread > 0) {
+    { simplePollNotif: true },
+    function (res) {
+      const total =
+        res && Number(res.total_unread) ? Number(res.total_unread) : 0;
+
+      if (total > 0) {
+        // show visual indicator on the bell
         $("#DisplayPublicMessage").addClass("has-unread");
+
+        // update detailed badges (friend / collection) when there is something to show
+        $.post(
+          "../MyLibrary.php",
+          { getNotifCounts: true },
+          function (data) {
+            updateNotifBadge("#friendsNotifBadge", data.friend_request || 0);
+            updateNotifBadge(
+              "#collectionNotifBadge",
+              data.collection_share || 0,
+            );
+          },
+          "json",
+        ).fail(function () {
+          // ignore failures for badge update (best-effort)
+        });
       } else {
+        // no unread notifications: hide all indicators
         $("#DisplayPublicMessage").removeClass("has-unread");
+        $("#friendsNotifBadge, #collectionNotifBadge").hide();
       }
-      //pull all notifications and update unread notifications
-      $.post(
-        "../MyLibrary.php",
-        { getAllNotifications: true, userId: window.currentUserId },
-        function (notifData) {
-          if (notifData && notifData.success) {
-            // Process and display notifications
-          }
-        },
-        "json",
-      );
     },
     "json",
-  );
+  ).fail(function () {
+    // network/server error: keep UI unchanged and fail silently
+  });
 }
 
 function updateNotifBadge(selector, count) {
