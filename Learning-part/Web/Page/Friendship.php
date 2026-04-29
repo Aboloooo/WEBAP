@@ -21,83 +21,8 @@ include_once("../MyLibrary.php");
 <body>
     <?php
     NavigationBarE();
-    ?>
-    <?php
-
-    if (isset($_POST['submitBtn'])) {
-        if (!$_SESSION["userLogin"]) {
-            echo "<script>
-        alert('Please login first');
-        window.location.href = 'sign_in_up.php';
-    </script>";
-            exit;
-        }
-        if (isset($_POST['username']) && !empty(trim($_POST['username']))) {
-            $friendFinder = $connection->prepare("SELECT * FROM Users WHERE username =?");
-            $friendFinder->bind_param('s', $_POST['username']);
-            $friendFinder->execute();
-            $result = $friendFinder->get_result();
-
-            if ($result->num_rows > 0) {
-                $rowB = $result->fetch_assoc();
-                $UserB_ID = $rowB['UserID'];
-                $userA = getUserInfo($_SESSION['username']);
-                if ($userA) {
-                    $UserA_ID = $userA['UserID'];
-                    if ($UserA_ID == $UserB_ID) {
-                        echo "<script>alert('You cannot add yourself as a friend!');
-                       window.location.href = 'Friendship.php';
-                        </script>";
-                        return;
-                    }
-
-                    $checkQuery = $connection->prepare("SELECT status FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?) ");
-                    $checkQuery->bind_param("iiii", $UserA_ID, $UserB_ID, $UserB_ID, $UserA_ID);
-                    $checkQuery->execute();
-                    $checkResult = $checkQuery->get_result();
-                    if ($checkResult->num_rows > 0) {
-                        $existingRow = $checkResult->fetch_assoc();
-                        $existingStatus = $existingRow['status'];
-                        if ($existingStatus === 'rejected') {
-                            // allow resending — reset to pending
-                            $resend = $connection->prepare("UPDATE FriendList SET status = 'pending', requested_by = ? WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserB_ID = ? AND UserA_ID = ?)");
-                            $resend->bind_param('iiiii', $UserA_ID, $UserA_ID, $UserB_ID, $UserA_ID, $UserB_ID);
-                            if ($resend->execute()) {
-                                echo "<script>alert('Friendship request sent successfully!');</script>";
-                            }
-                        } else {
-                            echo "Your friendship request is already sent or you are already friends with this user.";
-                        }
-                    } else {
-                        $createFriendship = $connection->prepare("insert into FriendList(UserA_ID ,UserB_ID,status,requested_by) VALUES (?,?,?,?)");
-                        $status = 'pending';
-                        $requested_by = $UserA_ID;
-                        $createFriendship->bind_param('iisi', $UserA_ID, $UserB_ID, $status, $requested_by);
-                        if ($createFriendship->execute()) {
-                            // notify the recipient about the new friend request
-                            $senderName = $_SESSION['username'];
-                            $notifMsg = "$senderName sent you a friend request";
-                            $notifStmt = $connection->prepare("INSERT INTO Notifications (user_id, type, message) VALUES (?, 'friend_request', ?)");
-                            if ($notifStmt) {
-                                $notifStmt->bind_param('is', $UserB_ID, $notifMsg);
-                                $notifStmt->execute();
-                            }
-                            echo "<script>alert('Friendship request sent successfully!');</script>";
-                        } else {
-                            echo "<script>alert('Error adding friend: " . $connection->error . "');</script>";
-                        }
-                    }
-                }
-            } else {
-                echo "User didnt found";
-            }
-        } else {
-            echo "User ID is required";
-        }
-    }
     $totalFriends = DisplayNumberOfFriends($connection, 'accepted');
     $totalPendingRequests = DisplayNumberOfFriends($connection, 'pending');
-
     ?>
     <script>
         window.currentUsername = <?= json_encode($_SESSION["username"]) ?>;
@@ -130,10 +55,10 @@ include_once("../MyLibrary.php");
             </div>
 
             <div class="friendFinderContainer friendship-finder-wrap">
-                <form method="post" class="friendship-form-card">
+                <form method="post" class="friendship-form-card" onsubmit="FriendshipRequest(event)">
                     <h2>Add Friend</h2>
                     <p>Enter a username to send a friendship request.</p>
-                    <input type="text" name="username" placeholder="Enter username" required>
+                    <input type="text" name="username" id="targetUsernameToBeFriend" placeholder="Enter username" required>
                     <button type="submit" name="submitBtn">
                         <i class='bx bx-plus-circle'></i> Add Friend
                     </button>

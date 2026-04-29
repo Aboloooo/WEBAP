@@ -293,7 +293,6 @@ if (isset($_POST['CancelSharedCollection'])) {
     exit;
 }
 // Return collections related to me
-// Return collections related to me
 if (isset($_POST['FetchSharedCollection']) && $_POST['FetchSharedCollection']) {
     $user = getUserInfo($_SESSION['username']);
     $currentUserID = $user['UserID'];
@@ -1390,10 +1389,14 @@ if (isset($_POST['createGroup'], $_POST['groupName'])) {
     $user = getUserInfo($_SESSION['username']);
     $creatorId = $user['UserID'];
 
-    $stmt = $connection->prepare("INSERT INTO ChatGroup (Group_name, Created_by) VALUES (?, ?)");
+    $stmt = $connection->prepare("INSERT INTO ChatGroup (Group_name, Creator_id) VALUES (?, ?)");
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'error' => 'Failed to prepare group creation: ' . $connection->error]);
+        exit;
+    }
     $stmt->bind_param('si', $groupName, $creatorId);
     if (!$stmt->execute()) {
-        echo json_encode(['success' => false, 'error' => 'Failed to create group']);
+        echo json_encode(['success' => false, 'error' => 'Failed to create group: ' . $stmt->error]);
         exit;
     }
     $groupId = $connection->insert_id;
@@ -1429,16 +1432,20 @@ if (isset($_POST['getMyGroups']) && $_POST['getMyGroups']) {
     $user = getUserInfo($_SESSION['username']);
     $userId = $user['UserID'];
 
-    $stmt = $connection->prepare("
-        SELECT cg.Group_id, cg.Group_name, cg.Created_by, u.Username AS creator_name,
+    $stmt = $connection->prepare(" 
+        SELECT cg.Group_id, cg.Group_name, cg.Creator_id AS Created_by, u.Username AS creator_name,
                COUNT(gm2.User_id) AS member_count
         FROM ChatGroup cg
         JOIN GroupMember gm ON cg.Group_id = gm.Group_id AND gm.User_id = ?
-        JOIN Users u ON cg.Created_by = u.UserID
+        JOIN Users u ON cg.Creator_id = u.UserID
         LEFT JOIN GroupMember gm2 ON cg.Group_id = gm2.Group_id
         GROUP BY cg.Group_id
         ORDER BY cg.Created_at DESC
     ");
+    if (!$stmt) {
+        echo json_encode([]);
+        exit;
+    }
     $stmt->bind_param('i', $userId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -1462,12 +1469,16 @@ if (isset($_POST['addGroupMember'], $_POST['groupId'], $_POST['friendId'])) {
     $userId = $user['UserID'];
 
     // Verify caller is the group creator
-    $check = $connection->prepare("SELECT Created_by FROM ChatGroup WHERE Group_id = ?");
+    $check = $connection->prepare("SELECT Creator_id FROM ChatGroup WHERE Group_id = ?");
+    if (!$check) {
+        echo json_encode(['success' => false, 'error' => 'Failed to verify group creator: ' . $connection->error]);
+        exit;
+    }
     $check->bind_param('i', $groupId);
     $check->execute();
     $checkResult = $check->get_result();
     $groupRow = $checkResult->fetch_assoc();
-    if (!$groupRow || (int)$groupRow['Created_by'] !== $userId) {
+    if (!$groupRow || (int)$groupRow['Creator_id'] !== $userId) {
         echo json_encode(['success' => false, 'error' => 'Only the group creator can add members']);
         exit;
     }
@@ -1512,8 +1523,22 @@ if (isset($_POST['getGroupMessages'], $_POST['groupId'])) {
     $stmt->execute();
     $result = $stmt->get_result();
     $messages = [];
+    $messageIds = [];
     while ($row = $result->fetch_assoc()) {
         $messages[] = $row;
+        $messageIds[] = (int)$row['Message_id'];
+    }
+
+    // Mark fetched messages as read by the current user
+    if (!empty($messageIds)) {
+        $markRead = $connection->prepare('INSERT IGNORE INTO MessageRead (message_id, user_id) VALUES (?, ?)');
+        if ($markRead) {
+            foreach ($messageIds as $mid) {
+                $markRead->bind_param('ii', $mid, $userId);
+                $markRead->execute();
+            }
+            $markRead->close();
+        }
     }
     echo json_encode(['success' => true, 'messages' => $messages]);
     exit;
@@ -1554,6 +1579,15 @@ if (isset($_POST['sendGroupMessage'], $_POST['groupId'], $_POST['content'])) {
     $insertMessage->bind_param('siis', $content, $userId, $groupId, $currentTime);
     if ($insertMessage->execute()) {
         $messageId = $insertMessage->insert_id;
+
+        // Mark message as read by the sender immediately
+        $markRead = $connection->prepare('INSERT IGNORE INTO MessageRead (message_id, user_id) VALUES (?, ?)');
+        if ($markRead) {
+            $markRead->bind_param('ii', $messageId, $userId);
+            $markRead->execute();
+            $markRead->close();
+        }
+
         echo json_encode(['success' => true, 'messageId' => $messageId]);
         // Notify all other group members (exclude sender)
         // Fetch group name for nicer notification text
@@ -1690,6 +1724,74 @@ if (isset($_POST['friendRequestAction'], $_POST['requestId'])) {
         }
     } else {
         echo json_encode(['error' => 'Execute failed: ' . $changeFriendshipStatus->error]);
+    }
+    exit;
+}
+// Sending friendship request
+if (isset($_POST['FriendshipDemand'], $_POST['targetFriend'])) {
+    //Get your userID and target friend ID
+    $current_user = getUserInfo($_SESSION["username"]);
+    if (!$current_user) {
+        echo json_encode(['error' => 'Current user could not be loaded. Please sign in again.']);
+        exit;
+    }
+
+    $current_user_ID = $current_user['UserID'];
+    $targetUsername = trim($_POST['targetFriend']);
+    $targetFriend = getUserInfo($targetUsername);
+    if (!$targetFriend) {
+        echo json_encode(['error' => 'User not found.']);
+        exit;
+    }
+
+    $targetFriend_ID = $targetFriend['UserID'];
+
+    //check current friendship status
+    //Get your userID
+    //Check that for doublication demand
+    //You can not add yourself as friend
+    if ($current_user_ID === $targetFriend_ID) {
+        echo json_encode(['error' => 'You cannot add yourself as a friend.']);
+        exit;
+    }
+
+    // Check for duplicate friendship demand
+    $checkDuplicate = $connection->prepare('SELECT * FROM FriendList WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserA_ID = ? AND UserB_ID = ?)');
+    $checkDuplicate->bind_param('iiii', $current_user_ID, $targetFriend_ID, $targetFriend_ID, $current_user_ID);
+    $checkDuplicate->execute();
+    $result = $checkDuplicate->get_result();
+    if ($result->num_rows > 0) {
+        $existingRow = $result->fetch_assoc();
+        $existingStatus = $existingRow['status'];
+        if ($existingStatus === 'pending') {
+            echo json_encode(['error' => 'A friendship request is already pending with this user.']);
+            exit;
+        } elseif ($existingStatus === 'accepted') {
+            echo json_encode(['error' => 'You are already friends with this user.']);
+            exit;
+        } elseif ($existingStatus === 'rejected') {
+            // Allow resending — reset the existing record to pending
+            $resend = $connection->prepare("UPDATE FriendList SET status = 'pending', requested_by = ? WHERE (UserA_ID = ? AND UserB_ID = ?) OR (UserA_ID = ? AND UserB_ID = ?)");
+            $resend->bind_param('iiiii', $current_user_ID, $current_user_ID, $targetFriend_ID, $targetFriend_ID, $current_user_ID);
+            if ($resend->execute() && $resend->affected_rows > 0) {
+                echo json_encode(['success' => 'Your friendship request has been sent.']);
+            } else {
+                echo json_encode(['error' => 'Failed to resend friendship request: ' . $resend->error]);
+            }
+            exit;
+        }
+    }
+
+    // Insert new friendship demand
+    $insertFriendshipDemand = $connection->prepare('INSERT INTO FriendList (UserA_ID, UserB_ID, status, requested_by) VALUES (?, ?, ?, ?)');
+    $status = 'pending';
+    $insertFriendshipDemand->bind_param('iisi', $current_user_ID, $targetFriend_ID, $status, $current_user_ID);
+    if ($insertFriendshipDemand->execute()) {
+        echo json_encode(['success' => 'Your friendship request has been sent.']);
+        // Optionally, create a notification for the target user
+        createNotification($targetFriend_ID, 'friend_request', "You have a new friendship request from {$current_user['Username']}");
+    } else {
+        echo json_encode(['error' => 'Failed to send friendship request: ' . $insertFriendshipDemand->error]);
     }
     exit;
 }

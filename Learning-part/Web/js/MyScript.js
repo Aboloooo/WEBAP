@@ -2130,3 +2130,31 @@ $(document).on("click", "#navCollectionLink", function () {
   });
   $("#collectionNotifBadge").hide();
 });
+
+//sending friendship request
+function FriendshipRequest(event) {
+  if (event) {
+    event.preventDefault();
+  }
+
+  let targetUser = $("#targetUsernameToBeFriend").val().trim();
+  if (!targetUser) {
+    alert("Please enter a username.");
+    return;
+  }
+  $.post(
+    "../MyLibrary.php",
+    { FriendshipDemand: true, targetFriend: targetUser },
+    function (res) {
+      if (res.success) {
+        alert("Your friendship request has been sent.");
+        $("#targetUsernameToBeFriend").val("");
+      } else if (res.error) {
+        alert("Error: " + res.error);
+      }
+    },
+    "json",
+  ).fail(function () {
+    alert("Request failed. Please try again.");
+  });
+}

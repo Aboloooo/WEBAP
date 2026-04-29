@@ -112,7 +112,6 @@ CREATE TABLE Message(
     Message_content VARCHAR(255),
     Sender_ID INT,
     Group_id INT DEFAULT NULL,
-    isViewed ENUM('unseen', 'seen') DEFAULT 'unseen',
     Message_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Sender_ID) REFERENCES Users(UserID)
 );
@@ -120,21 +119,24 @@ insert into Users(Fullname, Email, Username, Password, AccessLevelID) values
 ('Alice Smith', 'alice@example.com', 'user1', '1', 3),
 ('Bob Johnson', 'bob@example.com', 'user2', '2', 3),
 ('Charlie Brown', 'charlie@example.com', 'user3', '3', 3);
-INSERT INTO Message (Message_content, Sender_ID, isViewed, Message_time) VALUES
-('Hello, how are you?', 1, 'unseen', '20:10'),
-('Reminder: Meeting at 10 AM', 1, 'unseen', '10:00'),
-('sure', 2, 'unseen', '12:00'),
-('Im not aware!', 3, 'unseen', '14:00');
 
--- ChatGroup table
-CREATE TABLE ChatGroup (
-    Group_id INT PRIMARY KEY AUTO_INCREMENT,
-    Group_name VARCHAR(100) NOT NULL,
-    Created_by INT NOT NULL,
-    Created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (Created_by) REFERENCES Users(UserID)
+-- MessageRead table: tracks which users have read each message
+CREATE TABLE MessageRead (
+    message_id INT NOT NULL,
+    user_id    INT NOT NULL,
+    read_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (message_id, user_id),
+    FOREIGN KEY (message_id) REFERENCES Message(Message_ID),
+    FOREIGN KEY (user_id)    REFERENCES Users(UserID)
 );
 
+CREATE TABLE ChatGroup (
+    Group_id INT PRIMARY KEY AUTO_INCREMENT,
+    Group_name VARCHAR(50) NOT NULL,
+    Creator_id INT NOT NULL,
+    Created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Creator_id) REFERENCES Users(UserID)
+);
 -- GroupMember table (creator is also added as a member)
 CREATE TABLE GroupMember (
     Group_id INT NOT NULL,
@@ -142,18 +144,6 @@ CREATE TABLE GroupMember (
     PRIMARY KEY (Group_id, User_id),
     FOREIGN KEY (Group_id) REFERENCES ChatGroup(Group_id),
     FOREIGN KEY (User_id) REFERENCES Users(UserID)
-);
-
--- GroupMessage table
-CREATE TABLE GroupMessage (
-    Message_id INT PRIMARY KEY AUTO_INCREMENT,
-    Group_id INT NOT NULL,
-    Sender_id INT NOT NULL,
-    Message_Content_ID INT NOT NULL,
-    Sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (Group_id) REFERENCES ChatGroup(Group_id),
-    FOREIGN KEY (Sender_id) REFERENCES Users(UserID),
-    FOREIGN KEY (Message_Content_ID) REFERENCES Message(Message_ID)
 );
 
 -- NotificationType table
