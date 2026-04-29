@@ -1807,7 +1807,7 @@ function CreateGroupChat() {
   friendsList.text("Loading friends...");
 
   const createBtn = $("<button>")
-    .addClass("btn btn-approve")
+    .addClass("btn btn-approve sticky")
     .text("Create Group")
     .css("margin-top", "1rem")
     .on("click", function () {
@@ -1843,8 +1843,8 @@ function CreateGroupChat() {
     subHeading,
     nameInput,
     friendsLabel,
-    friendsList,
     createBtn,
+    friendsList,
   );
   $("body").append(blurDiv, section);
 
