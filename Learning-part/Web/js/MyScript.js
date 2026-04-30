@@ -2061,7 +2061,7 @@ function appendGroupMessage(messageList, msg) {
 
 function startNotificationPolling() {
   pollNotifications();
-  setInterval(pollNotifications, 20000);
+  setInterval(pollNotifications, 1000);
 }
 
 function pollNotifications() {
