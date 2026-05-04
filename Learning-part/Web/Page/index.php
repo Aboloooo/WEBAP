@@ -8,6 +8,7 @@ include_once("../MyLibrary.php");
     <!-- CDN jQuery pull -->
     <!--     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
     <script src="../js/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <!-- my vanila js script -->
     <script src="../js/MyScript.js"></script>
     <!-- bank of icons -->
@@ -264,7 +265,7 @@ include_once("../MyLibrary.php");
         </div>
 
         <div class="dashboard-metrics">
-            <div class="metric-card">
+            <div class="metric-card active-metric" data-metric="humidity">
                 <div class="metric-icon">
                     <i class='bx bx-droplet'></i>
                 </div>
@@ -278,7 +279,7 @@ include_once("../MyLibrary.php");
                 </div>
             </div>
 
-            <div class="metric-card">
+            <div class="metric-card" data-metric="pressure">
                 <div class="metric-icon">
                     <i class='bx bx-wind'></i>
                 </div>
@@ -292,7 +293,7 @@ include_once("../MyLibrary.php");
                 </div>
             </div>
 
-            <div class="metric-card">
+            <div class="metric-card" data-metric="light">
                 <div class="metric-icon">
                     <i class='bx bx-sun'></i>
                 </div>
@@ -306,7 +307,7 @@ include_once("../MyLibrary.php");
                 </div>
             </div>
 
-            <div class="metric-card">
+            <div class="metric-card" data-metric="airquality">
                 <div class="metric-icon">
                     <i class='bx bx-leaf'></i>
                 </div>
@@ -324,12 +325,12 @@ include_once("../MyLibrary.php");
         <div class="dashboard-charts">
             <div class="chart-container">
                 <div class="chart-header">
-                    <h3>Temperature Trend</h3>
+                    <h3 id="chartMetricTitle">Humidity Trend</h3>
                     <div class="chart-controls">
-                        <button class="chart-btn active" data-period="1h">1H</button>
-                        <button class="chart-btn" data-period="24h">24H</button>
-                        <button class="chart-btn" data-period="7d">7D</button>
-                        <button class="chart-btn" data-period="30d">30D</button>
+                        <button type="button" class="chart-btn active" data-period="1h">1H</button>
+                        <button type="button" class="chart-btn" data-period="24h">24H</button>
+                        <button type="button" class="chart-btn" data-period="7d">7D</button>
+                        <button type="button" class="chart-btn" data-period="30d">30D</button>
                     </div>
                 </div>
                 <div class="chart-canvas-wrap">

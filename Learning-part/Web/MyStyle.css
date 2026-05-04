@@ -5501,6 +5501,17 @@ section > article {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
+.metric-card[data-metric] {
+  cursor: pointer;
+}
+
+.metric-card.active-metric {
+  border-color: var(--primary-color);
+  box-shadow:
+    0 0 0 3px rgba(30, 136, 229, 0.18),
+    0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
 .metric-icon {
   font-size: 2.5rem;
   color: var(--primary-color);
@@ -5587,6 +5598,31 @@ section > article {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: white;
+}
+
+.chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+.chart-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.chart-canvas-wrap.chart-no-data::after {
+  content: "No data available for this period";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .chart-placeholder {

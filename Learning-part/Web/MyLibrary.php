@@ -656,6 +656,101 @@ if (isset($_POST['getLatestMeasurement'])) {
     exit;
 }
 
+// get trend measurements for dashboard chart
+if (isset($_POST['getTrendMeasurements'])) {
+    $user = getUserInfo($_SESSION['username'] ?? '');
+    if (!$user) {
+        echo json_encode(['success' => false, 'data' => []]);
+        exit;
+    }
+
+    $ownerId = (int)$user['UserID'];
+    $stationId = (int)($_POST['stationId'] ?? 0);
+    $period = $_POST['period'] ?? '24h';
+    $metricKey = $_POST['metric'] ?? 'humidity';
+
+    $metricColumnMap = [
+        'humidity'   => 'Humidity',
+        'pressure'   => 'Air_pressure',
+        'light'      => 'Light_intensity',
+        'airquality' => 'Air_quality',
+        'temperature' => 'Temperature',
+    ];
+    $metricColumn = $metricColumnMap[$metricKey] ?? 'Humidity';
+
+    $intervalSecondsMap = [
+        '1h'  => 3600,
+        '24h' => 86400,
+        '7d'  => 604800,
+        '30d' => 2592000,
+    ];
+    $intervalSeconds = $intervalSecondsMap[$period] ?? 86400;
+
+    // Step 1: find the latest available timestamp for this owner/station
+    if ($stationId === 0) {
+        $anchorSql = "SELECT MAX(m.Timestamp) AS max_ts
+            FROM Measurement m
+            INNER JOIN Station s ON m.Station_id = s.Station_id
+            WHERE s.Owner_id = ?";
+        $anchorStmt = $connection->prepare($anchorSql);
+        $anchorStmt->bind_param('i', $ownerId);
+    } else {
+        $anchorSql = "SELECT MAX(m.Timestamp) AS max_ts
+            FROM Measurement m
+            INNER JOIN Station s ON m.Station_id = s.Station_id
+            WHERE m.Station_id = ? AND s.Owner_id = ?";
+        $anchorStmt = $connection->prepare($anchorSql);
+        $anchorStmt->bind_param('ii', $stationId, $ownerId);
+    }
+    $anchorStmt->execute();
+    $anchorRow = $anchorStmt->get_result()->fetch_assoc();
+    $anchorTs  = $anchorRow['max_ts'] ?? null;
+
+    if (!$anchorTs) {
+        echo json_encode(['success' => true, 'data' => [], 'metric' => $metricKey]);
+        exit;
+    }
+
+    $startTs = date('Y-m-d H:i:s', strtotime($anchorTs) - $intervalSeconds);
+
+    // Step 2: fetch measurements in the computed time window
+    if ($stationId === 0) {
+        $sql = "SELECT m.Timestamp, m.`$metricColumn` AS value
+            FROM Measurement m
+            INNER JOIN Station s ON m.Station_id = s.Station_id
+            WHERE s.Owner_id = ?
+              AND m.Timestamp BETWEEN ? AND ?
+            ORDER BY m.Timestamp ASC
+            LIMIT 500";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param('iss', $ownerId, $startTs, $anchorTs);
+    } else {
+        $sql = "SELECT m.Timestamp, m.`$metricColumn` AS value
+            FROM Measurement m
+            INNER JOIN Station s ON m.Station_id = s.Station_id
+            WHERE m.Station_id = ? AND s.Owner_id = ?
+              AND m.Timestamp BETWEEN ? AND ?
+            ORDER BY m.Timestamp ASC
+            LIMIT 500";
+        $stmt = $connection->prepare($sql);
+        $stmt->bind_param('iiss', $stationId, $ownerId, $startTs, $anchorTs);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $points = [];
+    while ($row = $result->fetch_assoc()) {
+        $points[] = [
+            'Timestamp' => $row['Timestamp'],
+            'value'     => $row['value'] !== null ? (float)$row['value'] : null,
+        ];
+    }
+
+    echo json_encode(['success' => true, 'data' => $points, 'metric' => $metricKey]);
+    exit;
+}
+
 if (isset($_POST['selectedOption'], $_POST['filterDateStart'], $_POST['filterDateEnd'])) {
 
     // I need to check and verify that I always get measurements of my own station

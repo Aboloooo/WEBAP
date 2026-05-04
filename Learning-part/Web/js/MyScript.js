@@ -1,7 +1,6 @@
 $(start);
 
 function start() {
-  // we can start writing here
   updateNavbarSizeOnScroll();
 
   $(window).on("scroll", function () {
@@ -16,7 +15,7 @@ function start() {
     updateNavbarSizeOnScroll();
   });
 
-  // Run after all assets/styles are loaded so section offsets are accurate
+  // wait for all assets before checking scroll positions
   $(window).on("load", function () {
     PageScrollDetector();
   });
@@ -31,13 +30,12 @@ function start() {
     window.location.href = "./sign_in_up.php";
   });
 
-  /* sign in up overlayout trigger */
   $(".layoutTrigger").click(overlayoutTrigger);
 
   $("#saveBtn").on("click", saveChanges);
 }
 
-/* date formater for database */
+// formats a datetime-local value into a SQL-compatible string
 function formatThisDate(input) {
   var date = new Date(input.replace("T", " "));
 
@@ -56,7 +54,7 @@ function formatThisDate(input) {
   return formatted;
 }
 
-/* class toggle function */
+// toggle a CSS class on all elements matching a selector
 function toggleMyClass(classTarget, className) {
   $("." + classTarget).each(function () {
     $(this).toggleClass(className);
@@ -73,7 +71,7 @@ function Logout() {
   );
 }
 
-/* Toggles dark mode and saves preference to localStorage */
+// switch dark/light mode and remember the choice
 function toggleDarkMode() {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   if (isDark) {
@@ -89,7 +87,7 @@ function toggleDarkMode() {
   }
 }
 
-/* Applies saved theme on page load */
+// restore the theme the user last chose
 function applySavedTheme() {
   if (localStorage.getItem("theme") === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
@@ -102,7 +100,7 @@ function applySavedTheme() {
 }
 
 function saveChanges() {
-  /* only in case two passwords are match we can pass them */
+  // only submit if both passwords match
   let pass = $("#passwordInput").val();
   let confirPass = $("#passwordConfirmationInput").val();
   if (pass !== "") {
@@ -121,7 +119,6 @@ function saveChanges() {
     data.pass = pass;
   }
   $.post("../MyLibrary.php", data, function (htmlReply) {
-    // we get called here when the request was finished
     alert(htmlReply);
     toggleMyClass("info_row", "editing");
     $("#saveBtn").css("display", "none");
@@ -131,7 +128,6 @@ function saveChanges() {
 }
 
 function enableEditing() {
-  // Enter edit mode for all fields
   $("#cancelBtn").css("display", "flex");
   $("#saveBtn").css("display", "flex");
   toggleMyClass("info_row", "editing");
@@ -146,7 +142,7 @@ function cancelEdit() {
 
 let timer;
 
-/* Highlights the navbar link for the currently visible section (index.php scroll) */
+// highlight the nav link for whichever section is on screen
 function PageScrollDetector() {
   const navHeight = $("nav").outerHeight() || 0;
   let activeId = null;
@@ -164,7 +160,7 @@ function PageScrollDetector() {
   }
 }
 
-/* Highlights the navbar link matching the current page filename */
+// mark the active nav link for the current page
 function highlightActiveNavLink() {
   const page = window.location.pathname.split("/").pop().toLowerCase();
 
@@ -206,7 +202,7 @@ function updateNavbarSizeOnScroll() {
   );
 }
 
-/* sign in up overlayout trigger */
+// slide the sign-in/sign-up panel in or out
 function overlayoutTrigger() {
   let currentPosition = parseInt($(".overlayout").css("left"));
   if (currentPosition == 0) {
@@ -216,9 +212,6 @@ function overlayoutTrigger() {
   }
 }
 
-// state managment
-/* everytime we want to edit the initial data, we simply change the
-value of the field and call function initializeOriginalData() */
 function removeFriend(target_user) {
   $.post(
     "../MyLibrary.php",
@@ -229,13 +222,10 @@ function removeFriend(target_user) {
     },
   );
 }
-// ====== Create Friend Card Function ======
 function createFriendCard(friend, allowMultiSelect = false) {
   let card = $("<div>").addClass("friendCard").data("id", friend.id);
 
   let defaultProfileImg = "../img/User.png";
-
-  // Selection square for multi-select
   let selectBox = $("<div>").addClass("selectBox");
 
   let avatar = $("<img>")
@@ -250,19 +240,17 @@ function createFriendCard(friend, allowMultiSelect = false) {
   info.append(username, email);
   const pagePath = decodeURIComponent(window.location.pathname);
   const isCollectionPage = pagePath.endsWith("/Collection.php");
-  // Remove friend button
   let removeBtn = $("<button>")
     .addClass("removeFriendBtn")
     .html("&times;")
     .toggle(!isCollectionPage)
     .on("click", function (e) {
-      e.stopPropagation(); // Prevent selecting card
+      e.stopPropagation();
       removeFriend(friend.id);
       card.remove();
-      updateShareButton(); // update selection count if necessary
+      updateShareButton();
     });
 
-  // Multi-select behavior
   if (allowMultiSelect) {
     card.addClass("selectable");
     card.on("click", function () {
@@ -287,7 +275,6 @@ function DisplayFriends(targetCollection) {
     String(targetCollection) !== "" &&
     String(targetCollection) !== "0";
 
-  // Remove previous overlay if exists
   $(".blur-background, .content").remove();
 
   let blurDiv = $("<div>").addClass("blur-background");
@@ -319,7 +306,6 @@ function DisplayFriends(targetCollection) {
         return;
       }
 
-      // Use the correct collection ID here
       $.post(
         "../MyLibrary.php",
         {
@@ -349,7 +335,6 @@ function DisplayFriends(targetCollection) {
   sectionContent.append(friendsList);
   $("body").append(blurDiv, sectionContent);
 
-  // Fetch friends from backend
   $.post(
     "../MyLibrary.php",
     { showFriends: "true" },
@@ -380,7 +365,6 @@ function CloseChatBox() {
 }
 
 function DisplayPendingRequests() {
-  // Remove previous overlay if exists
   $(".blur-background, .content").remove();
 
   let blurDiv = $("<div>").addClass("blur-background");
@@ -413,7 +397,7 @@ function DisplayPendingRequests() {
       request.UserA_ID || request.userA_id || request.user_a_id || null;
     const userB_id =
       request.UserB_ID || request.userB_id || request.user_b_id || null;
-    const requestId = `${userA_id},${userB_id}`; // Construct a unique ID for the request card
+    const requestId = `${userA_id},${userB_id}`;
 
     $.post(
       "../MyLibrary.php",
@@ -422,7 +406,6 @@ function DisplayPendingRequests() {
         requestId: requestId,
       },
       function (serverRespond) {
-        // serverRespond is expected to be JSON with either {success: true} or {error: '...'}
         try {
           const resp =
             typeof serverRespond === "object"
@@ -431,18 +414,15 @@ function DisplayPendingRequests() {
           if (resp && resp.error) {
             alert("Server error: " + resp.error);
           } else {
-            // success
             removeCardOrShowEmpty(card);
             window.location.href = "./Friendship.php";
           }
         } catch (e) {
-          // non-JSON response: fallback to existing behavior
           removeCardOrShowEmpty(card);
           window.location.href = "./Friendship.php";
         }
       },
     ).fail(function () {
-      // Keep optimistic fallback for frontend-only integration.
       removeCardOrShowEmpty(card);
     });
   }
@@ -453,7 +433,7 @@ function DisplayPendingRequests() {
     const userB_id =
       request.UserB_ID || request.userB_id || request.user_b_id || null;
 
-    const requestId = `${userA_id},${userB_id}`; // Construct a unique ID for the request card
+    const requestId = `${userA_id},${userB_id}`;
 
     const username = request.Username || "Unknown user";
     const email = request.Email || "No email provided";
@@ -535,7 +515,7 @@ function DisplayStationData() {
   const displayContainer = $(".tempretureDisplay");
   displayContainer.empty();
 
-  // === DROPDOWNS SECTION ===
+  // dropdowns
   const dropdownsSection = $("<div>").addClass("dropdowns-container");
 
   const stationLabel = $("<label>").text("Select Station").css({
@@ -567,7 +547,7 @@ function DisplayStationData() {
   dropdownsSection.append(stationGroup, collectionGroup);
   displayContainer.append(dropdownsSection);
 
-  // === CONTROLS SECTION (DateTime Inputs) ===
+  // date range inputs
   const controlsSection = $("<div>").addClass("dashboard-controls");
 
   const startLabel = $("<label>").text("Start Date & Time").css({
@@ -599,7 +579,7 @@ function DisplayStationData() {
   controlsSection.append(startGroup, endGroup);
   displayContainer.append(controlsSection);
 
-  // === BUTTONS SECTION ===
+  // action buttons
   const dispalyMeasuBtn = $("<button>")
     .attr("id", "displayDateBtn")
     .addClass("btn btn-save")
@@ -623,11 +603,10 @@ function DisplayStationData() {
 
   displayContainer.append(btnContainer);
 
-  // === MEASUREMENTS TABLE ===
+  // measurements table
   const tableContainer = $("<div>").addClass("displayTable");
   const table = $("<table>").attr("id", "measurementsTable");
 
-  // Create table head
   const thead = $("<thead>");
   const headerRow = $("<tr>");
   const headers = [
@@ -646,15 +625,13 @@ function DisplayStationData() {
   thead.append(headerRow);
   table.append(thead);
 
-  // Create table body
   const tbody = $("<tbody>");
   table.append(tbody);
 
   tableContainer.append(table);
   displayContainer.append(tableContainer);
 
-  // === LOAD DATA ===
-  // Load stations
+  // load stations and seed both dropdowns
   $.post(
     "../MyLibrary.php",
     { displayStaion: true },
@@ -665,7 +642,7 @@ function DisplayStationData() {
         );
       });
 
-      // populate the dashboard metric cards station dropdown with same data
+      // sync the dashboard station dropdown
       const $dash = $("#dashboardStationSelect");
       $dash.empty().append($("<option>").val("0").text("-- All Stations --"));
       stations.forEach((station) => {
@@ -673,24 +650,28 @@ function DisplayStationData() {
           $("<option>").val(station.stationId).text(station.stationName),
         );
       });
-      // default: first real station if available
       if (stations.length > 0) {
         $dash.val(stations[0].stationId);
         loadDashboardMetrics(stations[0].stationId);
+        loadDashboardTrendChart(
+          stations[0].stationId,
+          currentTrendPeriod,
+          currentTrendMetric,
+        );
+        startChartPolling(stations[0].stationId, 30000);
       } else {
         loadDashboardMetrics(0);
+        loadDashboardTrendChart(0, currentTrendPeriod, currentTrendMetric);
+        startChartPolling(0, 30000);
       }
 
       const defaultDateStart = $("#meeting-time-start").val();
       const defaultDateEnd = $("#meeting-time-end").val();
-
-      // If no station is selected or "All Stations" is chosen, load all measurements for user-owned stations.
       loadMeasurements(0, defaultDateStart, defaultDateEnd);
     },
     "json",
   );
 
-  // Load collections
   $.post(
     "../MyLibrary.php",
     { displayCollections: true },
@@ -711,17 +692,15 @@ function DisplayStationData() {
     "json",
   );
 
-  // Station selection change handler (auto-update if in live mode)
+  // restart live polling when station changes
   $(document).on("change", "#selectStation", function () {
     const isLive = $("#liveModeBtn").data("isLive");
     const newStationId = $(this).val();
     if (isLive) {
-      // If 0 or no station, poll all own stations
       startRealtimeMeasurementPolling(newStationId);
     }
   });
 
-  // Display button click
   $(document).on("click", "#displayDateBtn", function () {
     const stationId = $("#selectStation").val();
     const dateTimeStart = formatThisDate($("#meeting-time-start").val());
@@ -737,18 +716,12 @@ function DisplayStationData() {
     loadMeasurements(stationId, dateTimeStart, dateTimeEnd);
   });
 
-  // Live Mode button click
   $(document).on("click", "#liveModeBtn", function () {
     const $btn = $(this);
     const isLive = $btn.data("isLive");
     const stationId = $("#selectStation").val();
 
     if (!isLive) {
-      // Enable live mode
-      const selectedStationLabel =
-        stationId === "0" ? "all stations" : "station " + stationId;
-
-      // Load initial measurements and start polling after load finishes
       const defaultDateStart = $("#meeting-time-start").val();
       const defaultDateEnd = formatThisDate($("#meeting-time-end").val());
       loadMeasurements(
@@ -756,12 +729,17 @@ function DisplayStationData() {
         formatThisDate(defaultDateStart),
         defaultDateEnd,
         function () {
-          // Start real-time polling after measurements are rendered
           startRealtimeMeasurementPolling(stationId);
         },
       );
 
-      // Update button appearance
+      loadDashboardTrendChart(
+        stationId,
+        currentTrendPeriod,
+        currentTrendMetric,
+      );
+      startChartPolling(stationId, 5000);
+
       $btn
         .data("isLive", true)
         .text("🟢 Disable Live Mode")
@@ -769,10 +747,12 @@ function DisplayStationData() {
 
       alert("Live mode enabled! New measurements will appear every 1 second.");
     } else {
-      // Disable live mode
       stopRealtimeMeasurementPolling();
+      // keep chart refreshing, just slower
+      const dashStationId =
+        $("#dashboardStationSelect").val() || $("#selectStation").val() || 0;
+      startChartPolling(dashStationId, 30000);
 
-      // Update button appearance
       $btn
         .data("isLive", false)
         .text("🔴 Enable Live Mode")
@@ -782,7 +762,6 @@ function DisplayStationData() {
     }
   });
 
-  // Create collection button click
   $(document).on("click", "#createCollectionBtn", function () {
     const measurements = [];
     $("#measurementsTable tbody tr").each(function () {
@@ -821,6 +800,196 @@ function DisplayStationData() {
 }
 
 let dashboardMetricPollingInterval = null;
+let dashboardTrendChart = null;
+let currentTrendPeriod = "1h";
+let currentTrendMetric = "humidity";
+let chartPollingInterval = null;
+
+const METRIC_CONFIG = {
+  humidity: {
+    label: "Humidity (%)",
+    unit: "%",
+    color: "#1e88e5",
+    bg: "rgba(30,136,229,0.18)",
+    title: "Humidity Trend",
+  },
+  pressure: {
+    label: "Air Pressure (hPa)",
+    unit: "hPa",
+    color: "#8e24aa",
+    bg: "rgba(142,36,170,0.18)",
+    title: "Air Pressure Trend",
+  },
+  light: {
+    label: "Light Intensity (lx)",
+    unit: "lx",
+    color: "#f9a825",
+    bg: "rgba(249,168,37,0.18)",
+    title: "Light Intensity Trend",
+  },
+  airquality: {
+    label: "Air Quality (ppm)",
+    unit: "ppm",
+    color: "#43a047",
+    bg: "rgba(67,160,71,0.18)",
+    title: "Air Quality Trend",
+  },
+  temperature: {
+    label: "Temperature (\u00b0C)",
+    unit: "\u00b0C",
+    color: "#e53935",
+    bg: "rgba(229,57,53,0.18)",
+    title: "Temperature Trend",
+  },
+};
+
+function startChartPolling(stationId, interval) {
+  stopChartPolling();
+  chartPollingInterval = setInterval(function () {
+    loadDashboardTrendChart(stationId, currentTrendPeriod, currentTrendMetric);
+  }, interval || 30000);
+}
+
+function stopChartPolling() {
+  if (chartPollingInterval) {
+    clearInterval(chartPollingInterval);
+    chartPollingInterval = null;
+  }
+}
+
+function initializeDashboardTrendChart() {
+  const canvas = document.getElementById("tempTrendChart");
+  if (!canvas || typeof Chart === "undefined") return;
+  if (dashboardTrendChart) return;
+
+  dashboardTrendChart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Temperature (\u00b0C)",
+          data: [],
+          borderColor: "#1e88e5",
+          backgroundColor: "rgba(30, 136, 229, 0.18)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 8,
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "\u00b0C",
+          },
+        },
+      },
+    },
+  });
+}
+
+function formatChartTimestamp(rawTimestamp) {
+  if (!rawTimestamp) return "";
+  const parsedDate = new Date(String(rawTimestamp).replace(" ", "T"));
+  if (Number.isNaN(parsedDate.getTime())) {
+    return rawTimestamp;
+  }
+
+  return parsedDate.toLocaleString([], {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function applyMetricStyle(metric) {
+  const cfg = METRIC_CONFIG[metric] || METRIC_CONFIG.humidity;
+  if (!dashboardTrendChart) return;
+  dashboardTrendChart.data.datasets[0].label = cfg.label;
+  dashboardTrendChart.data.datasets[0].borderColor = cfg.color;
+  dashboardTrendChart.data.datasets[0].backgroundColor = cfg.bg;
+  dashboardTrendChart.options.scales.y.title.text = cfg.unit;
+  $("#chartMetricTitle").text(cfg.title);
+  dashboardTrendChart.update();
+}
+
+function setDashboardTrendChartData(points) {
+  if (!dashboardTrendChart) return;
+
+  const labels = [];
+  const values = [];
+
+  points.forEach((point) => {
+    labels.push(formatChartTimestamp(point.Timestamp));
+    values.push(
+      point.value !== null && point.value !== undefined
+        ? Number(point.value)
+        : null,
+    );
+  });
+
+  dashboardTrendChart.data.labels = labels;
+  dashboardTrendChart.data.datasets[0].data = values;
+
+  if (points.length === 0) {
+    $(".chart-canvas-wrap").addClass("chart-no-data");
+  } else {
+    $(".chart-canvas-wrap").removeClass("chart-no-data");
+  }
+
+  dashboardTrendChart.update();
+}
+
+function loadDashboardTrendChart(stationId, period, metric) {
+  if (!document.getElementById("tempTrendChart")) return;
+  initializeDashboardTrendChart();
+  if (!dashboardTrendChart) return;
+
+  metric = metric || currentTrendMetric;
+  applyMetricStyle(metric);
+
+  $.post(
+    "../MyLibrary.php",
+    {
+      getTrendMeasurements: true,
+      stationId: stationId,
+      period: period,
+      metric: metric,
+    },
+    function (response) {
+      if (!response || !response.success) {
+        setDashboardTrendChartData([]);
+        return;
+      }
+      setDashboardTrendChartData(response.data || []);
+    },
+    "json",
+  ).fail(function () {
+    setDashboardTrendChartData([]);
+  });
+}
 
 function loadDashboardMetrics(stationId) {
   $.post(
@@ -876,7 +1045,30 @@ function stopDashboardMetricPolling() {
 $(document).on("change", "#dashboardStationSelect", function () {
   const stationId = $(this).val();
   loadDashboardMetrics(stationId);
+  loadDashboardTrendChart(stationId, currentTrendPeriod, currentTrendMetric);
   startDashboardMetricPolling(stationId);
+  const isLive = $("#liveModeBtn").data("isLive");
+  startChartPolling(stationId, isLive ? 5000 : 30000);
+});
+
+$(document).on("click", ".chart-btn", function (event) {
+  event.preventDefault();
+  $(".chart-btn").removeClass("active");
+  $(this).addClass("active");
+
+  currentTrendPeriod = $(this).data("period") || "24h";
+  const stationId = $("#dashboardStationSelect").val() || 0;
+  loadDashboardTrendChart(stationId, currentTrendPeriod, currentTrendMetric);
+});
+
+$(document).on("click", ".metric-card[data-metric]", function (event) {
+  event.preventDefault();
+  $(".metric-card").removeClass("active-metric");
+  $(this).addClass("active-metric");
+
+  currentTrendMetric = $(this).data("metric");
+  const stationId = $("#dashboardStationSelect").val() || 0;
+  loadDashboardTrendChart(stationId, currentTrendPeriod, currentTrendMetric);
 });
 
 function loadMeasurements(stationId, start, end, doneCallback) {
@@ -910,7 +1102,6 @@ function loadMeasurements(stationId, start, end, doneCallback) {
 
       $("#createCollectionBtn").prop("disabled", measurements.length === 0);
 
-      // Call optional callback after measurements are loaded
       if (typeof doneCallback === "function") {
         try {
           doneCallback();
@@ -1026,7 +1217,6 @@ function renderNotificationList(target, items) {
 }
 
 function DisplayNotification() {
-  // Remove previous overlay if exists
   $(".blur-background, .content").remove();
 
   const blurDiv = $("<div>").addClass("blur-background");
@@ -1120,50 +1310,24 @@ function DisplayNotification() {
   $("#DisplayPublicMessage").removeClass("has-unread");
 }
 
-// ===== REAL-TIME MEASUREMENT POLLING =====
+// real-time polling
 let realtimePollingInterval = null;
 let currentStationForPolling = null;
 let lastMeasurementTimestamp = null;
 
 function startRealtimeMeasurementPolling(stationId) {
-  // Stop any existing polling
   stopRealtimeMeasurementPolling();
-
   currentStationForPolling = stationId;
 
-  // Set initial timestamp to now
-  // Prefer the timestamp of the newest measurement already displayed in the table
-  // (table now shows newest entries at the top), so we don't miss recent rows
-  // loaded just before enabling live mode.
+  // use the newest visible row's timestamp so we don't miss anything
   const lastRowTs = $("#measurementsTable tbody tr:first td:first")
     .text()
     .trim();
-  if (lastRowTs) {
-    lastMeasurementTimestamp = lastRowTs;
-  } else {
-    lastMeasurementTimestamp = new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
-  }
+  lastMeasurementTimestamp = lastRowTs
+    ? lastRowTs
+    : new Date().toISOString().slice(0, 19).replace("T", " ");
 
-  console.log(
-    "[RealtimePolling] startRealtimeMeasurementPolling called for station:",
-    currentStationForPolling,
-  );
-  console.log(
-    "[RealtimePolling] initial lastMeasurementTimestamp:",
-    lastMeasurementTimestamp,
-  );
-
-  // Poll every 1 second for new measurements
   realtimePollingInterval = setInterval(function () {
-    console.log(
-      "[RealtimePolling] poll tick - asking for measurements since:",
-      lastMeasurementTimestamp,
-      "for station:",
-      currentStationForPolling,
-    );
     $.post(
       "../MyLibrary.php",
       {
@@ -1172,7 +1336,6 @@ function startRealtimeMeasurementPolling(stationId) {
         lastTimestamp: lastMeasurementTimestamp,
       },
       function (response) {
-        console.log("[RealtimePolling] server response:", response);
         if (
           response &&
           response.success &&
@@ -1180,16 +1343,13 @@ function startRealtimeMeasurementPolling(stationId) {
         ) {
           const tbody = $("#measurementsTable tbody");
 
-          // Add new measurements to the table
-          // Insert new measurements at the top so newest entries appear first
           response.newMeasurements.forEach((row) => {
-            // Avoid duplicating rows that are already present (safe-guard)
+            // skip if already in table
             if (
-              tbody.find(`tr[data-measurement-id=\"${row.Measurement_id}\"]`)
+              tbody.find(`tr[data-measurement-id="${row.Measurement_id}"]`)
                 .length > 0
-            ) {
+            )
               return;
-            }
             const tr = $("<tr>").data("measurement-id", row.Measurement_id);
             tr.append($("<td>").text(row.Timestamp));
             tr.append($("<td>").text(row.Humidity));
@@ -1197,48 +1357,32 @@ function startRealtimeMeasurementPolling(stationId) {
             tr.append($("<td>").text(row.Light_intensity));
             tr.append($("<td>").text(row.Air_quality));
             tr.append($("<td>").text(row.Station_id));
-            // Prepend so newest rows are at the top
             tbody.prepend(tr);
           });
 
-          // Update timestamp for next poll
           lastMeasurementTimestamp = response.lastTimestamp;
-
-          // Update the dashboard metric cards with the latest measurement
-          const latest =
-            response.newMeasurements[response.newMeasurements.length - 1];
-          updateMetricCards(latest);
-
-          // Enable collection button if we have measurements
-          const totalRows = tbody.find("tr").length;
-          $("#createCollectionBtn").prop("disabled", totalRows === 0);
-
-          // Auto-scroll to top (newest entries are at the top)
+          updateMetricCards(
+            response.newMeasurements[response.newMeasurements.length - 1],
+          );
+          $("#createCollectionBtn").prop(
+            "disabled",
+            tbody.find("tr").length === 0,
+          );
           $("#measurementsTable").parent().scrollTop(0);
         }
       },
       "json",
-    ).fail(function (jqXHR, textStatus, errorThrown) {
-      console.log(
-        "[RealtimePolling] AJAX fail:",
-        textStatus,
-        errorThrown,
-        jqXHR && jqXHR.responseText,
-      );
-    });
-  }, 1000); // Poll every 1 second
+    );
+  }, 1000);
 }
 
 function stopRealtimeMeasurementPolling() {
   if (realtimePollingInterval) {
-    console.log(
-      "[RealtimePolling] stopRealtimeMeasurementPolling called - clearing interval",
-    );
     clearInterval(realtimePollingInterval);
     realtimePollingInterval = null;
   }
 }
-// unassign my station
+// remove this station from the user's account
 function removeMyStation(targetStationId) {
   $.post(
     "../MyLibrary.php",
@@ -1292,17 +1436,13 @@ function saveStationEdit(stationId) {
     "json",
   );
 }
-// share this collection (vlaue of btn is the collection id)
+// open share dialog with the collection's id
 $(document).on("click", ".shareCollectionBtn, .share-btn", function () {
   const collectionID = $(this).data("id") || $(this).val();
-  if (!collectionID) {
-    console.error("No collection ID found");
-    return;
-  }
-  DisplayFriends(collectionID); // Make sure this passes the ID
+  if (!collectionID) return;
+  DisplayFriends(collectionID);
 });
 
-// Contact form submission
 $(document).on("submit", "#contactForm", function (e) {
   e.preventDefault();
 
@@ -1316,35 +1456,28 @@ $(document).on("submit", "#contactForm", function (e) {
     return;
   }
 
-  // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     alert("Please enter a valid email address");
     return;
   }
 
-  // Simulate form submission (in a real app, this would send to server)
+  // TODO: send to server
   alert(`Thank you for your message, ${name}! We'll get back to you soon.`);
-
-  // Clear form
   $("#contactForm")[0].reset();
 });
 
-/* Collection.php */
 function loadCollectionLoad() {
   $(document).ready(function () {
     const $myTab = $(".Collections_container");
     const $sharedTab = $(".Collections_shared_container");
     const $sectionInfo = $("#sectionInfo");
 
-    // Default tab
     switchSection("my");
 
-    // Tab click handlers
     $myTab.on("click", () => switchSection("my"));
     $sharedTab.on("click", () => switchSection("shared"));
 
-    // === MOVE THIS FUNCTION OUTSIDE switchSection ===
     function buildCollectionHTML(collection, cid, isSharedByMe) {
       let html = `
     <div class="collection-block displayTable">
@@ -1397,13 +1530,12 @@ function loadCollectionLoad() {
   `;
 
       html += `
-      </div> <!-- collection-buttons -->
-    </div> <!-- collection-block -->
+      </div>
+    </div>
   `;
 
       return html;
     }
-    // === END OF MOVED FUNCTION ===
 
     function switchSection(section) {
       $myTab.removeClass("active");
@@ -1562,8 +1694,7 @@ function loadCollectionLoad() {
             alert("Invalid collection selected");
             return;
           }
-          console.log("Share collection:", collectionID);
-          DisplayFriends(collectionID); // corrected behavior
+          DisplayFriends(collectionID);
         });
 
       // Remove button
@@ -1575,8 +1706,6 @@ function loadCollectionLoad() {
             alert("Invalid collection selected");
             return;
           }
-          console.log("Remove collection:", collectionID);
-          // Add remove collection logic if needed
           if (
             !confirm(
               "Are you sure you want to remove this collection? This action cannot be undone.",
@@ -1609,8 +1738,6 @@ function loadCollectionLoad() {
             return;
           }
 
-          console.log("Canceling share for collection:", collectionID);
-
           $.post(
             "../MyLibrary.php",
             { CancelSharedCollection: collectionID },
@@ -1630,12 +1757,10 @@ function loadCollectionLoad() {
 }
 /* ==================== ADMIN DELETE BUTTONS ==================== */
 
-// Handle all delete buttons
 $(document).on("click", ".delete-btn", function () {
-  var value = $(this).val(); // Gets "user_123" or "station_456"
+  var value = $(this).val();
 
   if (value.startsWith("user_")) {
-    // Delete user
     var userId = value.replace("user_", "");
     if (confirm("Delete this user?")) {
       $.post(
@@ -1646,7 +1771,6 @@ $(document).on("click", ".delete-btn", function () {
         },
         function (response) {
           alert(response);
-          // Reload users
           $.post("../MyLibrary.php", { get_all_users: true }, function (data) {
             $("#usersList").html(data);
           });
@@ -1654,7 +1778,6 @@ $(document).on("click", ".delete-btn", function () {
       );
     }
   } else if (value.startsWith("station_")) {
-    // Delete station
     var stationId = value.replace("station_", "");
     if (confirm("Delete this station?")) {
       $.post(
@@ -1665,7 +1788,6 @@ $(document).on("click", ".delete-btn", function () {
         },
         function (response) {
           alert(response);
-          // Reload stations
           $.post(
             "../MyLibrary.php",
             { get_all_stations: true },
@@ -1685,8 +1807,7 @@ let groupPollingInterval = null;
 let currentGroupLastMessageId = 0;
 
 /**
- * Opens the "My Groups" overlay — lists all groups the user is in,
- * plus a button to create a new group.
+ * Opens the groups overlay.
  */
 function ShowGroupChats() {
   $(".blur-background, .content").remove();
