@@ -1,18 +1,1 @@
 Checking user with plain password and password verification of plain text needs to be stopped.
-
-bell icone => notification
--   A list of notification and all news display when bell clicked
--   the pulic massages can be displayed when we click the bell like a notification
--   Bell icone can be toggled and changed when there is a notification
-
-
-Displaying measrement order needs to be fixed
-
-Sending message facing problem
-
-
-WEBAP requirements:
-- public message by admin view by everybody
-- number of unseen message shown
-- last time a user was login
-- notify when a target user is typing
