@@ -1,0 +1,161 @@
+
+<style>
+#erd { padding: 1rem 0; }
+#erd svg { width: 100%; height: auto; }
+</style>
+<div id="erd"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+  },
+});
+
+const diagram = `erDiagram
+  Role {
+    int AccessLevelID PK
+    varchar level
+  }
+  Users {
+    int UserID PK
+    varchar Fullname
+    varchar Email
+    varchar Username
+    varchar Password
+    int AccessLevelID FK
+  }
+  Station {
+    int Station_id PK
+    varchar Serial_number
+    varchar Name
+    varchar Description
+    varchar Status
+    int Owner_id FK
+  }
+  Measurement {
+    int Measurement_id PK
+    datetime Timestamp
+    decimal Temperature
+    decimal Humidity
+    decimal Air_pressure
+    decimal Light_intensity
+    int Air_quality
+    int Station_id FK
+  }
+  Collection {
+    int Collection_id PK
+    varchar Name
+    varchar Description
+    datetime CreatedAt
+    int Creator_ID FK
+  }
+  CollectionContains {
+    int Collection_id FK
+    int Measurement_id FK
+  }
+  CollectionShare {
+    int Collection_id FK
+    int Shared_by FK
+    int Shared_with FK
+  }
+  FriendList {
+    int UserA_ID FK
+    int UserB_ID FK
+    varchar status
+    int requested_by
+  }
+  ChatGroup {
+    int Group_id PK
+    varchar Group_name
+    int Creator_id FK
+    datetime Created_at
+  }
+  GroupMember {
+    int Group_id FK
+    int User_id FK
+  }
+  Message {
+    int Message_ID PK
+    varchar Message_content
+    int Sender_ID FK
+    int Group_id FK
+    datetime Message_time
+  }
+  MessageRead {
+    int message_id FK
+    int user_id FK
+    datetime read_at
+  }
+  NotificationType {
+    int NotificationType_ID PK
+    varchar type_key
+    varchar display_name
+    varchar description
+  }
+  Notifications {
+    int id PK
+    int user_id FK
+    int notification_type_id FK
+    varchar message
+    boolean is_read
+    timestamp created_at
+  }
+
+  Role ||--o{ Users : "has"
+  Users ||--o{ Station : "owns"
+  Users ||--o{ Collection : "creates"
+  Users ||--o{ CollectionShare : "shared_by"
+  Users ||--o{ CollectionShare : "shared_with"
+  Users }o--o{ FriendList : "UserA"
+  Users }o--o{ FriendList : "UserB"
+  Users ||--o{ GroupMember : "joins"
+  Users ||--o{ Message : "sends"
+  Users ||--o{ MessageRead : "reads"
+  Users ||--o{ Notifications : "receives"
+  Station ||--o{ Measurement : "records"
+  Collection ||--o{ CollectionContains : "includes"
+  Collection ||--o{ CollectionShare : "shared"
+  Measurement ||--o{ CollectionContains : "part of"
+  ChatGroup ||--o{ GroupMember : "has"
+  ChatGroup ||--o{ Message : "contains"
+  Message ||--o{ MessageRead : "tracked by"
+  NotificationType ||--o{ Notifications : "categorizes"
+`;
+
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
