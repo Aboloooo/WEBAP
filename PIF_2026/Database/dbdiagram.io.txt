@@ -1,0 +1,159 @@
+// DBML format
+
+Table Role {
+  AccessLevelID int [pk, increment]
+  level varchar
+}
+
+Table Users {
+  UserID int [pk, increment]
+  Fullname varchar
+  Email varchar
+  Username varchar [unique]
+  Password varchar
+  AccessLevelID int
+}
+
+Table Station {
+  Station_id int [pk, increment]
+  Serial_number varchar
+  Name varchar
+  Description varchar
+  Status varchar
+  Owner_id int
+}
+
+Table Collection {
+  Collection_id int [pk, increment]
+  Name varchar
+  Description varchar
+  CreatedAt datetime
+  Creator_ID int
+}
+
+Table Measurement {
+  Measurement_id int [pk, increment]
+  Timestamp datetime
+  Temperature decimal
+  Humidity decimal
+  Air_pressure decimal
+  Light_intensity decimal
+  Air_quality int
+  Station_id int
+}
+
+Table CollectionContains {
+  Collection_id int
+  Measurement_id int
+
+  indexes {
+    (Collection_id, Measurement_id) [pk]
+  }
+}
+
+Table FriendList {
+  UserA_ID int
+  UserB_ID int
+  status varchar
+  requested_by int
+
+  indexes {
+    (UserA_ID, UserB_ID) [pk]
+  }
+}
+
+Table CollectionShare {
+  Collection_id int
+  Shared_by int
+  Shared_with int
+
+  indexes {
+    (Collection_id, Shared_by, Shared_with) [pk]
+  }
+}
+
+Table Message {
+  Message_ID int [pk, increment]
+  Message_content varchar
+  Sender_ID int
+  Group_id int
+  Message_time datetime
+}
+
+Table MessageRead {
+  message_id int
+  user_id int
+  read_at datetime
+
+  indexes {
+    (message_id, user_id) [pk]
+  }
+}
+
+Table ChatGroup {
+  Group_id int [pk, increment]
+  Group_name varchar
+  Creator_id int
+  Created_at datetime
+}
+
+Table GroupMember {
+  Group_id int
+  User_id int
+
+  indexes {
+    (Group_id, User_id) [pk]
+  }
+}
+
+Table NotificationType {
+  NotificationType_ID int [pk, increment]
+  type_key varchar
+  display_name varchar
+  description varchar
+}
+
+Table Notifications {
+  id int [pk, increment]
+  user_id int
+  notification_type_id int
+  message varchar
+  is_read boolean
+  created_at timestamp
+}
+
+/////////////////////////////////////////////////
+// Relationships
+/////////////////////////////////////////////////
+
+Ref: Users.AccessLevelID > Role.AccessLevelID
+
+Ref: Station.Owner_id > Users.UserID
+
+Ref: Collection.Creator_ID > Users.UserID
+
+Ref: Measurement.Station_id > Station.Station_id
+
+Ref: CollectionContains.Collection_id > Collection.Collection_id
+Ref: CollectionContains.Measurement_id > Measurement.Measurement_id
+
+Ref: FriendList.UserA_ID > Users.UserID
+Ref: FriendList.UserB_ID > Users.UserID
+
+Ref: CollectionShare.Collection_id > Collection.Collection_id
+Ref: CollectionShare.Shared_by > Users.UserID
+Ref: CollectionShare.Shared_with > Users.UserID
+
+Ref: Message.Sender_ID > Users.UserID
+Ref: Message.Group_id > ChatGroup.Group_id
+
+Ref: MessageRead.message_id > Message.Message_ID
+Ref: MessageRead.user_id > Users.UserID
+
+Ref: ChatGroup.Creator_id > Users.UserID
+
+Ref: GroupMember.Group_id > ChatGroup.Group_id
+Ref: GroupMember.User_id > Users.UserID
+
+Ref: Notifications.user_id > Users.UserID
+Ref: Notifications.notification_type_id > NotificationType.NotificationType_ID
