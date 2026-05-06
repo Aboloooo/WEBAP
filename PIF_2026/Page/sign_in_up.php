@@ -12,7 +12,8 @@ if (isset($_POST['signin_username'], $_POST['signin_password'])) {
     $loginCheck->execute();
     $result = $loginCheck->get_result();
     if ($row = $result->fetch_assoc()) {
-        if (password_verify($_POST['signin_password'], $row['Password']) || $_POST['signin_password'] === $row['Password']) {
+        //if (password_verify($_POST['signin_password'], $row['Password']) || $_POST['signin_password'] === $row['Password']) {
+        if (password_verify($_POST['signin_password'], $row['Password'])) {
             $_SESSION["username"]  = $row['Username'];
             $_SESSION["userLogin"] = true;
             // clear any buffered output from included files before sending headers

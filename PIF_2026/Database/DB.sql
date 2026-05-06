@@ -116,9 +116,9 @@ CREATE TABLE Message(
     FOREIGN KEY (Sender_ID) REFERENCES Users(UserID)
 );
 insert into Users(Fullname, Email, Username, Password, AccessLevelID) values
-('Alice Smith', 'alice@example.com', 'user1', '1', 3),
-('Bob Johnson', 'bob@example.com', 'user2', '2', 3),
-('Charlie Brown', 'charlie@example.com', 'user3', '3', 3);
+('Alice Smith', 'alice@example.com', 'user1', '$2y$10$J.VKHbFZuj24IoW01.FQt./tW/QOlb4jfJL.zl6oPSF6dwvYwyBTm', 3),
+('Bob Johnson', 'bob@example.com', 'user2', '$2y$10$ecYj0gAohASVeFmB1eyucuKtMVZsXx1Yp35OF5ubOO738XI1jOtDq', 3),
+('Charlie Brown', 'charlie@example.com', 'user3', '$2y$10$zYZdMrbaWSX90h5z7oUY4eU5nUvSevVcKkDhVnTPKDPtGu.REVLgW', 3);
 
 -- MessageRead table: tracks which users have read each message
 CREATE TABLE MessageRead (
