@@ -1,9 +1,12 @@
 <?php
+/* Database configuration and connection setup */
+/* This file contains the function to create a database connection using MySQLi
+the confidential requires be adjusted and adopted */
 function createDatabaseConnection(): mysqli
 {
     $host = getenv('DB_HOST') ?: 'localhost';
-    $username = getenv('DB_USER') ?: 'root';
-    $password = getenv('DB_PASS') ?: '';
+    $username = getenv('DB_USER') ?: 'root'; // Default to 'root' for local development, but should be set in production
+    $password = getenv('DB_PASS') ?: ''; // Default to empty for local development, but should be set in production
     $database = getenv('DB_NAME') ?: 'PIF_2026';
     $port = (int) (getenv('DB_PORT') ?: 3306);
 
