@@ -2061,22 +2061,7 @@ function OpenGroupChat(groupId, groupName) {
         { sendGroupMessage: true, groupId: groupId, content: message },
         function (res) {
           if (res && res.success) {
-            // Optimistically render own message immediately; poll will skip it
-            // since currentGroupLastMessageId is updated to res.messageId
-            appendGroupMessage(messageList, {
-              sender_name: window.currentUsername || "You",
-              Content: message,
-              Sent_at: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              Message_id: res.messageId,
-            });
-            currentGroupLastMessageId = Math.max(
-              currentGroupLastMessageId,
-              res.messageId,
-            );
-            messageList.scrollTop(messageList[0].scrollHeight);
+            // Keep rendering in one place (polling) to avoid duplicate message UI.
           } else {
             alert(res && res.error ? res.error : "Failed to send message.");
           }
